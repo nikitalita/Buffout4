@@ -37,6 +37,7 @@ public:
 	static inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };
 	static inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
 	static inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
+	static inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
 
 private:
 	Settings() = delete;

@@ -11,6 +11,7 @@ set(headers ${headers}
 	src/Fixes/FaderMenuFix.h
 	src/Fixes/Fixes.h
 	src/Fixes/SafeExit.h
+	src/Patches/HavokMemorySystemPatch.h
 	src/Patches/MemoryManagerPatch.h
 	src/Patches/Patches.h
 	src/Patches/ScaleformAllocatorPatch.h
