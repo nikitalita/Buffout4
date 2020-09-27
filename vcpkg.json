@@ -15,6 +15,7 @@
     "span-lite",
     "spdlog",
     "tomlplusplus",
+    "robin-hood-hashing",
     "xbyak"
   ]
 }

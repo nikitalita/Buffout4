@@ -9,6 +9,7 @@ UnalignedLoad = true         # Fixes a crash related to SIMD intrinsics with an 
 [Patches]
 HavokMemorySystem = true   # Replaces the havok memory system with os allocators
 MemoryManager = true       # Replaces the global memory manager with os allocators
+MemoryManagerDebug = true  # Enables debug tracing to determine faulting modules
 ScaleformAllocator = true  # Replaces the scaleform memory allocator with os allocators
 SmallBlockAllocator = true # Replaces the small block memory allocators with os allocators
 

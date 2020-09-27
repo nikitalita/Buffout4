@@ -13,6 +13,68 @@ namespace Patches
 		}
 
 	private:
+		class MemoryTraces
+		{
+		public:
+			using lock_type = std::mutex;
+			using value_type = robin_hood::unordered_flat_map<void*, std::pair<bool, boost::stacktrace::stacktrace>>;
+
+			class Accessor
+			{
+			public:
+				Accessor() = delete;
+				Accessor(const Accessor&) = delete;
+				Accessor(Accessor&&) = delete;
+
+				~Accessor() = default;
+
+				Accessor& operator=(const Accessor&) = delete;
+				Accessor& operator=(Accessor&&) = delete;
+
+				[[nodiscard]] value_type& operator*() noexcept { return get(); }
+				[[nodiscard]] const value_type& operator*() const noexcept { return get(); }
+
+				[[nodiscard]] value_type* operator->() noexcept { return std::addressof(get()); }
+				[[nodiscard]] const value_type* operator->() const noexcept { return std::addressof(get()); }
+
+				[[nodiscard]] value_type& get() noexcept { return _proxy; }
+				[[nodiscard]] const value_type& get() const noexcept { return _proxy; }
+
+			protected:
+				friend class MemoryTraces;
+
+				Accessor(lock_type& a_lock, value_type& a_proxy) :
+					_locker(a_lock),
+					_proxy(a_proxy)
+				{}
+
+			private:
+				std::scoped_lock<lock_type> _locker;
+				value_type& _proxy;
+			};
+
+			[[nodiscard]] static MemoryTraces& get() noexcept
+			{
+				static MemoryTraces singleton;
+				return singleton;
+			}
+
+			[[nodiscard]] Accessor access() { return { _lock, _traces }; }
+
+		private:
+			MemoryTraces() noexcept = default;
+			MemoryTraces(const MemoryTraces&) = delete;
+			MemoryTraces(MemoryTraces&&) = delete;
+
+			~MemoryTraces() noexcept = default;
+
+			MemoryTraces& operator=(const MemoryTraces&) = delete;
+			MemoryTraces& operator=(MemoryTraces&&) = delete;
+
+			lock_type _lock;
+			value_type _traces;
+		};
+
 		class MemoryManager
 		{
 		public:
@@ -34,6 +96,25 @@ namespace Patches
 				}
 			}
 
+			static void* DbgAllocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
+			{
+				void* result = nullptr;
+				if (a_alignmentRequired) {
+					result = _aligned_malloc(a_size, a_alignment);
+				} else {
+					result = std::malloc(a_size);
+				}
+
+				if (result && a_size == sizeof(RE::NiNode)) {
+					auto access = MemoryTraces::get().access();
+					access->emplace(
+						result,
+						std::make_pair(a_alignmentRequired, boost::stacktrace::stacktrace{}));
+				}
+
+				return result;
+			}
+
 			static void Deallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
 			{
 				if (a_alignmentRequired) {
@@ -42,6 +123,8 @@ namespace Patches
 					std::free(a_mem);
 				}
 			}
+
+			static void DbgDeallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired);
 
 			static void* Reallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
@@ -52,13 +135,34 @@ namespace Patches
 				}
 			}
 
+			static void* DbgReallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
+			{
+				auto access = MemoryTraces::get().access();
+
+				void* result = nullptr;
+				if (a_alignmentRequired) {
+					result = _aligned_realloc(a_oldMem, a_newSize, a_alignment);
+				} else {
+					result = std::realloc(a_oldMem, a_newSize);
+				}
+
+				if (const auto it = access->find(a_oldMem); it != access->end()) {
+					access->erase(it);
+					access->emplace(
+						result,
+						std::make_pair(a_alignmentRequired, boost::stacktrace::stacktrace{}));
+				}
+
+				return result;
+			}
+
 			static void ReplaceAllocRoutines()
 			{
 				using tuple_t = std::tuple<std::uint64_t, std::size_t, void*>;
 				const std::array todo{
-					tuple_t{ 652767, 0x24B, &Allocate },
-					tuple_t{ 1582181, 0x115, &Deallocate },
-					tuple_t{ 1502917, 0xA2, &Reallocate },
+					tuple_t{ 652767, 0x24B, *Settings::MemoryManagerDebug ? &DbgAllocate : &Allocate },
+					tuple_t{ 1582181, 0x115, *Settings::MemoryManagerDebug ? &DbgDeallocate : &Deallocate },
+					tuple_t{ 1502917, 0xA2, *Settings::MemoryManagerDebug ? &DbgReallocate : &Reallocate },
 				};
 
 				for (const auto& [id, size, func] : todo) {
@@ -107,9 +211,9 @@ namespace Patches
 			{
 				using tuple_t = std::tuple<std::uint64_t, std::size_t, void*>;
 				const std::array todo{
-					tuple_t{ 1085394, 0x5F6, Allocate },
-					tuple_t{ 923307, 0x144, Deallocate },
-					tuple_t{ 48809, 0x12B, Ctor },
+					tuple_t{ 1085394, 0x5F6, &Allocate },
+					tuple_t{ 923307, 0x144, &Deallocate },
+					tuple_t{ 48809, 0x12B, &Ctor },
 				};
 
 				for (const auto& [id, size, func] : todo) {

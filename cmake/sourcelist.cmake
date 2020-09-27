@@ -6,6 +6,7 @@ set(sources ${sources}
 	src/Crash/Modules/ModuleHandler.cpp
 	src/Fixes/CellInitFix.cpp
 	src/Fixes/Fixes.cpp
+	src/Patches/MemoryManagerPatch.cpp
 	src/Patches/Patches.cpp
 	src/Patches/SmallBlockAllocatorPatch.cpp
 	src/Warnings/Warnings.cpp

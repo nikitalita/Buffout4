@@ -36,6 +36,7 @@ public:
 	static inline bSetting UnalignedLoad{ "Fixes"s, "UnalignedLoad"s, true };
 
 	static inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };
+	static inline bSetting MemoryManagerDebug{ "Patches"s, "MemoryManagerDebug"s, false };
 	static inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
 	static inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
 	static inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };

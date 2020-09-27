@@ -29,6 +29,7 @@
 #include <boost/stacktrace.hpp>
 #include <fmt/chrono.h>
 #include <frozen/map.h>
+#include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 #include "AutoTOML.hpp"

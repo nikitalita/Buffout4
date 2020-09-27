@@ -133,6 +133,7 @@ find_package(frozen REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(tomlplusplus REQUIRED)
 
+find_path(ROBIN_HOOD_HASHING_INCLUDE_DIRS "robin_hood.h")
 find_path(XBYAK_INCLUDE_DIRS "xbyak/xbyak.h")
 
 # ---- Add source files ----
@@ -154,6 +155,13 @@ source_group(
 )
 
 # ---- Create DLL ----
+
+set(MSVC_TARGET_COMPILE_OPTIONS
+	/TP	# Specify Source File Type (C++)
+	
+	# disable warnings
+	/wd4324 # 'struct_name' : structure was padded due to __declspec(align())
+)
 
 add_library(Buffout4 SHARED
 	${headers}
@@ -179,7 +187,7 @@ target_compile_features(Buffout4
 
 target_compile_options(Buffout4
 	PRIVATE
-		"$<$<BOOL:${MSVC}>:/TP>"
+		"$<$<BOOL:${MSVC}>:${MSVC_TARGET_COMPILE_OPTIONS}>"
 )
 
 target_include_directories(Buffout4
@@ -187,6 +195,7 @@ target_include_directories(Buffout4
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${ROBIN_HOOD_HASHING_INCLUDE_DIRS}
 		${XBYAK_INCLUDE_DIRS}
 )
 

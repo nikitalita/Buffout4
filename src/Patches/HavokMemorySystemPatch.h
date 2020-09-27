@@ -14,17 +14,18 @@ namespace Patches
 		}
 
 	private:
-		class hkMemoryAllocator :
+		class hkMemoryAllocator final :
 			public RE::hkMemoryAllocator
 		{
 		public:
-			void* BlockAlloc(std::int32_t a_numBytesIn) override { return RE::malloc(a_numBytesIn); }
-			void BlockFree(void* a_ptr, std::int32_t) override { RE::free(a_ptr); }
-			virtual void GetMemoryStatistics(MemoryStatistics&) const override { return; }
-			virtual std::int32_t GetAllocatedSize(const void*, std::int32_t a_numBytes) const override { return a_numBytes; }
+			void* BlockAlloc(std::int32_t a_numBytesIn) override { return _aligned_malloc(a_numBytesIn, 0x10); }
+			void BlockFree(void* a_ptr, std::int32_t) override { _aligned_free(a_ptr); }
+			void* BufRealloc(void* a_old, std::int32_t, std::int32_t& a_reqNumBytesInOut) override { return _aligned_realloc(a_old, a_reqNumBytesInOut, 0x10); }
+			void GetMemoryStatistics(MemoryStatistics&) const override { return; }
+			std::int32_t GetAllocatedSize(const void*, std::int32_t a_numBytes) const override { return a_numBytes; }
 		};
 
-		class hkMemorySystem :
+		class hkMemorySystem final :
 			public RE::hkMemorySystem
 		{
 		public:
@@ -108,8 +109,8 @@ namespace Patches
 			hkMemorySystem& operator=(const hkMemorySystem&) = delete;
 			hkMemorySystem& operator=(hkMemorySystem&&) = delete;
 
-			hkMemoryAllocator _allocator;
-			RE::hkMemoryRouter _router;
+			alignas(0x10) hkMemoryAllocator _allocator;
+			alignas(0x10) RE::hkMemoryRouter _router;
 		};
 	};
 }

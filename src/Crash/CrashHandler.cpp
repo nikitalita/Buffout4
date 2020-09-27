@@ -51,119 +51,111 @@
 
 namespace Crash
 {
-	class Callstack
+	Callstack::Callstack(const ::EXCEPTION_RECORD& a_except) noexcept
 	{
-	public:
-		Callstack(const ::EXCEPTION_RECORD& a_except) noexcept
-		{
-			const auto exceptionAddress = reinterpret_cast<std::uintptr_t>(a_except.ExceptionAddress);
-			auto it = std::find_if(
-				_stacktrace.cbegin(),
-				_stacktrace.cend(),
-				[&](auto&& a_elem) noexcept {
-					return reinterpret_cast<std::uintptr_t>(a_elem.address()) == exceptionAddress;
+		const auto exceptionAddress = reinterpret_cast<std::uintptr_t>(a_except.ExceptionAddress);
+		auto it = std::find_if(
+			_stacktrace.cbegin(),
+			_stacktrace.cend(),
+			[&](auto&& a_elem) noexcept {
+				return reinterpret_cast<std::uintptr_t>(a_elem.address()) == exceptionAddress;
+			});
+
+		if (it == _stacktrace.cend()) {
+			it = _stacktrace.cbegin();
+		}
+
+		_frames = stl::make_span(it, _stacktrace.cend());
+	}
+
+	void Callstack::print(
+		std::shared_ptr<spdlog::logger> a_log,
+		stl::span<const module_pointer> a_modules) const noexcept
+	{
+		assert(a_log != nullptr);
+		print_probable_callstack(a_log, a_modules);
+	}
+
+	std::string Callstack::get_size_string(std::size_t a_size) noexcept
+	{
+		return fmt::to_string(
+			fmt::to_string(a_size - 1)
+				.length());
+	}
+
+	std::string Callstack::get_format(std::size_t a_nameWidth) const noexcept
+	{
+		return "\t[{:>"s +
+			   get_size_string(_frames.size()) +
+			   "}] 0x{:012X} {:>"s +
+			   fmt::to_string(a_nameWidth) +
+			   "}{}"s;
+	}
+
+	void Callstack::print_probable_callstack(
+		std::shared_ptr<spdlog::logger> a_log,
+		stl::span<const module_pointer> a_modules) const noexcept
+	{
+		assert(a_log != nullptr);
+		a_log->critical("PROBABLE CALL STACK:"sv);
+
+		std::vector<const Modules::Module*> moduleStack;
+		moduleStack.reserve(_frames.size());
+		for (const auto& frame : _frames) {
+			const auto it = std::lower_bound(
+				a_modules.rbegin(),
+				a_modules.rend(),
+				reinterpret_cast<std::uintptr_t>(frame.address()),
+				[](auto&& a_lhs, auto&& a_rhs) noexcept {
+					return a_lhs->address() >= a_rhs;
 				});
-
-			if (it == _stacktrace.cend()) {
-				it = _stacktrace.cbegin();
-			}
-
-			_frames = stl::make_span(it, _stacktrace.cend());
-		}
-
-		void print(
-			std::shared_ptr<spdlog::logger> a_log,
-			stl::span<const module_pointer> a_modules) const noexcept
-		{
-			assert(a_log != nullptr);
-			print_probable_callstack(a_log, a_modules);
-		}
-
-	private:
-		[[nodiscard]] static std::string get_size_string(std::size_t a_size) noexcept
-		{
-			return fmt::to_string(
-				fmt::to_string(a_size - 1)
-					.length());
-		}
-
-		[[nodiscard]] std::string get_format(std::size_t a_nameWidth) const noexcept
-		{
-			return "\t[{:>"s +
-				   get_size_string(_frames.size()) +
-				   "}] 0x{:012X} {:>"s +
-				   fmt::to_string(a_nameWidth) +
-				   "}{}"s;
-		}
-
-		void print_probable_callstack(
-			std::shared_ptr<spdlog::logger> a_log,
-			stl::span<const module_pointer> a_modules) const noexcept
-		{
-			assert(a_log != nullptr);
-			a_log->critical("PROBABLE CALL STACK:"sv);
-
-			std::vector<const Modules::Module*> moduleStack;
-			moduleStack.reserve(_frames.size());
-			for (const auto& frame : _frames) {
-				const auto it = std::lower_bound(
-					a_modules.rbegin(),
-					a_modules.rend(),
-					reinterpret_cast<std::uintptr_t>(frame.address()),
-					[](auto&& a_lhs, auto&& a_rhs) noexcept {
-						return a_lhs->address() >= a_rhs;
-					});
-				if (it != a_modules.rend() && (*it)->in_range(frame.address())) {
-					moduleStack.push_back(it->get());
-				} else {
-					moduleStack.push_back(nullptr);
-				}
-			}
-
-			const auto format = get_format([&]() noexcept {
-				std::size_t max = 0;
-				std::for_each(
-					moduleStack.begin(),
-					moduleStack.end(),
-					[&](auto&& a_elem) noexcept {
-						max = a_elem ? std::max(max, a_elem->name().length()) : max;
-					});
-				return max;
-			}());
-
-			for (std::size_t i = 0; i < _frames.size(); ++i) {
-				const auto mod = moduleStack[i];
-				const auto& frame = _frames[i];
-				a_log->critical(
-					format,
-					i,
-					reinterpret_cast<std::uintptr_t>(frame.address()),
-					(mod ? mod->name() : ""sv),
-					(mod ? mod->frame_info(frame) : ""s));
+			if (it != a_modules.rend() && (*it)->in_range(frame.address())) {
+				moduleStack.push_back(it->get());
+			} else {
+				moduleStack.push_back(nullptr);
 			}
 		}
 
-		void print_raw_callstack(std::shared_ptr<spdlog::logger> a_log) const noexcept
-		{
-			assert(a_log != nullptr);
-			a_log->critical("RAW CALL STACK:");
+		const auto format = get_format([&]() noexcept {
+			std::size_t max = 0;
+			std::for_each(
+				moduleStack.begin(),
+				moduleStack.end(),
+				[&](auto&& a_elem) noexcept {
+					max = a_elem ? std::max(max, a_elem->name().length()) : max;
+				});
+			return max;
+		}());
 
-			const auto format =
-				"\t[{:>"s +
-				get_size_string(_stacktrace.size()) +
-				"}] 0x{:X}"s;
-
-			for (std::size_t i = 0; i < _stacktrace.size(); ++i) {
-				a_log->critical(
-					format,
-					i,
-					reinterpret_cast<std::uintptr_t>(_stacktrace[i].address()));
-			}
+		for (std::size_t i = 0; i < _frames.size(); ++i) {
+			const auto mod = moduleStack[i];
+			const auto& frame = _frames[i];
+			a_log->critical(
+				format,
+				i,
+				reinterpret_cast<std::uintptr_t>(frame.address()),
+				(mod ? mod->name() : ""sv),
+				(mod ? mod->frame_info(frame) : ""s));
 		}
+	}
 
-		boost::stacktrace::stacktrace _stacktrace;
-		stl::span<const boost::stacktrace::frame> _frames;
-	};
+	void Callstack::print_raw_callstack(std::shared_ptr<spdlog::logger> a_log) const noexcept
+	{
+		assert(a_log != nullptr);
+		a_log->critical("RAW CALL STACK:");
+
+		const auto format =
+			"\t[{:>"s +
+			get_size_string(_stacktrace.size()) +
+			"}] 0x{:X}"s;
+
+		for (std::size_t i = 0; i < _stacktrace.size(); ++i) {
+			a_log->critical(
+				format,
+				i,
+				reinterpret_cast<std::uintptr_t>(_stacktrace[i].address()));
+		}
+	}
 
 	[[nodiscard]] std::shared_ptr<spdlog::logger> get_log() noexcept
 	{
