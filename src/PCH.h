@@ -35,6 +35,8 @@
 
 namespace WinAPI
 {
+	using namespace F4SE::WinAPI;
+
 	inline constexpr auto(DLL_PROCESS_DETACH){ static_cast<unsigned long>(0) };
 	inline constexpr auto(DLL_PROCESS_ATTACH){ static_cast<unsigned long>(1) };
 	inline constexpr auto(DLL_THREAD_ATTACH){ static_cast<unsigned long>(2) };
@@ -152,11 +154,8 @@ namespace stl
 			return {};
 		}
 	}
-}
 
-namespace WinAPI
-{
-	using namespace F4SE::WinAPI;
+	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 }
 
 using namespace std::literals;

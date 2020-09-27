@@ -46,6 +46,8 @@
 
 #include <dbghelp.h>
 
+#include <xbyak/xbyak.h>
+
 namespace WinAPI
 {
 	bool(IsDebuggerPresent)() noexcept
@@ -73,5 +75,31 @@ namespace WinAPI
 				static_cast<::PSTR>(a_outputString),
 				static_cast<::DWORD>(a_maxStringLength),
 				static_cast<::DWORD>(a_flags)));
+	}
+}
+
+namespace stl
+{
+	void asm_jump(std::uintptr_t a_from, [[maybe_unused]] std::size_t a_size, std::uintptr_t a_to)
+	{
+		struct Patch :
+			Xbyak::CodeGenerator
+		{
+			Patch(std::uintptr_t a_dst)
+			{
+				Xbyak::Label lbl;
+
+				jmp(ptr[rip + lbl]);
+				L(lbl);
+				dq(a_dst);
+			}
+		};
+
+		Patch p{ a_to };
+		p.ready();
+		assert(p.getSize() <= a_size);
+		REL::safe_write(
+			a_from,
+			stl::span{ p.getCode<const std::byte*>(), p.getSize() });
 	}
 }

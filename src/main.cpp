@@ -54,7 +54,7 @@ extern "C" DLLEXPORT int __stdcall DllMain(void*, unsigned long a_reason, void*)
 
 		OpenLog();
 		Settings::load();
-		F4SE::AllocTrampoline(1 << 8);
+		F4SE::AllocTrampoline(1 << 7);
 		Crash::Install();
 		Patches::Preload();
 		g_preloaded = true;

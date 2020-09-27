@@ -5,6 +5,7 @@
 #include "Fixes/EncounterZoneResetFix.h"
 #include "Fixes/FaderMenuFix.h"
 #include "Fixes/SafeExit.h"
+#include "Fixes/UnalignedLoadFix.h"
 
 namespace Fixes
 {
@@ -26,6 +27,10 @@ namespace Fixes
 
 		if (*Settings::SafeExit) {
 			SafeExit::Install();
+		}
+
+		if (*Settings::UnalignedLoad) {
+			UnalignedLoadFix::Install();
 		}
 	}
 

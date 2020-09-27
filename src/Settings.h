@@ -33,6 +33,7 @@ public:
 	static inline bSetting EncounterZoneReset{ "Fixes"s, "EncounterZoneReset"s, true };
 	static inline bSetting FaderMenu{ "Fixes"s, "FaderMenu"s, true };
 	static inline bSetting SafeExit{ "Fixes"s, "SafeExit"s, true };
+	static inline bSetting UnalignedLoad{ "Fixes"s, "UnalignedLoad"s, true };
 
 	static inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };
 	static inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };

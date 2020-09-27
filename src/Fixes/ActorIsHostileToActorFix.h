@@ -7,12 +7,11 @@ namespace Fixes
 	public:
 		static void Install()
 		{
+			constexpr std::size_t size = 0x10;
 			REL::Relocation<std::uintptr_t> target{ REL::ID(1022223) };
 
-			REL::safe_fill(target.address(), REL::INT3, 0xB);
-
-			auto& trampoline = F4SE::GetTrampoline();
-			trampoline.write_branch<5>(target.address(), IsHostileToActor);
+			REL::safe_fill(target.address(), REL::INT3, size);
+			stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(&IsHostileToActor));
 		}
 
 	private:

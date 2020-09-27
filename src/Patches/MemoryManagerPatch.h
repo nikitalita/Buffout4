@@ -9,7 +9,6 @@ namespace Patches
 		{
 			MemoryManager::Install();
 			ScrapHeap::Install();
-
 			logger::info("installed {}"sv, typeid(MemoryManagerPatch).name());
 		}
 
@@ -62,11 +61,10 @@ namespace Patches
 					tuple_t{ 1502917, 0xA2, &Reallocate },
 				};
 
-				auto& trampoline = F4SE::GetTrampoline();
 				for (const auto& [id, size, func] : todo) {
 					REL::Relocation<std::uintptr_t> target{ REL::ID(id) };
 					REL::safe_fill(target.address(), REL::INT3, size);
-					trampoline.write_branch<6>(target.address(), func);	 // TODO: optimize out trampoline usage
+					stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(func));
 				}
 			}
 
@@ -114,11 +112,10 @@ namespace Patches
 					tuple_t{ 48809, 0x12B, Ctor },
 				};
 
-				auto& trampoline = F4SE::GetTrampoline();
 				for (const auto& [id, size, func] : todo) {
 					REL::Relocation<std::uintptr_t> target{ REL::ID(id) };
 					REL::safe_fill(target.address(), REL::INT3, size);
-					trampoline.write_branch<6>(target.address(), func);	 // TODO: optimize out trampoline usage
+					stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(func));
 				}
 			}
 
