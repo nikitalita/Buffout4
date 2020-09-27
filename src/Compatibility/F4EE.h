@@ -9,6 +9,7 @@ namespace Compatibility
 		{
 			const auto handle = static_cast<const std::byte*>(WinAPI::GetModuleHandle(L"f4ee.dll"));
 			if (handle != nullptr) {
+				// GetOverlayRoot
 				{
 					constexpr std::size_t size = 0x51;
 					const auto dst = reinterpret_cast<std::uintptr_t>(handle) + 0x0001F40;
@@ -16,10 +17,12 @@ namespace Compatibility
 					stl::asm_jump(dst, size, reinterpret_cast<std::uintptr_t>(&Create));
 				}
 
+				// UpdateOverlays
 				{
-					constexpr std::size_t size = 0x28;
-					const auto dst = reinterpret_cast<std::uintptr_t>(handle) + 0x0043416;
-					REL::safe_fill(dst, REL::INT3, size);
+					constexpr std::uintptr_t offset = 0x0043416;
+					constexpr std::size_t size = 0x004345F - offset;
+					const auto dst = reinterpret_cast<std::uintptr_t>(handle) + offset;
+					REL::safe_fill(dst, REL::NOP, size);
 					stl::asm_jump(dst, size, reinterpret_cast<std::uintptr_t>(&Create));
 				}
 
