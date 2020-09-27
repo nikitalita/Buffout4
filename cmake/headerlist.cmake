@@ -2,6 +2,9 @@ set(headers ${headers}
 	include/AutoTOML.hpp
 	src/PCH.h
 	src/Settings.h
+	src/Compatibility/ClassicHolsteredWeapons.h
+	src/Compatibility/Compatibility.h
+	src/Compatibility/F4EE.h
 	src/Crash/CrashHandler.h
 	src/Crash/Introspection/Introspection.h
 	src/Crash/Modules/ModuleHandler.h

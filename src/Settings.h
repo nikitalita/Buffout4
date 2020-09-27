@@ -43,6 +43,9 @@ public:
 
 	static inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };
 
+	static inline bSetting ClassicHolsteredWeapons{ "Compatibility"s, "ClassicHolsteredWeapons"s, false };
+	static inline bSetting F4EE{ "Compatibility"s, "F4EE"s, false };
+
 private:
 	Settings() = delete;
 	Settings(const Settings&) = delete;

@@ -12,6 +12,8 @@ namespace Fixes
 
 			REL::safe_fill(target.address(), REL::INT3, size);
 			stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(&IsHostileToActor));
+
+			logger::info("installed {}"sv, typeid(ActorIsHostileToActorFix).name());
 		}
 
 	private:

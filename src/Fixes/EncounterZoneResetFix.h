@@ -16,7 +16,7 @@ namespace Fixes
 		{
 			auto& cells = RE::CellAttachDetachEventSource::CellAttachDetachEventSourceSingleton::GetSingleton();
 			cells.source.RegisterSink(GetSingleton());
-			logger::info(FMT_STRING("installed {}"), typeid(EncounterZoneResetFix).name());
+			logger::info("installed {}"sv, typeid(EncounterZoneResetFix).name());
 		}
 
 	private:
