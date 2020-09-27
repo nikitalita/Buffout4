@@ -8,4 +8,5 @@ set(sources ${sources}
 	src/Fixes/Fixes.cpp
 	src/Patches/Patches.cpp
 	src/Patches/SmallBlockAllocatorPatch.cpp
+	src/Warnings/Warnings.cpp
 )

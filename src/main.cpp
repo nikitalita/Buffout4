@@ -1,6 +1,7 @@
 #include "Crash/CrashHandler.h"
 #include "Fixes/Fixes.h"
 #include "Patches/Patches.h"
+#include "Warnings/Warnings.h"
 
 bool g_preloaded = false;
 
@@ -47,8 +48,14 @@ extern "C" DLLEXPORT int __stdcall DllMain(void*, unsigned long a_reason, void*)
 #endif
 
 	if (a_reason == WinAPI::DLL_PROCESS_ATTACH) {
+		if (WinAPI::GetModuleHandle(L"CreationKit.exe")) {
+			return WinAPI::FALSE;
+		}
+
 		OpenLog();
-		F4SE::AllocTrampoline(1 << 7);
+		Settings::load();
+		F4SE::AllocTrampoline(1 << 8);
+		Crash::Install();
 		Patches::Preload();
 		g_preloaded = true;
 	}
@@ -91,8 +98,8 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 		return false;
 	}
 
-	Crash::Install();
 	Fixes::PreInit();
+	Warnings::PreInit();
 
 	return true;
 }

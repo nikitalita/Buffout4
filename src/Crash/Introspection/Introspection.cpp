@@ -373,7 +373,7 @@ namespace Crash::Introspection
 				if (_module) {
 					const auto address = reinterpret_cast<std::uintptr_t>(_ptr);
 					return fmt::format(
-						FMT_STRING("(void* -> {}+0x{:X})"),
+						FMT_STRING("(void* -> {}+{:X})"),
 						_module->name(),
 						address - _module->address());
 				} else {

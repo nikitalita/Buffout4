@@ -39,6 +39,8 @@ public:
 	static inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
 	static inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
 
+	static inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };
+
 private:
 	Settings() = delete;
 	Settings(const Settings&) = delete;
