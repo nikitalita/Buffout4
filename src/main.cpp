@@ -43,6 +43,8 @@ void OpenLog()
 
 	spdlog::set_default_logger(std::move(log));
 	spdlog::set_pattern("%g(%#): [%^%l%$] %v"s);
+
+	logger::info("Buffout4 v{}"sv, Version::NAME);
 }
 
 extern "C" DLLEXPORT int __stdcall DllMain(void*, unsigned long a_reason, void*)
@@ -93,8 +95,6 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 
 extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f4se)
 {
-	logger::info("Buffout4 v{} loaded"sv, Version::NAME);
-
 	F4SE::Init(a_f4se);
 
 	const auto messaging = F4SE::GetMessagingInterface();
