@@ -5,33 +5,32 @@ namespace Warnings
 	class ImageSpaceAdapterWarning
 	{
 	public:
-		static void Install()
-		{
-			auto& trampoline = F4SE::GetTrampoline();
-			REL::Relocation<std::uintptr_t> target{ REL::ID(231868), 0x359 };
-			_original = trampoline.write_call<5>(target.address(), GetChunkData);
-			logger::info("installed {}"sv, typeid(ImageSpaceAdapterWarning).name());
-		}
+		static void Install();
 
 	private:
-		static bool GetChunkData(RE::TESFile* a_this, void* a_data, std::uint32_t a_maxSize)
+		static RE::NiFloatInterpolator* LoadChunk(RE::TESFile* a_file, std::uint32_t& a_size, RE::TESImageSpaceModifier* a_imad, float a_default)
 		{
-			const auto result = _original(a_this, a_data, a_maxSize);
-			const auto imad = stl::adjust_pointer<RE::TESImageSpaceModifier>(a_data, -0x20);
-			for (auto& sizes : imad->data.keySize) {
-				if (sizes[0] == 0 || sizes[1] == 0) {
-					stl::report_and_fail(
-						fmt::format(
-							"[IMAD 0x{:08X}] from \"{}\" has an invalid key size of zero. "
-							"This will result in memory corruption. "
-							"Please open the form in xedit and correct it or remove the mod from your load order."sv,
-							imad->GetFormID(),
-							a_this->GetFilename()));
+			if (a_size == 0) {
+				auto ichunk = a_file->GetTESChunk();
+				const auto cchunk = reinterpret_cast<char*>(std::addressof(ichunk));
+				if (cchunk[0] < '@') {
+					cchunk[0] += 'a';
 				}
+				const std::string_view schunk{ cchunk, 4 };
+				stl::report_and_fail(
+					fmt::format(
+						"IMAD with ID: [0x{:08X}] from \"{}\" with subrecord \"{}\" has an invalid key size of zero. "
+						"This will result in memory corruption. "
+						"Please open the form in xedit and correct it or remove the mod from your load order."sv,
+						a_imad->GetFormID(),
+						a_file->GetFilename(),
+						schunk));
+			} else {
+				return _original(a_file, a_size, a_imad->data.animatable, a_default);
 			}
-			return result;
 		}
 
-		static inline REL::Relocation<decltype(GetChunkData)> _original;
+		using func_t = RE::NiFloatInterpolator*(RE::TESFile*, std::uint32_t&, bool, float);
+		static inline REL::Relocation<func_t> _original;
 	};
 }
