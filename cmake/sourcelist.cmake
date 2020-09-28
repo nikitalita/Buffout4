@@ -2,6 +2,7 @@ set(sources ${sources}
 	src/main.cpp
 	src/PCH.cpp
 	src/Compatibility/Compatibility.cpp
+	src/Compatibility/F4EE.cpp
 	src/Crash/CrashHandler.cpp
 	src/Crash/Introspection/Introspection.cpp
 	src/Crash/Modules/ModuleHandler.cpp

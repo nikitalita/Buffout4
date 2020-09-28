@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(
 	Buffout4
-	VERSION 1.11.5
+	VERSION 1.11.6
 	LANGUAGES CXX
 )
 
