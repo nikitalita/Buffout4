@@ -80,26 +80,51 @@ namespace WinAPI
 
 namespace stl
 {
-	void asm_jump(std::uintptr_t a_from, [[maybe_unused]] std::size_t a_size, std::uintptr_t a_to)
+	namespace detail
 	{
-		struct Patch :
+		struct asm_call_t
+		{};
+
+		struct asm_jump_t
+		{};
+
+		struct asm_patch :
 			Xbyak::CodeGenerator
 		{
-			Patch(std::uintptr_t a_dst)
+			asm_patch(
+				std::variant<asm_call_t, asm_jump_t> a_type,
+				std::uintptr_t a_dst)
 			{
 				Xbyak::Label lbl;
 
-				jmp(ptr[rip + lbl]);
+				if (std::holds_alternative<asm_call_t>(a_type)) {
+					call(ptr[rip + lbl]);
+				} else if (std::holds_alternative<asm_jump_t>(a_type)) {
+					jmp(ptr[rip + lbl]);
+				} else {
+					stl::report_and_fail("fatal failure"sv);
+				}
+
 				L(lbl);
 				dq(a_dst);
 			}
 		};
 
-		Patch p{ a_to };
-		p.ready();
-		assert(p.getSize() <= a_size);
-		REL::safe_write(
-			a_from,
-			stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+		void asm_write(
+			std::variant<asm_call_t, asm_jump_t> a_type,
+			std::uintptr_t a_from,
+			[[maybe_unused]] std::size_t a_size,
+			std::uintptr_t a_to)
+		{
+			detail::asm_patch p{ a_type, a_to };
+			p.ready();
+			assert(p.getSize() <= a_size);
+			REL::safe_write(
+				a_from,
+				stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+		}
 	}
+
+	void asm_call(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to) { detail::asm_write(detail::asm_call_t{}, a_from, a_size, a_to); }
+	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to) { detail::asm_write(detail::asm_jump_t{}, a_from, a_size, a_to); }
 }

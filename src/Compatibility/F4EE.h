@@ -20,10 +20,10 @@ namespace Compatibility
 				// UpdateOverlays
 				{
 					constexpr std::uintptr_t offset = 0x0043416;
-					constexpr std::size_t size = 0x004345F - offset;
+					constexpr std::size_t size = 0x004343E - offset;
 					const auto dst = reinterpret_cast<std::uintptr_t>(handle) + offset;
 					REL::safe_fill(dst, REL::NOP, size);
-					stl::asm_jump(dst, size, reinterpret_cast<std::uintptr_t>(&Create));
+					stl::asm_call(dst, size, reinterpret_cast<std::uintptr_t>(&Allocate));
 				}
 
 				logger::info("installed {}"sv, typeid(F4EE).name());
@@ -33,6 +33,11 @@ namespace Compatibility
 		}
 
 	private:
+		static void* Allocate()
+		{
+			return RE::aligned_alloc<RE::NiNode>();
+		}
+
 		static RE::NiNode* Create()
 		{
 			return new RE::NiNode();

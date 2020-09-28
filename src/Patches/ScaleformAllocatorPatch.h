@@ -23,17 +23,17 @@ namespace Patches
 	protected:
 		void* Alloc(std::size_t a_size, std::size_t a_align) override
 		{
-			return _aligned_malloc(a_size, a_align);
+			return scalable_aligned_malloc(a_size, a_align);
 		}
 
 		void Free(void* a_ptr, std::size_t, std::size_t) override
 		{
-			_aligned_free(a_ptr);
+			scalable_aligned_free(a_ptr);
 		}
 
 		void* Realloc(void* a_oldPtr, std::size_t, std::size_t a_newSize, std::size_t a_align) override
 		{
-			return _aligned_realloc(a_oldPtr, a_newSize, a_align);
+			return scalable_aligned_realloc(a_oldPtr, a_newSize, a_align);
 		}
 
 	private:

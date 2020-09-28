@@ -90,69 +90,54 @@ namespace Patches
 			static void* Allocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				if (a_alignmentRequired) {
-					return _aligned_malloc(a_size, a_alignment);
+					return scalable_aligned_malloc(a_size, a_alignment);
 				} else {
-					return std::malloc(a_size);
+					return scalable_malloc(a_size);
 				}
 			}
 
-			static void* DbgAllocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
+			static void* DbgAllocate(RE::MemoryManager* a_this, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
-				void* result = nullptr;
-				if (a_alignmentRequired) {
-					result = _aligned_malloc(a_size, a_alignment);
-				} else {
-					result = std::malloc(a_size);
-				}
-
+				const auto result = Allocate(a_this, a_size, a_alignment, a_alignmentRequired);
 				if (result && a_size == sizeof(RE::NiNode)) {
 					auto access = MemoryTraces::get().access();
 					access->emplace(
 						result,
 						std::make_pair(a_alignmentRequired, boost::stacktrace::stacktrace{}));
 				}
-
 				return result;
 			}
 
 			static void Deallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
 			{
 				if (a_alignmentRequired) {
-					_aligned_free(a_mem);
+					scalable_aligned_free(a_mem);
 				} else {
-					std::free(a_mem);
+					scalable_free(a_mem);
 				}
 			}
 
-			static void DbgDeallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired);
+			static void DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired);
 
 			static void* Reallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				if (a_alignmentRequired) {
-					return _aligned_realloc(a_oldMem, a_newSize, a_alignment);
+					return scalable_aligned_realloc(a_oldMem, a_newSize, a_alignment);
 				} else {
-					return std::realloc(a_oldMem, a_newSize);
+					return scalable_realloc(a_oldMem, a_newSize);
 				}
 			}
 
-			static void* DbgReallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
+			static void* DbgReallocate(RE::MemoryManager* a_this, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				auto access = MemoryTraces::get().access();
-
-				void* result = nullptr;
-				if (a_alignmentRequired) {
-					result = _aligned_realloc(a_oldMem, a_newSize, a_alignment);
-				} else {
-					result = std::realloc(a_oldMem, a_newSize);
-				}
-
+				const auto result = Reallocate(a_this, a_oldMem, a_newSize, a_alignment, a_alignmentRequired);
 				if (const auto it = access->find(a_oldMem); it != access->end()) {
 					access->erase(it);
 					access->emplace(
 						result,
 						std::make_pair(a_alignmentRequired, boost::stacktrace::stacktrace{}));
 				}
-
 				return result;
 			}
 
@@ -192,19 +177,19 @@ namespace Patches
 		private:
 			static void* Allocate(RE::ScrapHeap*, std::size_t a_size, std::size_t a_alignment)
 			{
-				return _aligned_malloc(a_size, a_alignment);
+				return scalable_aligned_malloc(a_size, a_alignment);
 			}
 
 			static RE::ScrapHeap* Ctor(RE::ScrapHeap* a_this)
 			{
 				std::memset(a_this, 0, sizeof(RE::ScrapHeap));
-				reinterpret_cast<std::uintptr_t*>(a_this)[0] = RE::ScrapHeap::VTABLE[0].address();
+				stl::emplace_vtable(a_this);
 				return a_this;
 			}
 
 			static void Deallocate(RE::ScrapHeap*, void* a_mem)
 			{
-				_aligned_free(a_mem);
+				scalable_aligned_free(a_mem);
 			}
 
 			static void WriteHooks()

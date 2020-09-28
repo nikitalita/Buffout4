@@ -75,7 +75,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 
 	a_info->infoVersion = F4SE::PluginInfo::kVersion;
 	a_info->name = "Buffout4";
-	a_info->version = 1;
+	a_info->version = Version::MAJOR;
 
 	if (a_f4se->IsEditor()) {
 		logger::critical("loaded in editor"sv);
@@ -93,7 +93,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 
 extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f4se)
 {
-	logger::info("Buffout4 loaded"sv);
+	logger::info("Buffout4 v{} loaded"sv, Version::NAME);
 
 	F4SE::Init(a_f4se);
 

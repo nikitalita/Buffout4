@@ -31,6 +31,7 @@
 #include <frozen/map.h>
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <tbb/scalable_allocator.h>
 
 #include "AutoTOML.hpp"
 
@@ -117,6 +118,7 @@ namespace stl
 	using F4SE::stl::report_and_fail;
 	using F4SE::stl::span;
 	using F4SE::util::adjust_pointer;
+	using F4SE::util::emplace_vtable;
 
 	template <class, class = void>
 	struct iter_reference;
@@ -156,6 +158,7 @@ namespace stl
 		}
 	}
 
+	void asm_call(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 }
 

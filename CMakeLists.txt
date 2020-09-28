@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(
 	Buffout4
-	VERSION 1.11.1
+	VERSION 1.11.2
 	LANGUAGES CXX
 )
 
@@ -128,10 +128,16 @@ find_package(Boost
 	COMPONENTS
 		stacktrace_windbg
 )
-find_package(fmt REQUIRED)
-find_package(frozen REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(tomlplusplus REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(frozen CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(TBB
+	CONFIG
+	REQUIRED
+	COMPONENTS
+		tbbmalloc
+)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 find_path(ROBIN_HOOD_HASHING_INCLUDE_DIRS "robin_hood.h")
 find_path(XBYAK_INCLUDE_DIRS "xbyak/xbyak.h")
@@ -208,6 +214,7 @@ target_link_libraries(Buffout4
 		fmt::fmt
 		frozen::frozen
 		spdlog::spdlog
+		TBB::tbbmalloc
 		tomlplusplus::tomlplusplus
 )
 

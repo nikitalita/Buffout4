@@ -5,7 +5,7 @@
 
 namespace Patches
 {
-	void MemoryManagerPatch::MemoryManager::DbgDeallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
+	void MemoryManagerPatch::MemoryManager::DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired)
 	{
 		auto access = MemoryTraces::get().access();
 		const auto it = access->find(a_mem);
@@ -25,12 +25,7 @@ namespace Patches
 			log->flush();
 			stl::report_and_fail("A bad deallocation has resulted in a crash. Please see Buffout4.log for more details."sv);
 		} else {
-			if (a_alignmentRequired) {
-				_aligned_free(a_mem);
-			} else {
-				std::free(a_mem);
-			}
-
+			Deallocate(a_this, a_mem, a_alignmentRequired);
 			access->erase(a_mem);
 		}
 	}

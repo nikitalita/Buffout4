@@ -8,6 +8,7 @@
 * [Frozen](https://github.com/serge-sans-paille/frozen)
 * [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
 * [spdlog](https://github.com/gabime/spdlog)
+* [TBB](https://github.com/oneapi-src/oneTBB)
 * [Xbyak](https://github.com/herumi/xbyak)
 
 # End User Dependencies

@@ -18,9 +18,53 @@ namespace Patches
 			public RE::hkMemoryAllocator
 		{
 		public:
-			void* BlockAlloc(std::int32_t a_numBytesIn) override { return _aligned_malloc(a_numBytesIn, 0x10); }
-			void BlockFree(void* a_ptr, std::int32_t) override { _aligned_free(a_ptr); }
-			void* BufRealloc(void* a_old, std::int32_t, std::int32_t& a_reqNumBytesInOut) override { return _aligned_realloc(a_old, a_reqNumBytesInOut, 0x10); }
+			void* BlockAlloc(std::int32_t a_numBytesIn) override
+			{
+				return scalable_aligned_malloc(a_numBytesIn, 0x10);
+			}
+
+			void BlockFree(void* a_ptr, std::int32_t) override
+			{
+				scalable_aligned_free(a_ptr);
+			}
+
+			void* BufAlloc(std::int32_t& a_reqNumBytesInOut) override
+			{
+				return scalable_aligned_malloc(a_reqNumBytesInOut, 0x10);
+			}
+
+			void BufFree(void* a_ptr, std::int32_t) override
+			{
+				scalable_free(a_ptr);
+			}
+
+			void* BufRealloc(void* a_old, std::int32_t, std::int32_t& a_reqNumBytesInOut) override
+			{
+				return scalable_aligned_realloc(a_old, a_reqNumBytesInOut, 0x10);
+			}
+
+			void BlockAllocBatch(void** a_ptrsOut, std::int32_t a_numPtrs, std::int32_t a_blockSize) override
+			{
+				stl::span range{ a_ptrsOut, static_cast<std::size_t>(a_numPtrs) };
+				std::for_each(
+					range.begin(),
+					range.end(),
+					[=](void*& a_elem) {
+						a_elem = scalable_aligned_malloc(a_blockSize, 0x10);
+					});
+			}
+
+			void BlockFreeBatch(void** a_ptrsIn, std::int32_t a_numPtrs, std::int32_t) override
+			{
+				stl::span range{ a_ptrsIn, static_cast<std::size_t>(a_numPtrs) };
+				std::for_each(
+					range.begin(),
+					range.end(),
+					[](void* a_elem) {
+						scalable_aligned_free(a_elem);
+					});
+			}
+
 			void GetMemoryStatistics(MemoryStatistics&) const override { return; }
 			std::int32_t GetAllocatedSize(const void*, std::int32_t a_numBytes) const override { return a_numBytes; }
 		};
