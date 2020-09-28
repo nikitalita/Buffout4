@@ -35,7 +35,7 @@ namespace Patches
 
 			void BufFree(void* a_ptr, std::int32_t) override
 			{
-				scalable_free(a_ptr);
+				scalable_aligned_free(a_ptr);
 			}
 
 			void* BufRealloc(void* a_old, std::int32_t, std::int32_t& a_reqNumBytesInOut) override
