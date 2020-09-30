@@ -29,6 +29,9 @@
 #include <boost/stacktrace.hpp>
 #include <fmt/chrono.h>
 #include <frozen/map.h>
+#include <infoware/cpu.hpp>
+#include <infoware/gpu.hpp>
+#include <infoware/system.hpp>
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <tbb/scalable_allocator.h>
@@ -158,7 +161,6 @@ namespace stl
 		}
 	}
 
-	void asm_call(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 }
 

@@ -377,6 +377,66 @@ namespace Crash
 		}
 	}
 
+	void print_sysinfo(
+		std::shared_ptr<spdlog::logger> a_log) noexcept
+	{
+		assert(a_log != nullptr);
+		a_log->critical("SYSTEM SPECS:"sv);
+
+		const auto os = iware::system::OS_info();
+		a_log->critical(
+			FMT_STRING("\tOS: {} v{}.{}.{}"),
+			os.full_name,
+			os.major,
+			os.minor,
+			os.patch);
+
+		a_log->critical(
+			FMT_STRING("\tCPU: {} {}"),
+			iware::cpu::vendor(),
+			iware::cpu::model_name());
+
+		const auto vendor = [](iware::gpu::vendor_t a_vendor) {
+			using vendor_t = iware::gpu::vendor_t;
+			switch (a_vendor) {
+			case vendor_t::intel:
+				return "Intel"sv;
+			case vendor_t::amd:
+				return "AMD"sv;
+			case vendor_t::nvidia:
+				return "Nvidia"sv;
+			case vendor_t::microsoft:
+				return "Microsoft"sv;
+			case vendor_t::qualcomm:
+				return "Qualcomm"sv;
+			case vendor_t::unknown:
+			default:
+				return "Unknown"sv;
+			}
+		};
+
+		const auto gpus = iware::gpu::device_properties();
+		for (std::size_t i = 0; i < gpus.size(); ++i) {
+			const auto& gpu = gpus[i];
+			a_log->critical(
+				FMT_STRING("\tGPU #{}: {} {}"),
+				i + 1,
+				vendor(gpu.vendor),
+				gpu.name);
+		}
+
+		const auto gibibyte = [](std::uint64_t a_bytes) {
+			constexpr double factor = 1024 * 1024 * 1024;
+			return static_cast<double>(a_bytes) / factor;
+		};
+
+		const auto mem = iware::system::memory();
+		a_log->critical(
+			FMT_STRING("\tPHYSICAL MEMORY: {:.02f} GB/{:.02f} GB"),
+			gibibyte(mem.physical_total - mem.physical_available),
+			gibibyte(mem.physical_total));
+	}
+
 	std::int32_t __stdcall UnhandledExceptions(::EXCEPTION_POINTERS* a_exception) noexcept
 	{
 #ifndef NDEBUG
@@ -387,36 +447,27 @@ namespace Crash
 		const auto cmodules = stl::make_span(modules.begin(), modules.end());
 		const auto log = get_log();
 
-		log->critical(Version::NAME);
-		print_exception(log, *a_exception->ExceptionRecord);
-		log->flush();
-
 		const auto print = [&](auto&& a_functor) noexcept {
 			log->critical(""sv);
 			a_functor();
 			log->flush();
 		};
 
+		log->critical("v{}", Version::NAME);
+		log->flush();
+
+		print([&]() noexcept { print_exception(log, *a_exception->ExceptionRecord); });
+		print([&]() noexcept { print_sysinfo(log); });
+
 		print([&]() noexcept {
 			const Callstack callstack{ *a_exception->ExceptionRecord };
 			callstack.print(log, cmodules);
 		});
 
-		print([&]() noexcept {
-			print_registers(log, *a_exception->ContextRecord, cmodules);
-		});
-
-		print([&]() noexcept {
-			print_stack(log, *a_exception->ContextRecord, cmodules);
-		});
-
-		print([&]() noexcept {
-			print_modules(log, cmodules);
-		});
-
-		print([&]() noexcept {
-			print_plugins(log);
-		});
+		print([&]() noexcept { print_registers(log, *a_exception->ContextRecord, cmodules); });
+		print([&]() noexcept { print_stack(log, *a_exception->ContextRecord, cmodules); });
+		print([&]() noexcept { print_modules(log, cmodules); });
+		print([&]() noexcept { print_plugins(log); });
 
 		WinAPI::TerminateProcess(
 			WinAPI::GetCurrentProcess(),

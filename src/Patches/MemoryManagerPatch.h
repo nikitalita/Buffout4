@@ -89,11 +89,9 @@ namespace Patches
 		private:
 			static void* Allocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
-				if (a_alignmentRequired) {
-					return scalable_aligned_malloc(a_size, a_alignment);
-				} else {
-					return scalable_malloc(a_size);
-				}
+				return a_alignmentRequired ?
+							 scalable_aligned_malloc(a_size, a_alignment) :
+							 scalable_malloc(a_size);
 			}
 
 			static void* DbgAllocate(RE::MemoryManager* a_this, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
@@ -110,22 +108,18 @@ namespace Patches
 
 			static void Deallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
 			{
-				if (a_alignmentRequired) {
-					scalable_aligned_free(a_mem);
-				} else {
-					scalable_free(a_mem);
-				}
+				a_alignmentRequired ?
+					  scalable_aligned_free(a_mem) :
+					  scalable_free(a_mem);
 			}
 
 			static void DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired);
 
 			static void* Reallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
-				if (a_alignmentRequired) {
-					return scalable_aligned_realloc(a_oldMem, a_newSize, a_alignment);
-				} else {
-					return scalable_realloc(a_oldMem, a_newSize);
-				}
+				return a_alignmentRequired ?
+							 scalable_aligned_realloc(a_oldMem, a_newSize, a_alignment) :
+							 scalable_realloc(a_oldMem, a_newSize);
 			}
 
 			static void* DbgReallocate(RE::MemoryManager* a_this, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)

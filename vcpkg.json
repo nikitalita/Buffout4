@@ -12,11 +12,17 @@
     "boost-stacktrace",
     "fmt",
     "frozen",
+    {
+      "name": "infoware",
+      "features": [
+        "d3d"
+      ]
+    },
+    "robin-hood-hashing",
     "span-lite",
     "spdlog",
     "tbb",
     "tomlplusplus",
-    "robin-hood-hashing",
     "xbyak"
   ]
 }

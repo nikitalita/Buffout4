@@ -5,6 +5,7 @@ class Settings
 public:
 	using ISetting = AutoTOML::ISetting;
 	using bSetting = AutoTOML::bSetting;
+	using iSetting = AutoTOML::iSetting;
 
 	static void load()
 	{
@@ -35,15 +36,16 @@ public:
 	static inline bSetting SafeExit{ "Fixes"s, "SafeExit"s, true };
 	static inline bSetting UnalignedLoad{ "Fixes"s, "UnalignedLoad"s, true };
 
+	static inline bSetting Achievements{ "Patches"s, "Achievements"s, true };
+	static inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
+	static inline iSetting MaxStdIO{ "Patches"s, "MaxStdIO"s, -1 };
 	static inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };
 	static inline bSetting MemoryManagerDebug{ "Patches"s, "MemoryManagerDebug"s, false };
 	static inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
 	static inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
-	static inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
 
 	static inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };
 
-	static inline bSetting ClassicHolsteredWeapons{ "Compatibility"s, "ClassicHolsteredWeapons"s, false };
 	static inline bSetting F4EE{ "Compatibility"s, "F4EE"s, false };
 
 private:

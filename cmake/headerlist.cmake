@@ -2,7 +2,6 @@ set(headers ${headers}
 	include/AutoTOML.hpp
 	src/PCH.h
 	src/Settings.h
-	src/Compatibility/ClassicHolsteredWeapons.h
 	src/Compatibility/Compatibility.h
 	src/Compatibility/F4EE.h
 	src/Crash/CrashHandler.h
@@ -15,7 +14,9 @@ set(headers ${headers}
 	src/Fixes/Fixes.h
 	src/Fixes/SafeExit.h
 	src/Fixes/UnalignedLoadFix.h
+	src/Patches/AchievementsPatch.h
 	src/Patches/HavokMemorySystemPatch.h
+	src/Patches/MaxStdIOPatch.h
 	src/Patches/MemoryManagerPatch.h
 	src/Patches/Patches.h
 	src/Patches/ScaleformAllocatorPatch.h
