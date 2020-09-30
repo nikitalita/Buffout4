@@ -9,6 +9,13 @@
 
 namespace Patches
 {
+	void PreInit()
+	{
+		if (*Settings::MaxStdIO != -1) {
+			MaxStdIOPatch::Install();
+		}
+	}
+
 	void Preload()
 	{
 		if (*Settings::Achievements) {
@@ -17,10 +24,6 @@ namespace Patches
 
 		if (*Settings::HavokMemorySystem) {
 			HavokMemorySystemPatch::Install();
-		}
-
-		if (*Settings::MaxStdIO != -1) {
-			MaxStdIOPatch::Install();
 		}
 
 		if (*Settings::MemoryManager) {

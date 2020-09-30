@@ -103,6 +103,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 	}
 
 	Fixes::PreInit();
+	Patches::PreInit();
 	Warnings::PreInit();
 
 	return true;

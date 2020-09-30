@@ -2,5 +2,6 @@
 
 namespace Patches
 {
+	void PreInit();
 	void Preload();
 }

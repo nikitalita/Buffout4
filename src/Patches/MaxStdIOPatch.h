@@ -7,7 +7,7 @@ namespace Patches
 	public:
 		static void Install()
 		{
-			const auto handle = WinAPI::GetModuleHandle(L"api-ms-win-crt-stdio-l1-1-0.dll");
+			const auto handle = WinAPI::GetModuleHandle(L"msvcr110.dll");
 			const auto proc =
 				handle ?
 					  reinterpret_cast<decltype(&_setmaxstdio)>(WinAPI::GetProcAddress(handle, "_setmaxstdio")) :
