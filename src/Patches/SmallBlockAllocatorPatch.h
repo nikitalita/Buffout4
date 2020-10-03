@@ -20,7 +20,16 @@ namespace Patches
 		static void InstallAllocations();
 		static void InstallDeallocations();
 
-		static void* Allocate(std::size_t a_size) { return scalable_malloc(a_size); }
-		static void Deallocate(void* a_ptr) { scalable_free(a_ptr); }
+		static void* Allocate(std::size_t a_size)
+		{
+			return a_size > 0 ?
+						 scalable_malloc(a_size) :
+						 nullptr;
+		}
+
+		static void Deallocate(void* a_ptr)
+		{
+			scalable_free(a_ptr);
+		}
 	};
 }

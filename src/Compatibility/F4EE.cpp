@@ -46,27 +46,67 @@
 
 namespace Compatibility
 {
-	struct Patch :
-		Xbyak::CodeGenerator
+	void F4EE::SimpleInlinePatch(std::uintptr_t a_dst, std::size_t a_size, std::uintptr_t a_func)
 	{
-		Patch(std::uintptr_t a_dst)
+		struct Patch :
+			Xbyak::CodeGenerator
 		{
-			mov(rcx, a_dst);
-			call(rcx);
-		}
-	};
+			Patch(std::uintptr_t a_dst)
+			{
+				mov(rcx, a_dst);
+				call(rcx);
+			}
+		};
 
-	void F4EE::UpdateOverlays(std::uintptr_t a_base)
-	{
-		constexpr std::uintptr_t offset = 0x0043416;
-		constexpr std::size_t size = 0x004343E - offset;
-		const auto dst = a_base + offset;
-		REL::safe_fill(dst, REL::NOP, size);
-		Patch p{ reinterpret_cast<std::uintptr_t>(&Allocate) };
+		REL::safe_fill(a_dst, REL::NOP, a_size);
+		Patch p{ a_func };
 		p.ready();
-		assert(p.getSize() <= size);
+		assert(p.getSize() <= a_size);
 		REL::safe_write(
-			dst,
+			a_dst,
 			stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+	}
+
+	void F4EE::SetMorphValues(std::uintptr_t a_base)
+	{
+		{
+			constexpr std::size_t first = 0x001A1F8;
+			constexpr std::size_t last = 0x001A23C;
+			constexpr std::size_t size = last - first;
+			const auto dst = a_base + first;
+			SimpleInlinePatch(dst, size, reinterpret_cast<std::uintptr_t>(&AllocateMorphs));
+		}
+
+		{
+			struct Patch :
+				Xbyak::CodeGenerator
+			{
+				Patch(std::uintptr_t a_dst)
+				{
+					sub(rsi, r15);
+					sar(rsi, 2);
+
+					mov(rcx, r15);				// float*
+					mov(rdx, rsi);				// size
+					mov(r8, ptr[r14 + 0x2D8]);	// BSTArray<float>*
+
+					mov(r9, a_dst);
+					call(r9);
+				}
+			};
+
+			constexpr std::size_t first = 0x001A253;
+			constexpr std::size_t last = 0x001A2FF;
+			constexpr std::size_t size = last - first;
+			const auto dst = a_base + first;
+
+			REL::safe_fill(dst, REL::NOP, size);
+			Patch p{ reinterpret_cast<std::uintptr_t>(&CopyMorphs) };
+			p.ready();
+			assert(p.getSize() <= size);
+			REL::safe_write(
+				dst,
+				stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+		}
 	}
 }

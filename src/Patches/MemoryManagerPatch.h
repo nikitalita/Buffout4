@@ -89,9 +89,13 @@ namespace Patches
 		private:
 			static void* Allocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
-				return a_alignmentRequired ?
-							 scalable_aligned_malloc(a_size, a_alignment) :
-							 scalable_malloc(a_size);
+				if (a_size > 0) {
+					return a_alignmentRequired ?
+								 scalable_aligned_malloc(a_size, a_alignment) :
+								 scalable_malloc(a_size);
+				} else {
+					return nullptr;
+				}
 			}
 
 			static void* DbgAllocate(RE::MemoryManager* a_this, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
@@ -171,7 +175,9 @@ namespace Patches
 		private:
 			static void* Allocate(RE::ScrapHeap*, std::size_t a_size, std::size_t a_alignment)
 			{
-				return scalable_aligned_malloc(a_size, a_alignment);
+				return a_size > 0 ?
+							 scalable_aligned_malloc(a_size, a_alignment) :
+							 nullptr;
 			}
 
 			static RE::ScrapHeap* Ctor(RE::ScrapHeap* a_this)

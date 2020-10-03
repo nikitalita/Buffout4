@@ -269,7 +269,7 @@ namespace Crash
 		if (datahandler) {
 			const auto& [files, smallfiles] = datahandler->compiledFileCollection;
 
-			const auto fileFormat = [&](auto&& a_files) {
+			const auto fileFormat = [&](const auto& a_files) {
 				return "\t[{:>02X}]{:"s +
 					   (!a_files.empty() ? "5"s : "1"s) +
 					   "}{}"s;

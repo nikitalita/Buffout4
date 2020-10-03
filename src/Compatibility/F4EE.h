@@ -11,6 +11,7 @@ namespace Compatibility
 			if (handle != nullptr) {
 				const auto base = reinterpret_cast<std::uintptr_t>(handle);
 				GetOverlayRoot(base);
+				SetMorphValues(base);
 				UpdateOverlays(base);
 				logger::info("installed {}"sv, typeid(F4EE).name());
 			} else {
@@ -19,24 +20,49 @@ namespace Compatibility
 		}
 
 	private:
+		static void* AllocateMorphs()
+		{
+			return new RE::BSTArray<float>(5, 0.0F);
+		}
+
+		static void* AllocateNiNode()
+		{
+			return RE::aligned_alloc<RE::NiNode>();
+		}
+
+		static void CopyMorphs(const float a_src[], std::size_t a_size, RE::BSTArray<float>& a_dst)
+		{
+			constexpr std::size_t max = 5;
+			a_dst.resize(max);
+			std::fill(a_dst.begin(), a_dst.end(), 0.0F);
+			for (std::size_t i = 0; i < std::min(a_size, max); ++i) {
+				a_dst[static_cast<std::uint32_t>(i)] = a_src[i];
+			}
+		}
+
+		static RE::NiNode* CreateNiNode()
+		{
+			return new RE::NiNode();
+		}
+
 		static void GetOverlayRoot(std::uintptr_t a_base)
 		{
 			constexpr std::size_t size = 0x51;
 			const auto dst = a_base + 0x0001F40;
 			REL::safe_fill(dst, REL::INT3, size);
-			stl::asm_jump(dst, size, reinterpret_cast<std::uintptr_t>(&Create));
+			stl::asm_jump(dst, size, reinterpret_cast<std::uintptr_t>(&CreateNiNode));
 		}
 
-		static void UpdateOverlays(std::uintptr_t a_base);
+		static void SimpleInlinePatch(std::uintptr_t a_dst, std::size_t a_size, std::uintptr_t a_func);
+		static void SetMorphValues(std::uintptr_t a_base);
 
-		static void* Allocate()
+		static void UpdateOverlays(std::uintptr_t a_base)
 		{
-			return RE::aligned_alloc<RE::NiNode>();
-		}
-
-		static RE::NiNode* Create()
-		{
-			return new RE::NiNode();
+			constexpr std::size_t first = 0x0043416;
+			constexpr std::size_t last = 0x004343E;
+			constexpr std::size_t size = last - first;
+			const auto dst = a_base + first;
+			SimpleInlinePatch(dst, size, reinterpret_cast<std::uintptr_t>(&AllocateNiNode));
 		}
 	};
 }

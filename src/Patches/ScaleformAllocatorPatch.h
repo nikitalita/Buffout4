@@ -23,7 +23,9 @@ namespace Patches
 	protected:
 		void* Alloc(std::size_t a_size, std::size_t a_align) override
 		{
-			return scalable_aligned_malloc(a_size, a_align);
+			return a_size > 0 ?
+						 scalable_aligned_malloc(a_size, a_align) :
+						 nullptr;
 		}
 
 		void Free(void* a_ptr, std::size_t, std::size_t) override
