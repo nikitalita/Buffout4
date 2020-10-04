@@ -74,7 +74,7 @@ namespace Compatibility
 			constexpr std::size_t last = 0x001A23C;
 			constexpr std::size_t size = last - first;
 			const auto dst = a_base + first;
-			SimpleInlinePatch(dst, size, reinterpret_cast<std::uintptr_t>(&AllocateMorphs));
+			SimpleInlinePatch(dst, size, reinterpret_cast<std::uintptr_t>(&CreateMorphs));
 		}
 
 		{

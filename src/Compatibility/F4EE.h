@@ -20,11 +20,6 @@ namespace Compatibility
 		}
 
 	private:
-		static void* AllocateMorphs()
-		{
-			return new RE::BSTArray<float>(5, 0.0F);
-		}
-
 		static void* AllocateNiNode()
 		{
 			return RE::aligned_alloc<RE::NiNode>();
@@ -38,6 +33,11 @@ namespace Compatibility
 			for (std::size_t i = 0; i < std::min(a_size, max); ++i) {
 				a_dst[static_cast<std::uint32_t>(i)] = a_src[i];
 			}
+		}
+
+		static RE::BSTArray<float>* CreateMorphs()
+		{
+			return new RE::BSTArray<float>(5, 0.0F);
 		}
 
 		static RE::NiNode* CreateNiNode()

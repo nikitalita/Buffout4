@@ -5,6 +5,7 @@ EncounterZoneReset = true    # Fixes encounter zones resetting immediately once 
 FaderMenu = true             # Fixes a bug where the fader menu may not fully close
 SafeExit = true              # Fixes crashes related to exiting the game that can be caused erroneously by F4SE plugin hooks
 UnalignedLoad = true         # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory
+UtilityShader = true         # Fixes a crash when a shader can't be found for a given technique id.
 
 [Patches]
 Achievements = true        # Enables achievements on modded saves

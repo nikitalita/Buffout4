@@ -6,6 +6,7 @@
 #include "Fixes/FaderMenuFix.h"
 #include "Fixes/SafeExit.h"
 #include "Fixes/UnalignedLoadFix.h"
+#include "Fixes/UtilityShaderFix.h"
 
 namespace Fixes
 {
@@ -38,6 +39,10 @@ namespace Fixes
 	{
 		if (*Settings::EncounterZoneReset) {
 			EncounterZoneResetFix::Install();
+		}
+
+		if (*Settings::UtilityShader) {
+			UtilityShaderFix::Install();
 		}
 	}
 }

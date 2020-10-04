@@ -14,6 +14,7 @@ set(headers ${headers}
 	src/Fixes/Fixes.h
 	src/Fixes/SafeExit.h
 	src/Fixes/UnalignedLoadFix.h
+	src/Fixes/UtilityShaderFix.h
 	src/Patches/AchievementsPatch.h
 	src/Patches/HavokMemorySystemPatch.h
 	src/Patches/MaxStdIOPatch.h

@@ -8,6 +8,7 @@ set(sources ${sources}
 	src/Crash/Modules/ModuleHandler.cpp
 	src/Fixes/CellInitFix.cpp
 	src/Fixes/Fixes.cpp
+	src/Fixes/UtilityShaderFix.cpp
 	src/Patches/AchievementsPatch.cpp
 	src/Patches/MemoryManagerPatch.cpp
 	src/Patches/Patches.cpp
