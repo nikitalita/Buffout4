@@ -45,6 +45,7 @@ public:
 	static inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
 	static inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
 
+	static inline bSetting CreateTexture2D{ "Warnings"s, "CreateTexture2D"s, true };
 	static inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };
 
 	static inline bSetting F4EE{ "Compatibility"s, "F4EE"s, false };

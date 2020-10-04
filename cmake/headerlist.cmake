@@ -22,6 +22,7 @@ set(headers ${headers}
 	src/Patches/Patches.h
 	src/Patches/ScaleformAllocatorPatch.h
 	src/Patches/SmallBlockAllocatorPatch.h
+	src/Warnings/CreateTexture2DWarning.h
 	src/Warnings/ImageSpaceAdapterWarning.h
 	src/Warnings/Warnings.h
 )

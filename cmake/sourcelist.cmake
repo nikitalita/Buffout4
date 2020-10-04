@@ -13,6 +13,7 @@ set(sources ${sources}
 	src/Patches/MemoryManagerPatch.cpp
 	src/Patches/Patches.cpp
 	src/Patches/SmallBlockAllocatorPatch.cpp
+	src/Warnings/CreateTexture2DWarning.cpp
 	src/Warnings/ImageSpaceAdapterWarning.cpp
 	src/Warnings/Warnings.cpp
 )
