@@ -46,15 +46,18 @@
 
 namespace Patches
 {
-	struct Patch :
-		Xbyak::CodeGenerator
+	namespace
 	{
-		Patch()
+		struct Patch :
+			Xbyak::CodeGenerator
 		{
-			xor_(rax, rax);
-			ret();
-		}
-	};
+			Patch()
+			{
+				xor_(rax, rax);
+				ret();
+			}
+		};
+	}
 
 	void AchievementsPatch::Install()
 	{

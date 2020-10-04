@@ -46,17 +46,20 @@
 
 namespace Fixes
 {
-	void WritePatch(std::uintptr_t a_base, std::size_t a_first, std::size_t a_last, const Xbyak::CodeGenerator& a_code)
+	namespace
 	{
-		const std::size_t size = a_last - a_first;
-		const auto dst = a_base + a_first;
-		REL::safe_fill(dst, REL::NOP, size);
+		void WritePatch(std::uintptr_t a_base, std::size_t a_first, std::size_t a_last, const Xbyak::CodeGenerator& a_code)
+		{
+			const std::size_t size = a_last - a_first;
+			const auto dst = a_base + a_first;
+			REL::safe_fill(dst, REL::NOP, size);
 
-		auto& trampoline = F4SE::GetTrampoline();
-		assert(size >= 6);
-		trampoline.write_call<6>(
-			dst,
-			trampoline.allocate(a_code));
+			auto& trampoline = F4SE::GetTrampoline();
+			assert(size >= 6);
+			trampoline.write_call<6>(
+				dst,
+				trampoline.allocate(a_code));
+		}
 	}
 
 	void UtilityShaderFix::PatchPixelShader(std::uintptr_t a_base)

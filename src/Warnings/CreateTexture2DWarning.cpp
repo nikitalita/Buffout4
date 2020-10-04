@@ -47,32 +47,35 @@
 
 namespace Warnings
 {
-	struct Patch :
-		Xbyak::CodeGenerator
+	namespace
 	{
-		Patch(std::uintptr_t a_dst)
+		struct Patch :
+			Xbyak::CodeGenerator
 		{
-			lea(r9, ptr[rbp + 0x8]);
-			mov(rax, a_dst);
-			jmp(rax);
-		}
-	};
+			Patch(std::uintptr_t a_dst)
+			{
+				lea(r9, ptr[rbp + 0x8]);
+				mov(rax, a_dst);
+				jmp(rax);
+			}
+		};
 
-	::HRESULT CreateTexture2D(
-		::ID3D11Device* a_this,
-		const ::D3D11_TEXTURE2D_DESC* a_desc,
-		const ::D3D11_SUBRESOURCE_DATA* a_initialData,
-		::ID3D11Texture2D** a_texture2D)
-	{
-		const auto result = a_this->CreateTexture2D(a_desc, a_initialData, a_texture2D);
-		if (result != S_OK) {
-			stl::report_and_fail(
-				fmt::format(
-					"A call to ID3D11Device::CreateTexture2D failed with error code 0x{:08X}. "
-					"This will crash the game.",
-					result));
-		} else {
-			return result;
+		::HRESULT CreateTexture2D(
+			::ID3D11Device* a_this,
+			const ::D3D11_TEXTURE2D_DESC* a_desc,
+			const ::D3D11_SUBRESOURCE_DATA* a_initialData,
+			::ID3D11Texture2D** a_texture2D)
+		{
+			const auto result = a_this->CreateTexture2D(a_desc, a_initialData, a_texture2D);
+			if (result != S_OK) {
+				stl::report_and_fail(
+					fmt::format(
+						FMT_STRING("A call to ID3D11Device::CreateTexture2D failed with error code 0x{:08X}. "
+								   "This will crash the game."),
+						result));
+			} else {
+				return result;
+			}
 		}
 	}
 

@@ -46,20 +46,23 @@
 
 namespace Warnings
 {
-	struct Patch :
-		Xbyak::CodeGenerator
+	namespace
 	{
-		Patch(std::uintptr_t a_dst)
+		struct Patch :
+			Xbyak::CodeGenerator
 		{
-			Xbyak::Label dst;
+			Patch(std::uintptr_t a_dst)
+			{
+				Xbyak::Label dst;
 
-			mov(r8, r14);
-			jmp(ptr[rip + dst]);
+				mov(r8, r14);
+				jmp(ptr[rip + dst]);
 
-			L(dst);
-			dq(a_dst);
-		}
-	};
+				L(dst);
+				dq(a_dst);
+			}
+		};
+	}
 
 	void ImageSpaceAdapterWarning::Install()
 	{

@@ -46,16 +46,19 @@
 
 namespace Fixes
 {
-	struct Patch :
-		Xbyak::CodeGenerator
+	namespace
 	{
-		Patch(std::uintptr_t a_target)
+		struct Patch :
+			Xbyak::CodeGenerator
 		{
-			mov(rcx, rbx);	// rbx == TESObjectCELL*
-			mov(rdx, a_target);
-			jmp(rdx);
-		}
-	};
+			Patch(std::uintptr_t a_target)
+			{
+				mov(rcx, rbx);	// rbx == TESObjectCELL*
+				mov(rdx, a_target);
+				jmp(rdx);
+			}
+		};
+	}
 
 	void CellInitFix::Install()
 	{

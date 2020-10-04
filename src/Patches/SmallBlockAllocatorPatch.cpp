@@ -46,27 +46,30 @@
 
 namespace Patches
 {
-	struct AllocPatch :
-		Xbyak::CodeGenerator
+	namespace
 	{
-		AllocPatch(std::size_t a_size, std::uintptr_t a_target)
+		struct AllocPatch :
+			Xbyak::CodeGenerator
 		{
-			mov(rcx, a_size);
-			mov(rdx, a_target);
-			jmp(rdx);
-		}
-	};
+			AllocPatch(std::size_t a_size, std::uintptr_t a_target)
+			{
+				mov(rcx, a_size);
+				mov(rdx, a_target);
+				jmp(rdx);
+			}
+		};
 
-	struct DeallocPatch :
-		Xbyak::CodeGenerator
-	{
-		DeallocPatch(std::uintptr_t a_target)
+		struct DeallocPatch :
+			Xbyak::CodeGenerator
 		{
-			mov(rcx, rdx);
-			mov(rdx, a_target);
-			jmp(rdx);
-		}
-	};
+			DeallocPatch(std::uintptr_t a_target)
+			{
+				mov(rcx, rdx);
+				mov(rdx, a_target);
+				jmp(rdx);
+			}
+		};
+	}
 
 	void SmallBlockAllocatorPatch::InstallAllocations()
 	{
