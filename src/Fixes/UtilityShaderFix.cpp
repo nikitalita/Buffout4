@@ -75,7 +75,7 @@ namespace Fixes
 		};
 
 		REL::Relocation<RE::BSGraphics::PixelShader**> shader{ REL::ID(286285) };
-
+		assert(*shader != nullptr);
 		Patch p{ reinterpret_cast<std::uintptr_t>(*shader) };
 		p.ready();
 		WritePatch(a_base, 0x1A4, 0x1AB, p);
@@ -94,7 +94,7 @@ namespace Fixes
 		};
 
 		REL::Relocation<RE::BSGraphics::VertexShader**> shader{ REL::ID(67091) };
-
+		assert(*shader != nullptr);
 		Patch p{ reinterpret_cast<std::uintptr_t>(*shader) };
 		p.ready();
 		WritePatch(a_base, 0x150, 0x157, p);

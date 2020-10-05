@@ -25,7 +25,10 @@
 #include <variant>
 #include <vector>
 
+#pragma warning(push)
+#pragma warning(disable : 4706)	 // assignment within conditional expression
 #include <boost/algorithm/searching/knuth_morris_pratt.hpp>
+#include <boost/container/map.hpp>
 #include <boost/stacktrace.hpp>
 #include <fmt/chrono.h>
 #include <frozen/map.h>
@@ -35,6 +38,7 @@
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <tbb/scalable_allocator.h>
+#pragma warning(pop)
 
 #include "AutoTOML.hpp"
 

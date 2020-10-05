@@ -7,6 +7,7 @@
   "dependencies": [
     "boost-algorithm",
     "boost-atomic",
+    "boost-container",
     "boost-iostreams",
     "boost-iterator",
     "boost-stacktrace",
