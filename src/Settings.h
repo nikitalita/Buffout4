@@ -33,6 +33,7 @@ public:
 	static inline bSetting CellInit{ "Fixes"s, "CellInit"s, true };
 	static inline bSetting EncounterZoneReset{ "Fixes"s, "EncounterZoneReset"s, true };
 	static inline bSetting FaderMenu{ "Fixes"s, "FaderMenu"s, true };
+	static inline bSetting MovementPlanner{ "Fixes"s, "MovementPlanner"s, true };
 	static inline bSetting SafeExit{ "Fixes"s, "SafeExit"s, true };
 	static inline bSetting UnalignedLoad{ "Fixes"s, "UnalignedLoad"s, true };
 	static inline bSetting UtilityShader{ "Fixes"s, "UtilityShader"s, true };

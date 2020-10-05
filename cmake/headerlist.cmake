@@ -12,6 +12,7 @@ set(headers ${headers}
 	src/Fixes/EncounterZoneResetFix.h
 	src/Fixes/FaderMenuFix.h
 	src/Fixes/Fixes.h
+	src/Fixes/MovementPlannerFix.h
 	src/Fixes/SafeExit.h
 	src/Fixes/UnalignedLoadFix.h
 	src/Fixes/UtilityShaderFix.h

@@ -4,6 +4,7 @@
 #include "Fixes/CellInitFix.h"
 #include "Fixes/EncounterZoneResetFix.h"
 #include "Fixes/FaderMenuFix.h"
+#include "Fixes/MovementPlannerFix.h"
 #include "Fixes/SafeExit.h"
 #include "Fixes/UnalignedLoadFix.h"
 #include "Fixes/UtilityShaderFix.h"
@@ -24,6 +25,10 @@ namespace Fixes
 
 		if (*Settings::FaderMenu) {
 			FaderMenuFix::Install();
+		}
+
+		if (*Settings::MovementPlanner) {
+			MovementPlannerFix::Install();
 		}
 
 		if (*Settings::SafeExit) {

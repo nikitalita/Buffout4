@@ -72,7 +72,7 @@ namespace Warnings
 					fmt::format(
 						FMT_STRING("A call to ID3D11Device::CreateTexture2D failed with error code 0x{:08X}. "
 								   "This will crash the game."),
-						result));
+						static_cast<std::uint32_t>(result)));
 			} else {
 				return result;
 			}
