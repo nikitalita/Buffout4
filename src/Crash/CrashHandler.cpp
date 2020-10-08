@@ -442,9 +442,7 @@ namespace Crash
 #define SETTING_CASE(a_enum, a_type)                                                \
 	case toml::node_type::a_enum:                                                   \
 		if (const auto ptr = dynamic_cast<const AutoTOML::a_type*>(setting); ptr) { \
-			value = fmt::format(                                                    \
-				FMT_STRING("{}"),                                                   \
-				ptr->get());                                                        \
+			value = fmt::to_string(ptr->get());                                     \
 		}                                                                           \
 		break
 
@@ -494,14 +492,12 @@ namespace Crash
 				for (const auto setting : settings) {
 					assert(setting != nullptr);
 
+					value = "UNKNOWN"sv;
 					switch (setting->type()) {
 						SETTING_CASE(boolean, bSetting);
 						SETTING_CASE(floating_point, fSetting);
 						SETTING_CASE(integer, iSetting);
 						SETTING_CASE(string, sSetting);
-					default:
-						value = "UNKNOWN"sv;
-						break;
 					}
 
 					a_log->critical(

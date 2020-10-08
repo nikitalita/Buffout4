@@ -7,6 +7,7 @@ namespace Patches
 	public:
 		static void Install()
 		{
+			AutoScrapBuffer::Install();
 			MemoryManager::Install();
 			ScrapHeap::Install();
 			logger::info("installed {}"sv, typeid(MemoryManagerPatch).name());
@@ -73,6 +74,28 @@ namespace Patches
 
 			lock_type _lock;
 			value_type _traces;
+		};
+
+		class AutoScrapBuffer
+		{
+		public:
+			static void Install()
+			{
+				CtorLong();
+				CtorShort();
+				Dtor();
+			}
+
+		private:
+			static void CtorLong()
+			{
+				REL::Relocation<std::uintptr_t> target{ REL::ID(1305199), 0x1D };
+				constexpr std::size_t size = 0x15;
+				REL::safe_fill(target.address(), REL::NOP, size);
+			}
+
+			static void CtorShort();
+			static void Dtor();
 		};
 
 		class MemoryManager

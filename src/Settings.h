@@ -39,6 +39,7 @@ public:
 	static inline bSetting UtilityShader{ "Fixes"s, "UtilityShader"s, true };
 
 	static inline bSetting Achievements{ "Patches"s, "Achievements"s, true };
+	static inline bSetting BSTextureStreamerLocalHeap{ "Patches"s, "BSTextureStreamerLocalHeap"s, true };
 	static inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
 	static inline iSetting MaxStdIO{ "Patches"s, "MaxStdIO"s, -1 };
 	static inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };

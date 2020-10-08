@@ -1,6 +1,7 @@
 #include "Patches/Patches.h"
 
 #include "Patches/AchievementsPatch.h"
+#include "Patches/BSTextureStreamerLocalHeapPatch.h"
 #include "Patches/HavokMemorySystemPatch.h"
 #include "Patches/MaxStdIOPatch.h"
 #include "Patches/MemoryManagerPatch.h"
@@ -20,6 +21,10 @@ namespace Patches
 	{
 		if (*Settings::Achievements) {
 			AchievementsPatch::Install();
+		}
+
+		if (*Settings::BSTextureStreamerLocalHeap) {
+			BSTextureStreamerLocalHeapPatch::Install();
 		}
 
 		if (*Settings::HavokMemorySystem) {

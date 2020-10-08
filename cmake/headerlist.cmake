@@ -17,6 +17,7 @@ set(headers ${headers}
 	src/Fixes/UnalignedLoadFix.h
 	src/Fixes/UtilityShaderFix.h
 	src/Patches/AchievementsPatch.h
+	src/Patches/BSTextureStreamerLocalHeapPatch.h
 	src/Patches/HavokMemorySystemPatch.h
 	src/Patches/MaxStdIOPatch.h
 	src/Patches/MemoryManagerPatch.h
