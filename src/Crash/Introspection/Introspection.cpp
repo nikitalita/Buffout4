@@ -17,54 +17,26 @@ namespace Crash::Introspection::F4
 			{
 				const auto stream = static_cast<const value_type*>(a_ptr);
 
-				if (const auto dirName = GetDirName(stream); dirName) {
+				try {
+					const auto dirName = stream->GetDirName();
 					a_results.emplace_back(
 						"Directory Name"sv,
-						*dirName);
-				}
+						dirName);
+				} catch (...) {}
 
-				if (const auto fileName = GetFileName(stream); fileName) {
+				try {
+					const auto fileName = stream->GetFileName();
 					a_results.emplace_back(
 						"File Name"sv,
-						*fileName);
-				}
+						fileName);
+				} catch (...) {}
 
-				if (const auto prefix = GetPrefix(stream); prefix) {
+				try {
+					const auto prefix = stream->GetPrefix();
 					a_results.emplace_back(
 						"Prefix"sv,
-						*prefix);
-				}
-			}
-
-		private:
-			[[nodiscard]] static auto GetDirName(const value_type* a_stream) noexcept
-				-> std::optional<std::string_view>
-			{
-				__try {
-					return a_stream->dirName;
-				} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-					return std::nullopt;
-				}
-			}
-
-			[[nodiscard]] static auto GetFileName(const value_type* a_stream) noexcept
-				-> std::optional<std::string_view>
-			{
-				__try {
-					return a_stream->fileName;
-				} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-					return std::nullopt;
-				}
-			}
-
-			[[nodiscard]] static auto GetPrefix(const value_type* a_stream) noexcept
-				-> std::optional<std::string_view>
-			{
-				__try {
-					return a_stream->prefix;
-				} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-					return std::nullopt;
-				}
+						prefix);
+				} catch (...) {}
 			}
 		};
 	}
@@ -84,55 +56,28 @@ namespace Crash::Introspection::F4
 				{
 					const auto function = static_cast<const value_type*>(a_ptr);
 
-					if (const auto name = GetName(function); name) {
+					try {
+						const std::string_view name = function->name;
 						a_results.emplace_back(
 							"Function"sv,
-							*name);
-					}
+							name);
+					} catch (...) {}
 
-					if (const auto objName = GetObjName(function); objName) {
+					try {
+						const std::string_view objName = function->objName;
 						a_results.emplace_back(
 							"Object"sv,
-							*objName);
-					}
+							objName);
+					} catch (...) {}
 
-					if (const auto stateName = GetStateName(function);
-						stateName && !stateName->empty()) {
-						a_results.emplace_back(
-							"State"sv,
-							*stateName);
-					}
-				}
-
-			private:
-				[[nodiscard]] static auto GetName(const value_type* a_function) noexcept
-					-> std::optional<std::string_view>
-				{
-					__try {
-						return a_function->name;
-					} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-						return std::nullopt;
-					}
-				}
-
-				[[nodiscard]] static auto GetObjName(const value_type* a_function) noexcept
-					-> std::optional<std::string_view>
-				{
-					__try {
-						return a_function->objName;
-					} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-						return std::nullopt;
-					}
-				}
-
-				[[nodiscard]] static auto GetStateName(const value_type* a_function) noexcept
-					-> std::optional<std::string_view>
-				{
-					__try {
-						return a_function->stateName;
-					} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-						return std::nullopt;
-					}
+					try {
+						const std::string_view stateName = function->stateName;
+						if (!stateName.empty()) {
+							a_results.emplace_back(
+								"State"sv,
+								stateName);
+						}
+					} catch (...) {}
 				}
 			};
 		}
@@ -148,22 +93,12 @@ namespace Crash::Introspection::F4
 			{
 				const auto info = static_cast<const value_type*>(a_ptr);
 
-				if (const auto name = GetName(info); name) {
+				try {
+					const auto name = info->GetName();
 					a_results.emplace_back(
 						"Name"sv,
-						*name);
-				}
-			}
-
-		private:
-			[[nodiscard]] static auto GetName(const value_type* a_info) noexcept
-				-> std::optional<std::string_view>
-			{
-				__try {
-					return a_info->name;
-				} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-					return std::nullopt;
-				}
+						name);
+				} catch (...) {}
 			}
 		};
 	}
@@ -179,22 +114,32 @@ namespace Crash::Introspection::F4
 		{
 			const auto object = static_cast<const value_type*>(a_ptr);
 
-			if (const auto name = GetName(object); name) {
+			try {
+				const auto name = object->GetName();
 				a_results.emplace_back(
 					"Name"sv,
-					*name);
-			}
+					name);
+			} catch (...) {}
 		}
+	};
 
-	private:
-		[[nodiscard]] static auto GetName(const value_type* a_object) noexcept
-			-> std::optional<std::string_view>
+	class NiStream
+	{
+	public:
+		using value_type = RE::NiStream;
+
+		static void filter(
+			std::vector<std::pair<std::string, std::string>>& a_results,
+			const void* a_ptr) noexcept
 		{
-			__try {
-				return a_object->name;
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-				return std::nullopt;
-			}
+			const auto stream = static_cast<const value_type*>(a_ptr);
+
+			try {
+				const auto fileName = stream->GetFileName();
+				a_results.emplace_back(
+					"File Name"sv,
+					fileName);
+			} catch (...) {}
 		}
 	};
 
@@ -209,22 +154,12 @@ namespace Crash::Introspection::F4
 		{
 			const auto texture = static_cast<const value_type*>(a_ptr);
 
-			if (const auto name = GetName(texture); name) {
+			try {
+				const auto name = texture->GetName();
 				a_results.emplace_back(
 					"Name"sv,
-					*name);
-			}
-		}
-
-	private:
-		[[nodiscard]] static auto GetName(const value_type* a_texture) noexcept
-			-> std::optional<std::string_view>
-		{
-			__try {
-				return a_texture->name;
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-				return std::nullopt;
-			}
+					name);
+			} catch (...) {}
 		}
 	};
 
@@ -239,64 +174,31 @@ namespace Crash::Introspection::F4
 		{
 			const auto form = static_cast<const value_type*>(a_ptr);
 
-			if (const auto filename = GetFilename(form); filename) {
+			try {
+				const auto file = form->GetDescriptionOwnerFile();
+				const auto filename = file ? file->GetFilename() : ""sv;
 				a_results.emplace_back(
 					"File"sv,
-					*filename);
-			}
+					filename);
+			} catch (...) {}
 
-			if (const auto formFlags = GetFormFlags(form); formFlags) {
+			try {
+				const auto formFlags = form->GetFormFlags();
 				a_results.emplace_back(
 					"Flags"sv,
 					fmt::format(
 						FMT_STRING("0x{:08X}"),
-						*formFlags));
-			}
+						formFlags));
+			} catch (...) {}
 
-			if (const auto formID = GetFormID(form); formID) {
+			try {
+				const auto formID = form->GetFormID();
 				a_results.emplace_back(
 					"Form ID"sv,
 					fmt::format(
 						FMT_STRING("0x{:08X}"),
-						*formID));
-			}
-		}
-
-	private:
-		[[nodiscard]] static auto GetFilename(const value_type* a_form) noexcept
-			-> std::optional<std::string_view>
-		{
-			__try {
-				const auto files = a_form->sourceFiles.array;
-				const auto file = files && !files->empty() ? files->back() : nullptr;
-				if (file) {
-					return file->GetFilename();
-				} else {
-					return std::nullopt;
-				}
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-				return std::nullopt;
-			}
-		}
-
-		[[nodiscard]] static auto GetFormFlags(const value_type* a_form) noexcept
-			-> std::optional<std::uint32_t>
-		{
-			__try {
-				return a_form->GetFormFlags();
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-				return std::nullopt;
-			}
-		}
-
-		[[nodiscard]] static auto GetFormID(const value_type* a_form) noexcept
-			-> std::optional<std::uint32_t>
-		{
-			__try {
-				return a_form->GetFormID();
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-				return std::nullopt;
-			}
+						formID));
+			} catch (...) {}
 		}
 	};
 
@@ -309,24 +211,14 @@ namespace Crash::Introspection::F4
 			std::vector<std::pair<std::string, std::string>>& a_results,
 			const void* a_ptr) noexcept
 		{
-			const auto form = static_cast<const value_type*>(a_ptr);
+			const auto component = static_cast<const value_type*>(a_ptr);
 
-			if (const auto fullName = GetFullName(form); fullName) {
+			try {
+				const auto fullName = component->GetFullName();
 				a_results.emplace_back(
 					"Full Name"sv,
-					*fullName);
-			}
-		}
-
-	private:
-		[[nodiscard]] static auto GetFullName(const value_type* a_form) noexcept
-			-> std::optional<std::string_view>
-		{
-			__try {
-				return a_form->fullName;
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
-				return std::nullopt;
-			}
+					fullName);
+			} catch (...) {}
 		}
 	};
 }
@@ -352,7 +244,7 @@ namespace Crash::Introspection
 		class Integer
 		{
 		public:
-			[[nodiscard]] std::string name() const noexcept { return "(size_t)"s; }
+			[[nodiscard]] std::string name() const { return "(size_t)"s; }
 		};
 
 		class Pointer
@@ -368,7 +260,7 @@ namespace Crash::Introspection
 				}
 			}
 
-			[[nodiscard]] std::string name() const noexcept
+			[[nodiscard]] std::string name() const
 			{
 				if (_module) {
 					const auto address = reinterpret_cast<std::uintptr_t>(_ptr);
@@ -395,9 +287,9 @@ namespace Crash::Introspection
 				assert(_mangled.size() > 1 && _mangled.data()[_mangled.size()] == '\0');
 			}
 
-			[[nodiscard]] std::string name() const noexcept
+			[[nodiscard]] std::string name() const
 			{
-				const auto demangle = [](const char* a_in, char* a_out, std::uint32_t a_size) noexcept {
+				const auto demangle = [](const char* a_in, char* a_out, std::uint32_t a_size) {
 					static std::mutex m;
 					std::lock_guard l{ m };
 					return WinAPI::UnDecorateSymbolName(
@@ -451,7 +343,7 @@ namespace Crash::Introspection
 				assert(_ptr != nullptr);
 			}
 
-			[[nodiscard]] std::string name() const noexcept
+			[[nodiscard]] std::string name() const
 			{
 				auto result = _poly.name();
 				std::vector<std::pair<std::string, std::string>> xInfo;
@@ -495,6 +387,7 @@ namespace Crash::Introspection
 				std::make_pair(".?AVNativeFunctionBase@NF_util@BSScript@@"sv, F4::BSScript::NF_util::NativeFunctionBase::filter),
 				std::make_pair(".?AVObjectTypeInfo@BSScript@@"sv, F4::BSScript::ObjectTypeInfo::filter),
 				std::make_pair(".?AVNiObjectNET@@"sv, F4::NiObjectNET::filter),
+				std::make_pair(".?AVNiStream@@"sv, F4::NiStream::filter),
 				std::make_pair(".?AVNiTexture@@"sv, F4::NiTexture::filter),
 				std::make_pair(".?AVTESForm@@"sv, F4::TESForm::filter),
 				std::make_pair(".?AVTESFullName@@"sv, F4::TESFullName::filter),
@@ -517,7 +410,7 @@ namespace Crash::Introspection
 			stl::span<const module_pointer> a_modules) noexcept
 			-> analysis_result
 		{
-			__try {
+			try {
 				const auto vtable = *reinterpret_cast<void**>(a_ptr);
 				const auto mod = get_module_for_pointer(vtable, a_modules);
 				if (!mod || !mod->in_rdata_range(vtable)) {
@@ -547,7 +440,7 @@ namespace Crash::Introspection
 				} else {
 					return Polymorphic{ typeDesc->mangled_name() };
 				}
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
+			} catch (...) {
 				return Pointer{ a_ptr, a_modules };
 			}
 		}
@@ -557,14 +450,14 @@ namespace Crash::Introspection
 			stl::span<const module_pointer> a_modules) noexcept
 			-> analysis_result
 		{
-			__try {
+			try {
 				if (a_value != 0) {
 					*reinterpret_cast<const volatile std::byte*>(a_value);
 					return analyze_pointer(reinterpret_cast<void*>(a_value), a_modules);
 				} else {
 					return Integer{};
 				}
-			} __except (WinAPI::EXCEPTION_EXECUTE_HANDLER) {
+			} catch (...) {
 				return Integer{};
 			}
 		}
@@ -572,7 +465,7 @@ namespace Crash::Introspection
 
 	std::vector<std::string> analyze_data(
 		stl::span<const std::size_t> a_data,
-		stl::span<const module_pointer> a_modules) noexcept
+		stl::span<const module_pointer> a_modules)
 	{
 		std::vector<std::string> results;
 		results.resize(a_data.size());
@@ -585,7 +478,7 @@ namespace Crash::Introspection
 				const auto pos = std::addressof(a_val) - a_data.data();
 				results[pos] =
 					std::visit(
-						[](auto&& a_val) noexcept { return a_val.name(); },
+						[](auto&& a_val) { return a_val.name(); },
 						result);
 			});
 		return results;

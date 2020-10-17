@@ -30,7 +30,7 @@ namespace Fixes
 
 			REL::Relocation<std::uintptr_t> base{ REL::ID(768994) };
 			for (const auto off : offsets) {
-				REL::safe_write(base.address() + off + 0x1, std::uint8_t{ 0x11 });	// movaps -> movups
+				REL::safe_write(base.address() + off + 0x1, std::uint8_t{ 0x11 });  // movaps -> movups
 			}
 		}
 	};

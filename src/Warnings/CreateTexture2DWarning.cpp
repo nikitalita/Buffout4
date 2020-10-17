@@ -49,17 +49,6 @@ namespace Warnings
 {
 	namespace
 	{
-		struct Patch :
-			Xbyak::CodeGenerator
-		{
-			Patch(std::uintptr_t a_dst)
-			{
-				lea(r9, ptr[rbp + 0x8]);
-				mov(rax, a_dst);
-				jmp(rax);
-			}
-		};
-
 		::HRESULT CreateTexture2D(
 			::ID3D11Device* a_this,
 			const ::D3D11_TEXTURE2D_DESC* a_desc,
@@ -77,18 +66,55 @@ namespace Warnings
 				return result;
 			}
 		}
+
+		template <class T>
+		void WritePatch(std::uintptr_t a_dst, std::size_t a_size)
+		{
+			REL::safe_fill(a_dst, REL::NOP, a_size);
+			T p{ reinterpret_cast<std::uintptr_t>(&CreateTexture2D) };
+			p.ready();
+			auto& trampoline = F4SE::GetTrampoline();
+			assert(a_size >= 6);
+			trampoline.write_call<6>(
+				a_dst,
+				trampoline.allocate(p));
+		}
 	}
 
 	void CreateTexture2DWarning::Install()
 	{
-		REL::Relocation<std::uintptr_t> target{ REL::ID(678241), 0x147 };
-		REL::safe_fill(target.address(), REL::NOP, 0x7);
-		Patch p{ reinterpret_cast<std::uintptr_t>(&CreateTexture2D) };
-		p.ready();
-		auto& trampoline = F4SE::GetTrampoline();
-		trampoline.write_call<6>(
-			target.address(),
-			trampoline.allocate(p));
+		{
+			struct Patch :
+				Xbyak::CodeGenerator
+			{
+				Patch(std::uintptr_t a_dst)
+				{
+					lea(r9, ptr[rbp + 0x8]);
+					mov(rax, a_dst);
+					jmp(rax);
+				}
+			};
+
+			REL::Relocation<std::uintptr_t> target{ REL::ID(678241), 0x147 };
+			WritePatch<Patch>(target.address(), 0x7);
+		}
+
+		{
+			struct Patch :
+				Xbyak::CodeGenerator
+			{
+				Patch(std::uintptr_t a_dst)
+				{
+					lea(rdx, ptr[rsp + (0x78 - 0x40) + 0x8]);
+					mov(rax, a_dst);
+					jmp(rax);
+				}
+			};
+
+			REL::Relocation<std::uintptr_t> target{ REL::ID(367479), 0xAA };
+			WritePatch<Patch>(target.address(), 0x8);
+		}
+
 		logger::info("installed {}"sv, typeid(CreateTexture2DWarning).name());
 	}
 }

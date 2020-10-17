@@ -23,5 +23,4 @@ CreateTexture2D = true   # Warns when a call to CreateTexture2D fails
 ImageSpaceAdapter = true # Warns on bad IMAD definitions which will corrupt your memory and crash your game
 
 [Compatibility]
-ClassicHolsteredWeapons = false # Patches Classic Holstered Weapons to be compatibile with the memory manager patch
-F4EE = false                    # Patches F4EE to be compatibile with the memory manager patch
+F4EE = false # Patches F4EE to be compatibile with the memory manager patch

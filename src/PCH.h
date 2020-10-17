@@ -26,7 +26,7 @@
 #include <vector>
 
 #pragma warning(push)
-#pragma warning(disable : 4706)	 // assignment within conditional expression
+#pragma warning(disable: 4706)  // assignment within conditional expression
 #include <boost/algorithm/searching/knuth_morris_pratt.hpp>
 #include <boost/container/map.hpp>
 #include <boost/stacktrace.hpp>

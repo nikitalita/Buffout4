@@ -86,9 +86,9 @@ namespace Compatibility
 					sub(rsi, r15);
 					sar(rsi, 2);
 
-					mov(rcx, r15);				// float*
-					mov(rdx, rsi);				// size
-					mov(r8, ptr[r14 + 0x2D8]);	// BSTArray<float>*
+					mov(rcx, r15);              // float*
+					mov(rdx, rsi);              // size
+					mov(r8, ptr[r14 + 0x2D8]);  // BSTArray<float>*
 
 					mov(r9, a_dst);
 					call(r9);

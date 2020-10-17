@@ -21,8 +21,8 @@ namespace Patches
 			void* BlockAlloc(std::int32_t a_numBytesIn) override
 			{
 				return a_numBytesIn > 0 ?
-							 scalable_aligned_malloc(a_numBytesIn, 0x10) :
-							 nullptr;
+                           scalable_aligned_malloc(a_numBytesIn, 0x10) :
+                           nullptr;
 			}
 
 			void BlockFree(void* a_ptr, std::int32_t) override
@@ -33,8 +33,8 @@ namespace Patches
 			void* BufAlloc(std::int32_t& a_reqNumBytesInOut) override
 			{
 				return a_reqNumBytesInOut > 0 ?
-							 scalable_aligned_malloc(a_reqNumBytesInOut, 0x10) :
-							 nullptr;
+                           scalable_aligned_malloc(a_reqNumBytesInOut, 0x10) :
+                           nullptr;
 			}
 
 			void BufFree(void* a_ptr, std::int32_t) override
@@ -56,8 +56,8 @@ namespace Patches
 					[=](void*& a_elem) {
 						a_elem =
 							a_blockSize > 0 ?
-								  scalable_aligned_malloc(a_blockSize, 0x10) :
-								  nullptr;
+                                scalable_aligned_malloc(a_blockSize, 0x10) :
+                                nullptr;
 					});
 			}
 

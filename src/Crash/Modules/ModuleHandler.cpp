@@ -57,7 +57,7 @@ namespace Crash::Modules
 				std::string_view a_name,
 				stl::span<const std::byte> a_module,
 				stl::span<const std::byte> a_data,
-				stl::span<const std::byte> a_rdata) noexcept
+				stl::span<const std::byte> a_rdata)
 			{
 				const auto typeDesc = type_descriptor(a_name, a_data);
 				const auto col = typeDesc ? complete_object_locator(typeDesc, a_module, a_rdata) : nullptr;
@@ -69,7 +69,7 @@ namespace Crash::Modules
 		private:
 			[[nodiscard]] auto type_descriptor(
 				std::string_view a_name,
-				stl::span<const std::byte> a_data) const noexcept
+				stl::span<const std::byte> a_data) const
 				-> const RE::RTTI::TypeDescriptor*
 			{
 				constexpr std::size_t offset = 0x10;  // offset of name into type descriptor
@@ -78,14 +78,14 @@ namespace Crash::Modules
 					reinterpret_cast<const char*>(a_data.data()),
 					reinterpret_cast<const char*>(a_data.data() + a_data.size()));
 				return first != last ?
-							 reinterpret_cast<const RE::RTTI::TypeDescriptor*>(first - offset) :
-							 nullptr;
+                           reinterpret_cast<const RE::RTTI::TypeDescriptor*>(first - offset) :
+                           nullptr;
 			}
 
 			[[nodiscard]] auto complete_object_locator(
 				const RE::RTTI::TypeDescriptor* a_typeDesc,
 				stl::span<const std::byte> a_module,
-				stl::span<const std::byte> a_rdata) const noexcept
+				stl::span<const std::byte> a_rdata) const
 				-> const RE::RTTI::CompleteObjectLocator*
 			{
 				assert(a_typeDesc != nullptr);
@@ -121,7 +121,7 @@ namespace Crash::Modules
 
 			[[nodiscard]] const void* virtual_table(
 				const RE::RTTI::CompleteObjectLocator* a_col,
-				stl::span<const std::byte> a_rdata) const noexcept
+				stl::span<const std::byte> a_rdata) const
 			{
 				assert(a_col != nullptr);
 
@@ -154,7 +154,7 @@ namespace Crash::Modules
 
 			using super::super;
 
-			[[nodiscard]] std::string get_frame_info(const boost::stacktrace::frame& a_frame) const noexcept override
+			[[nodiscard]] std::string get_frame_info(const boost::stacktrace::frame& a_frame) const override
 			{
 				const auto offset = reinterpret_cast<std::uintptr_t>(a_frame.address()) - address();
 				const auto it = std::lower_bound(
@@ -182,7 +182,7 @@ namespace Crash::Modules
 		class Factory
 		{
 		public:
-			[[nodiscard]] static std::unique_ptr<Module> create(::HMODULE a_module) noexcept
+			[[nodiscard]] static std::unique_ptr<Module> create(::HMODULE a_module)
 			{
 				using result_t = std::unique_ptr<Module>;
 
@@ -196,14 +196,14 @@ namespace Crash::Modules
 			}
 
 		private:
-			[[nodiscard]] static stl::span<const std::byte> get_image(::HMODULE a_module) noexcept
+			[[nodiscard]] static stl::span<const std::byte> get_image(::HMODULE a_module)
 			{
 				const auto dosHeader = reinterpret_cast<const ::IMAGE_DOS_HEADER*>(a_module);
 				const auto ntHeader = stl::adjust_pointer<::IMAGE_NT_HEADERS64>(dosHeader, dosHeader->e_lfanew);
 				return { reinterpret_cast<const std::byte*>(a_module), ntHeader->OptionalHeader.SizeOfImage };
 			}
 
-			[[nodiscard]] static std::string get_name(::HMODULE a_module) noexcept
+			[[nodiscard]] static std::string get_name(::HMODULE a_module)
 			{
 				std::vector<char> buf;
 				buf.reserve(MAX_PATH);
@@ -222,13 +222,13 @@ namespace Crash::Modules
 		};
 	}
 
-	std::string Module::frame_info(const boost::stacktrace::frame& a_frame) const noexcept
+	std::string Module::frame_info(const boost::stacktrace::frame& a_frame) const
 	{
 		assert(in_range(a_frame.address()));
 		return get_frame_info(a_frame);
 	}
 
-	Module::Module(std::string a_name, stl::span<const std::byte> a_image) noexcept :
+	Module::Module(std::string a_name, stl::span<const std::byte> a_image) :
 		_name(std::move(a_name)),
 		_image(a_image)
 	{
@@ -264,7 +264,7 @@ namespace Crash::Modules
 		}
 	}
 
-	std::string Module::get_frame_info(const boost::stacktrace::frame& a_frame) const noexcept
+	std::string Module::get_frame_info(const boost::stacktrace::frame& a_frame) const
 	{
 		const auto offset = reinterpret_cast<std::uintptr_t>(a_frame.address()) - address();
 		return fmt::format(
@@ -272,7 +272,7 @@ namespace Crash::Modules
 			offset);
 	}
 
-	auto get_loaded_modules() noexcept
+	auto get_loaded_modules()
 		-> std::vector<std::unique_ptr<Module>>
 	{
 		const auto proc = ::GetCurrentProcess();
@@ -293,7 +293,7 @@ namespace Crash::Modules
 			std::execution::parallel_unsequenced_policy{},
 			modules.begin(),
 			modules.end(),
-			[&](auto&& a_elem) noexcept {
+			[&](auto&& a_elem) {
 				const auto pos = std::addressof(a_elem) - modules.data();
 				results[pos] = detail::Factory::create(a_elem);
 			});

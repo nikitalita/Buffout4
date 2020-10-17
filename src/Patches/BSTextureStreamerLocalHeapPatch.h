@@ -16,8 +16,8 @@ namespace Patches
 		static void* Allocate(RE::BSTextureStreamer::LocalHeap*, std::uint32_t a_size)
 		{
 			return a_size > 0 ?
-						 scalable_aligned_malloc(a_size, 0x10) :
-						 nullptr;
+                       scalable_aligned_malloc(a_size, 0x10) :
+                       nullptr;
 		}
 
 		static RE::BSTextureStreamer::LocalHeap* Ctor(RE::BSTextureStreamer::LocalHeap* a_this)

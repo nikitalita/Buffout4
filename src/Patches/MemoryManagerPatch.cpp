@@ -103,7 +103,7 @@ namespace Patches
 
 		{
 			const auto dst = base.address() + 0x26;
-			REL::safe_write(dst, std::uint8_t{ 0x74 });	 // jnz -> jz
+			REL::safe_write(dst, std::uint8_t{ 0x74 });  // jnz -> jz
 		}
 	}
 

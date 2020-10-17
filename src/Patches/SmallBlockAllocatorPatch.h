@@ -23,8 +23,8 @@ namespace Patches
 		static void* Allocate(std::size_t a_size)
 		{
 			return a_size > 0 ?
-						 scalable_aligned_malloc(a_size, 0x10) :
-						 nullptr;
+                       scalable_aligned_malloc(a_size, 0x10) :
+                       nullptr;
 		}
 
 		static void Deallocate(void* a_ptr)

@@ -114,8 +114,8 @@ namespace Patches
 			{
 				if (a_size > 0) {
 					return a_alignmentRequired ?
-								 scalable_aligned_malloc(a_size, a_alignment) :
-								 scalable_malloc(a_size);
+                               scalable_aligned_malloc(a_size, a_alignment) :
+                               scalable_malloc(a_size);
 				} else {
 					return nullptr;
 				}
@@ -136,8 +136,8 @@ namespace Patches
 			static void Deallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
 			{
 				a_alignmentRequired ?
-					  scalable_aligned_free(a_mem) :
-					  scalable_free(a_mem);
+                    scalable_aligned_free(a_mem) :
+                    scalable_free(a_mem);
 			}
 
 			static void DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired);
@@ -145,8 +145,8 @@ namespace Patches
 			static void* Reallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				return a_alignmentRequired ?
-							 scalable_aligned_realloc(a_oldMem, a_newSize, a_alignment) :
-							 scalable_realloc(a_oldMem, a_newSize);
+                           scalable_aligned_realloc(a_oldMem, a_newSize, a_alignment) :
+                           scalable_realloc(a_oldMem, a_newSize);
 			}
 
 			static void* DbgReallocate(RE::MemoryManager* a_this, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
@@ -199,8 +199,8 @@ namespace Patches
 			static void* Allocate(RE::ScrapHeap*, std::size_t a_size, std::size_t a_alignment)
 			{
 				return a_size > 0 ?
-							 scalable_aligned_malloc(a_size, a_alignment) :
-							 nullptr;
+                           scalable_aligned_malloc(a_size, a_alignment) :
+                           nullptr;
 			}
 
 			static RE::ScrapHeap* Ctor(RE::ScrapHeap* a_this)
@@ -236,7 +236,7 @@ namespace Patches
 				using tuple_t = std::tuple<std::uint64_t, std::size_t>;
 				const std::array todo{
 					tuple_t{ 550677, 0xC3 },  // Clean
-					tuple_t{ 111657, 0x8 },	  // ClearKeepPages
+					tuple_t{ 111657, 0x8 },   // ClearKeepPages
 					tuple_t{ 975239, 0xF6 },  // InsertFreeBlock
 					tuple_t{ 84225, 0x183 },  // RemoveFreeBlock
 					tuple_t{ 1255203, 0x4 },  // SetKeepPages

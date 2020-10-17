@@ -53,7 +53,7 @@ namespace Fixes
 		{
 			Patch(std::uintptr_t a_target)
 			{
-				mov(rcx, rbx);	// rbx == TESObjectCELL*
+				mov(rcx, rbx);  // rbx == TESObjectCELL*
 				mov(rdx, a_target);
 				jmp(rdx);
 			}

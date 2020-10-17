@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(
 	Buffout4
-	VERSION 1.16.0
+	VERSION 1.16.1
 	LANGUAGES CXX
 )
 
@@ -32,6 +32,7 @@ endif()
 # ---- Globals ----
 
 set(MSVC_COMPILE_OPTIONS
+	/EHa	# Enables standard C++ stack unwinding. Catches synchronous/asynchronous with catch(...) syntax
 	/Gy	# Enable Function-Level Linking
 	/MP	# Build with Multiple Processes
 	/Oi	# Generate Intrinsic Functions

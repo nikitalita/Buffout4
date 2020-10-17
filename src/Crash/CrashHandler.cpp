@@ -51,7 +51,7 @@
 
 namespace Crash
 {
-	Callstack::Callstack(const ::EXCEPTION_RECORD& a_except) noexcept
+	Callstack::Callstack(const ::EXCEPTION_RECORD& a_except)
 	{
 		const auto exceptionAddress = reinterpret_cast<std::uintptr_t>(a_except.ExceptionAddress);
 		auto it = std::find_if(
@@ -70,31 +70,31 @@ namespace Crash
 
 	void Callstack::print(
 		std::shared_ptr<spdlog::logger> a_log,
-		stl::span<const module_pointer> a_modules) const noexcept
+		stl::span<const module_pointer> a_modules) const
 	{
 		assert(a_log != nullptr);
 		print_probable_callstack(a_log, a_modules);
 	}
 
-	std::string Callstack::get_size_string(std::size_t a_size) noexcept
+	std::string Callstack::get_size_string(std::size_t a_size)
 	{
 		return fmt::to_string(
 			fmt::to_string(a_size - 1)
 				.length());
 	}
 
-	std::string Callstack::get_format(std::size_t a_nameWidth) const noexcept
+	std::string Callstack::get_format(std::size_t a_nameWidth) const
 	{
 		return "\t[{:>"s +
-			   get_size_string(_frames.size()) +
-			   "}] 0x{:012X} {:>"s +
-			   fmt::to_string(a_nameWidth) +
-			   "}{}"s;
+		       get_size_string(_frames.size()) +
+		       "}] 0x{:012X} {:>"s +
+		       fmt::to_string(a_nameWidth) +
+		       "}{}"s;
 	}
 
 	void Callstack::print_probable_callstack(
 		std::shared_ptr<spdlog::logger> a_log,
-		stl::span<const module_pointer> a_modules) const noexcept
+		stl::span<const module_pointer> a_modules) const
 	{
 		assert(a_log != nullptr);
 		a_log->critical("PROBABLE CALL STACK:"sv);
@@ -106,7 +106,7 @@ namespace Crash
 				a_modules.rbegin(),
 				a_modules.rend(),
 				reinterpret_cast<std::uintptr_t>(frame.address()),
-				[](auto&& a_lhs, auto&& a_rhs) noexcept {
+				[](auto&& a_lhs, auto&& a_rhs) {
 					return a_lhs->address() >= a_rhs;
 				});
 			if (it != a_modules.rend() && (*it)->in_range(frame.address())) {
@@ -116,12 +116,12 @@ namespace Crash
 			}
 		}
 
-		const auto format = get_format([&]() noexcept {
+		const auto format = get_format([&]() {
 			std::size_t max = 0;
 			std::for_each(
 				moduleStack.begin(),
 				moduleStack.end(),
-				[&](auto&& a_elem) noexcept {
+				[&](auto&& a_elem) {
 					max = a_elem ? std::max(max, a_elem->name().length()) : max;
 				});
 			return max;
@@ -139,7 +139,7 @@ namespace Crash
 		}
 	}
 
-	void Callstack::print_raw_callstack(std::shared_ptr<spdlog::logger> a_log) const noexcept
+	void Callstack::print_raw_callstack(std::shared_ptr<spdlog::logger> a_log) const
 	{
 		assert(a_log != nullptr);
 		a_log->critical("RAW CALL STACK:");
@@ -159,7 +159,7 @@ namespace Crash
 
 	namespace
 	{
-		[[nodiscard]] std::shared_ptr<spdlog::logger> get_log() noexcept
+		[[nodiscard]] std::shared_ptr<spdlog::logger> get_log()
 		{
 			auto path = logger::log_directory();
 			if (!path) {
@@ -195,7 +195,7 @@ namespace Crash
 
 		void print_exception(
 			std::shared_ptr<spdlog::logger> a_log,
-			const ::EXCEPTION_RECORD& a_exception) noexcept
+			const ::EXCEPTION_RECORD& a_exception)
 		{
 			assert(a_log != nullptr);
 
@@ -232,13 +232,13 @@ namespace Crash
 
 		void print_modules(
 			std::shared_ptr<spdlog::logger> a_log,
-			stl::span<const module_pointer> a_modules) noexcept
+			stl::span<const module_pointer> a_modules)
 		{
 			assert(a_log != nullptr);
 			a_log->critical("MODULES:"sv);
 
-			const auto format = [&]() noexcept {
-				const auto width = [&]() noexcept {
+			const auto format = [&]() {
+				const auto width = [&]() {
 					std::size_t max = 0;
 					std::for_each(
 						a_modules.begin(),
@@ -250,8 +250,8 @@ namespace Crash
 				}();
 
 				return "\t{:<"s +
-					   fmt::to_string(width) +
-					   "} 0x{:012X}"s;
+				       fmt::to_string(width) +
+				       "} 0x{:012X}"s;
 			}();
 
 			for (const auto& mod : a_modules) {
@@ -262,7 +262,7 @@ namespace Crash
 			}
 		}
 
-		void print_plugins(std::shared_ptr<spdlog::logger> a_log) noexcept
+		void print_plugins(std::shared_ptr<spdlog::logger> a_log)
 		{
 			assert(a_log != nullptr);
 			a_log->critical("PLUGINS:"sv);
@@ -273,8 +273,8 @@ namespace Crash
 
 				const auto fileFormat = [&](const auto& a_files) {
 					return "\t[{:>02X}]{:"s +
-						   (!a_files.empty() ? "5"s : "1"s) +
-						   "}{}"s;
+					       (!a_files.empty() ? "5"s : "1"s) +
+					       "}{}"s;
 				}(smallfiles);
 
 				for (const auto file : files) {
@@ -297,7 +297,7 @@ namespace Crash
 		void print_registers(
 			std::shared_ptr<spdlog::logger> a_log,
 			const ::CONTEXT& a_context,
-			stl::span<const module_pointer> a_modules) noexcept
+			stl::span<const module_pointer> a_modules)
 		{
 			assert(a_log != nullptr);
 			a_log->critical("REGISTERS:"sv);
@@ -339,7 +339,7 @@ namespace Crash
 		void print_stack(
 			std::shared_ptr<spdlog::logger> a_log,
 			const ::CONTEXT& a_context,
-			stl::span<const module_pointer> a_modules) noexcept
+			stl::span<const module_pointer> a_modules)
 		{
 			assert(a_log != nullptr);
 			a_log->critical("STACK:"sv);
@@ -352,12 +352,12 @@ namespace Crash
 				const auto rsp = reinterpret_cast<const std::size_t*>(a_context.Rsp);
 				stl::span stack{ rsp, base };
 
-				const auto format = [&]() noexcept {
+				const auto format = [&]() {
 					return "\t[RSP+{:<"s +
-						   fmt::to_string(
+					       fmt::to_string(
 							   fmt::format(FMT_STRING("{:X}"), (stack.size() - 1) * sizeof(std::size_t))
 								   .length()) +
-						   "X}] 0x{:<16X} {}"s;
+					       "X}] 0x{:<16X} {}"s;
 				}();
 
 				constexpr std::size_t blockSize = 1000;
@@ -380,7 +380,7 @@ namespace Crash
 		}
 
 		void print_sysinfo(
-			std::shared_ptr<spdlog::logger> a_log) noexcept
+			std::shared_ptr<spdlog::logger> a_log)
 		{
 			assert(a_log != nullptr);
 			a_log->critical("SYSTEM SPECS:"sv);
@@ -447,7 +447,7 @@ namespace Crash
 		break
 
 		void print_settings(
-			std::shared_ptr<spdlog::logger> a_log) noexcept
+			std::shared_ptr<spdlog::logger> a_log)
 		{
 			assert(a_log != nullptr);
 			a_log->critical("SETTINGS:"sv);
@@ -516,38 +516,49 @@ namespace Crash
 			for (; !WinAPI::IsDebuggerPresent();) {}
 #endif
 
-			const auto modules = Modules::get_loaded_modules();
-			const auto cmodules = stl::make_span(modules.begin(), modules.end());
-			const auto log = get_log();
+			try {
+				static std::mutex sync;
+				std::lock_guard l{ sync };
 
-			const auto print = [&](auto&& a_functor) noexcept {
-				log->critical(""sv);
-				a_functor();
+				const auto modules = Modules::get_loaded_modules();
+				const auto cmodules = stl::make_span(modules.begin(), modules.end());
+				const auto log = get_log();
+
+				const auto print = [&](auto&& a_functor) {
+					log->critical(""sv);
+					try {
+						a_functor();
+					} catch (const std::exception& e) {
+						log->critical(
+							FMT_STRING("\t{}"),
+							e.what());
+					} catch (...) {
+						log->critical("\tERROR"sv);
+					}
+					log->flush();
+				};
+
+				log->critical("v{}", Version::NAME);
 				log->flush();
-			};
 
-			log->critical("v{}", Version::NAME);
-			log->flush();
+				print([&]() { print_exception(log, *a_exception->ExceptionRecord); });
+				print([&]() { print_settings(log); });
+				print([&]() { print_sysinfo(log); });
 
-			print([&]() noexcept { print_exception(log, *a_exception->ExceptionRecord); });
-			print([&]() noexcept { print_settings(log); });
-			print([&]() noexcept { print_sysinfo(log); });
+				print([&]() {
+					const Callstack callstack{ *a_exception->ExceptionRecord };
+					callstack.print(log, cmodules);
+				});
 
-			print([&]() noexcept {
-				const Callstack callstack{ *a_exception->ExceptionRecord };
-				callstack.print(log, cmodules);
-			});
-
-			print([&]() noexcept { print_registers(log, *a_exception->ContextRecord, cmodules); });
-			print([&]() noexcept { print_stack(log, *a_exception->ContextRecord, cmodules); });
-			print([&]() noexcept { print_modules(log, cmodules); });
-			print([&]() noexcept { print_plugins(log); });
+				print([&]() { print_registers(log, *a_exception->ContextRecord, cmodules); });
+				print([&]() { print_stack(log, *a_exception->ContextRecord, cmodules); });
+				print([&]() { print_modules(log, cmodules); });
+				print([&]() { print_plugins(log); });
+			} catch (...) {}
 
 			WinAPI::TerminateProcess(
 				WinAPI::GetCurrentProcess(),
 				EXIT_FAILURE);
-
-			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
 		std::int32_t _stdcall VectoredExceptions(::EXCEPTION_POINTERS*) noexcept
