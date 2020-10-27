@@ -102,15 +102,11 @@ namespace Crash
 		std::vector<const Modules::Module*> moduleStack;
 		moduleStack.reserve(_frames.size());
 		for (const auto& frame : _frames) {
-			const auto it = std::lower_bound(
-				a_modules.rbegin(),
-				a_modules.rend(),
-				reinterpret_cast<std::uintptr_t>(frame.address()),
-				[](auto&& a_lhs, auto&& a_rhs) {
-					return a_lhs->address() >= a_rhs;
-				});
-			if (it != a_modules.rend() && (*it)->in_range(frame.address())) {
-				moduleStack.push_back(it->get());
+			const auto mod = Introspection::get_module_for_pointer(
+				frame.address(),
+				a_modules);
+			if (mod && mod->in_range(frame.address())) {
+				moduleStack.push_back(mod);
 			} else {
 				moduleStack.push_back(nullptr);
 			}
@@ -185,47 +181,66 @@ namespace Crash
 			return log;
 		}
 
-#define EXCEPTION_CASE(a_code)                                               \
-	case a_code:                                                             \
-		a_log->critical(                                                     \
-			FMT_STRING("Unhandled exception \"{}\" at 0x{:X}"),              \
-			#a_code##sv,                                                     \
-			reinterpret_cast<std::uintptr_t>(a_exception.ExceptionAddress)); \
-		break
+#define EXCEPTION_CASE(a_code) \
+	case a_code:               \
+		return " \"" #a_code "\""sv
 
 		void print_exception(
 			std::shared_ptr<spdlog::logger> a_log,
-			const ::EXCEPTION_RECORD& a_exception)
+			const ::EXCEPTION_RECORD& a_exception,
+			stl::span<const module_pointer> a_modules)
 		{
 			assert(a_log != nullptr);
 
-			switch (a_exception.ExceptionCode) {
-				EXCEPTION_CASE(EXCEPTION_ACCESS_VIOLATION);
-				EXCEPTION_CASE(EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
-				EXCEPTION_CASE(EXCEPTION_BREAKPOINT);
-				EXCEPTION_CASE(EXCEPTION_DATATYPE_MISALIGNMENT);
-				EXCEPTION_CASE(EXCEPTION_FLT_DENORMAL_OPERAND);
-				EXCEPTION_CASE(EXCEPTION_FLT_DIVIDE_BY_ZERO);
-				EXCEPTION_CASE(EXCEPTION_FLT_INEXACT_RESULT);
-				EXCEPTION_CASE(EXCEPTION_FLT_INVALID_OPERATION);
-				EXCEPTION_CASE(EXCEPTION_FLT_OVERFLOW);
-				EXCEPTION_CASE(EXCEPTION_FLT_STACK_CHECK);
-				EXCEPTION_CASE(EXCEPTION_FLT_UNDERFLOW);
-				EXCEPTION_CASE(EXCEPTION_ILLEGAL_INSTRUCTION);
-				EXCEPTION_CASE(EXCEPTION_IN_PAGE_ERROR);
-				EXCEPTION_CASE(EXCEPTION_INT_DIVIDE_BY_ZERO);
-				EXCEPTION_CASE(EXCEPTION_INT_OVERFLOW);
-				EXCEPTION_CASE(EXCEPTION_INVALID_DISPOSITION);
-				EXCEPTION_CASE(EXCEPTION_NONCONTINUABLE_EXCEPTION);
-				EXCEPTION_CASE(EXCEPTION_PRIV_INSTRUCTION);
-				EXCEPTION_CASE(EXCEPTION_SINGLE_STEP);
-				EXCEPTION_CASE(EXCEPTION_STACK_OVERFLOW);
-			default:
-				a_log->critical(
-					FMT_STRING("Unhandled exception at 0x{:X}"),
-					reinterpret_cast<std::uintptr_t>(a_exception.ExceptionAddress));
-				break;
-			}
+			const auto eptr = a_exception.ExceptionAddress;
+			const auto eaddr = reinterpret_cast<std::uintptr_t>(a_exception.ExceptionAddress);
+
+			const auto post = [&]() {
+				const auto mod = Introspection::get_module_for_pointer(
+					eptr,
+					a_modules);
+				if (mod) {
+					return fmt::format(
+						FMT_STRING(" {}+{:07X}"),
+						mod->name(),
+						eaddr - mod->address());
+				} else {
+					return ""s;
+				}
+			}();
+
+			const auto exception = [&]() {
+				switch (a_exception.ExceptionCode) {
+					EXCEPTION_CASE(EXCEPTION_ACCESS_VIOLATION);
+					EXCEPTION_CASE(EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
+					EXCEPTION_CASE(EXCEPTION_BREAKPOINT);
+					EXCEPTION_CASE(EXCEPTION_DATATYPE_MISALIGNMENT);
+					EXCEPTION_CASE(EXCEPTION_FLT_DENORMAL_OPERAND);
+					EXCEPTION_CASE(EXCEPTION_FLT_DIVIDE_BY_ZERO);
+					EXCEPTION_CASE(EXCEPTION_FLT_INEXACT_RESULT);
+					EXCEPTION_CASE(EXCEPTION_FLT_INVALID_OPERATION);
+					EXCEPTION_CASE(EXCEPTION_FLT_OVERFLOW);
+					EXCEPTION_CASE(EXCEPTION_FLT_STACK_CHECK);
+					EXCEPTION_CASE(EXCEPTION_FLT_UNDERFLOW);
+					EXCEPTION_CASE(EXCEPTION_ILLEGAL_INSTRUCTION);
+					EXCEPTION_CASE(EXCEPTION_IN_PAGE_ERROR);
+					EXCEPTION_CASE(EXCEPTION_INT_DIVIDE_BY_ZERO);
+					EXCEPTION_CASE(EXCEPTION_INT_OVERFLOW);
+					EXCEPTION_CASE(EXCEPTION_INVALID_DISPOSITION);
+					EXCEPTION_CASE(EXCEPTION_NONCONTINUABLE_EXCEPTION);
+					EXCEPTION_CASE(EXCEPTION_PRIV_INSTRUCTION);
+					EXCEPTION_CASE(EXCEPTION_SINGLE_STEP);
+					EXCEPTION_CASE(EXCEPTION_STACK_OVERFLOW);
+				default:
+					return ""sv;
+				}
+			}();
+
+			a_log->critical(
+				FMT_STRING("Unhandled exception{} at 0x{:012X}{}"),
+				exception,
+				eaddr,
+				post);
 		}
 
 #undef EXCEPTION_CASE
@@ -541,7 +556,7 @@ namespace Crash
 				log->critical("v{}", Version::NAME);
 				log->flush();
 
-				print([&]() { print_exception(log, *a_exception->ExceptionRecord); });
+				print([&]() { print_exception(log, *a_exception->ExceptionRecord, cmodules); });
 				print([&]() { print_settings(log); });
 				print([&]() { print_sysinfo(log); });
 

@@ -13,6 +13,7 @@ set(headers ${headers}
 	src/Fixes/FaderMenuFix.h
 	src/Fixes/Fixes.h
 	src/Fixes/MovementPlannerFix.h
+	src/Fixes/PackageAllocateLocationFix.h
 	src/Fixes/SafeExit.h
 	src/Fixes/UnalignedLoadFix.h
 	src/Fixes/UtilityShaderFix.h

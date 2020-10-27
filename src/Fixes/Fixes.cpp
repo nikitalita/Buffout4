@@ -5,6 +5,7 @@
 #include "Fixes/EncounterZoneResetFix.h"
 #include "Fixes/FaderMenuFix.h"
 #include "Fixes/MovementPlannerFix.h"
+#include "Fixes/PackageAllocateLocationFix.h"
 #include "Fixes/SafeExit.h"
 #include "Fixes/UnalignedLoadFix.h"
 #include "Fixes/UtilityShaderFix.h"
@@ -29,6 +30,10 @@ namespace Fixes
 
 		if (*Settings::MovementPlanner) {
 			MovementPlannerFix::Install();
+		}
+
+		if (*Settings::PackageAllocateLocation) {
+			PackageAllocateLocationFix::Install();
 		}
 
 		if (*Settings::SafeExit) {
