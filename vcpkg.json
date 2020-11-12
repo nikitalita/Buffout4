@@ -11,6 +11,7 @@
     "boost-iostreams",
     "boost-iterator",
     "boost-stacktrace",
+    "boost-stl-interfaces",
     "fmt",
     "frozen",
     {
@@ -22,7 +23,6 @@
     "robin-hood-hashing",
     "span-lite",
     "spdlog",
-    "stl-interfaces",
     "tbb",
     "tomlplusplus",
     "xbyak"

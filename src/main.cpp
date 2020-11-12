@@ -1,4 +1,3 @@
-#include "Compatibility/Compatibility.h"
 #include "Crash/CrashHandler.h"
 #include "Fixes/Fixes.h"
 #include "Patches/Patches.h"
@@ -9,11 +8,11 @@ bool g_preloaded = false;
 void F4SEAPI MessageHandler(F4SE::MessagingInterface::Message* a_message)
 {
 	switch (a_message->type) {
-	case F4SE::MessagingInterface::kPostLoad:
-		Compatibility::Install();
-		break;
 	case F4SE::MessagingInterface::kGameDataReady:
-		Fixes::PostInit();
+		{
+			static std::once_flag guard;
+			std::call_once(guard, Fixes::PostInit);
+		}
 		break;
 	}
 }
