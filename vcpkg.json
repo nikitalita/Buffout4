@@ -10,8 +10,11 @@
     "boost-container",
     "boost-iostreams",
     "boost-iterator",
+    "boost-nowide",
+    "boost-predef",
     "boost-stacktrace",
     "boost-stl-interfaces",
+    "botan",
     "fmt",
     "frozen",
     {

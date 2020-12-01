@@ -51,7 +51,7 @@ namespace Fixes
 		struct Patch :
 			Xbyak::CodeGenerator
 		{
-			Patch(std::uintptr_t a_target)
+			explicit Patch(std::uintptr_t a_target)
 			{
 				mov(rcx, rbx);  // rbx == TESObjectCELL*
 				mov(rdx, a_target);

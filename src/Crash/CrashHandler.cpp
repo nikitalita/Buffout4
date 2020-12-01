@@ -65,14 +65,13 @@ namespace Crash
 			it = _stacktrace.cbegin();
 		}
 
-		_frames = stl::make_span(it, _stacktrace.cend());
+		_frames = stl::span(it, _stacktrace.cend());
 	}
 
 	void Callstack::print(
-		std::shared_ptr<spdlog::logger> a_log,
+		spdlog::logger& a_log,
 		stl::span<const module_pointer> a_modules) const
 	{
-		assert(a_log != nullptr);
 		print_probable_callstack(a_log, a_modules);
 	}
 
@@ -93,11 +92,10 @@ namespace Crash
 	}
 
 	void Callstack::print_probable_callstack(
-		std::shared_ptr<spdlog::logger> a_log,
+		spdlog::logger& a_log,
 		stl::span<const module_pointer> a_modules) const
 	{
-		assert(a_log != nullptr);
-		a_log->critical("PROBABLE CALL STACK:"sv);
+		a_log.critical("PROBABLE CALL STACK:"sv);
 
 		std::vector<const Modules::Module*> moduleStack;
 		moduleStack.reserve(_frames.size());
@@ -126,7 +124,7 @@ namespace Crash
 		for (std::size_t i = 0; i < _frames.size(); ++i) {
 			const auto mod = moduleStack[i];
 			const auto& frame = _frames[i];
-			a_log->critical(
+			a_log.critical(
 				format,
 				i,
 				reinterpret_cast<std::uintptr_t>(frame.address()),
@@ -135,10 +133,9 @@ namespace Crash
 		}
 	}
 
-	void Callstack::print_raw_callstack(std::shared_ptr<spdlog::logger> a_log) const
+	void Callstack::print_raw_callstack(spdlog::logger& a_log) const
 	{
-		assert(a_log != nullptr);
-		a_log->critical("RAW CALL STACK:");
+		a_log.critical("RAW CALL STACK:");
 
 		const auto format =
 			"\t[{:>"s +
@@ -146,7 +143,7 @@ namespace Crash
 			"}] 0x{:X}"s;
 
 		for (std::size_t i = 0; i < _stacktrace.size(); ++i) {
-			a_log->critical(
+			a_log.critical(
 				format,
 				i,
 				reinterpret_cast<std::uintptr_t>(_stacktrace[i].address()));
@@ -163,7 +160,7 @@ namespace Crash
 			}
 
 			const auto time = std::time(nullptr);
-			std::tm localTime;
+			std::tm localTime{};
 			if (gmtime_s(std::addressof(localTime), std::addressof(time)) != 0) {
 				stl::report_and_fail("failed to get current time"sv);
 			}
@@ -173,7 +170,7 @@ namespace Crash
 			*path /= buf.str();
 
 			auto sink = std::make_shared<spdlog::sinks::basic_file_sink_st>(path->string(), true);
-			const auto log = std::make_shared<spdlog::logger>("crash log"s, std::move(sink));
+			auto log = std::make_shared<spdlog::logger>("crash log"s, std::move(sink));
 			log->set_pattern("%v"s);
 			log->set_level(spdlog::level::trace);
 			log->flush_on(spdlog::level::off);
@@ -186,12 +183,10 @@ namespace Crash
 		return " \"" #a_code "\""sv
 
 		void print_exception(
-			std::shared_ptr<spdlog::logger> a_log,
+			spdlog::logger& a_log,
 			const ::EXCEPTION_RECORD& a_exception,
 			stl::span<const module_pointer> a_modules)
 		{
-			assert(a_log != nullptr);
-
 			const auto eptr = a_exception.ExceptionAddress;
 			const auto eaddr = reinterpret_cast<std::uintptr_t>(a_exception.ExceptionAddress);
 
@@ -236,7 +231,7 @@ namespace Crash
 				}
 			}();
 
-			a_log->critical(
+			a_log.critical(
 				FMT_STRING("Unhandled exception{} at 0x{:012X}{}"),
 				exception,
 				eaddr,
@@ -246,11 +241,10 @@ namespace Crash
 #undef EXCEPTION_CASE
 
 		void print_modules(
-			std::shared_ptr<spdlog::logger> a_log,
+			spdlog::logger& a_log,
 			stl::span<const module_pointer> a_modules)
 		{
-			assert(a_log != nullptr);
-			a_log->critical("MODULES:"sv);
+			a_log.critical("MODULES:"sv);
 
 			const auto format = [&]() {
 				const auto width = [&]() {
@@ -270,17 +264,16 @@ namespace Crash
 			}();
 
 			for (const auto& mod : a_modules) {
-				a_log->critical(
+				a_log.critical(
 					format,
 					mod->name(),
 					mod->address());
 			}
 		}
 
-		void print_plugins(std::shared_ptr<spdlog::logger> a_log)
+		void print_plugins(spdlog::logger& a_log)
 		{
-			assert(a_log != nullptr);
-			a_log->critical("PLUGINS:"sv);
+			a_log.critical("PLUGINS:"sv);
 
 			const auto datahandler = RE::TESDataHandler::GetSingleton();
 			if (datahandler) {
@@ -293,7 +286,7 @@ namespace Crash
 				}(smallfiles);
 
 				for (const auto file : files) {
-					a_log->critical(
+					a_log.critical(
 						fileFormat,
 						file->GetCompileIndex(),
 						"",
@@ -301,7 +294,7 @@ namespace Crash
 				}
 
 				for (const auto file : smallfiles) {
-					a_log->critical(
+					a_log.critical(
 						FMT_STRING("\t[FE:{:>03X}] {}"),
 						file->GetSmallFileCompileIndex(),
 						file->GetFilename());
@@ -310,12 +303,11 @@ namespace Crash
 		}
 
 		void print_registers(
-			std::shared_ptr<spdlog::logger> a_log,
+			spdlog::logger& a_log,
 			const ::CONTEXT& a_context,
 			stl::span<const module_pointer> a_modules)
 		{
-			assert(a_log != nullptr);
-			a_log->critical("REGISTERS:"sv);
+			a_log.critical("REGISTERS:"sv);
 
 			const std::array regs{
 				std::make_pair("RAX"sv, a_context.Rax),
@@ -336,14 +328,14 @@ namespace Crash
 				std::make_pair("R15"sv, a_context.R15),
 			};
 
-			std::array<std::size_t, regs.size()> todo;
+			std::array<std::size_t, regs.size()> todo{};
 			for (std::size_t i = 0; i < regs.size(); ++i) {
 				todo[i] = regs[i].second;
 			}
 			const auto analysis = Introspection::analyze_data(todo, a_modules);
 			for (std::size_t i = 0; i < regs.size(); ++i) {
 				const auto& [name, reg] = regs[i];
-				a_log->critical(
+				a_log.critical(
 					FMT_STRING("\t{:<3} 0x{:<16X} {}"),
 					name,
 					reg,
@@ -352,17 +344,16 @@ namespace Crash
 		}
 
 		void print_stack(
-			std::shared_ptr<spdlog::logger> a_log,
+			spdlog::logger& a_log,
 			const ::CONTEXT& a_context,
 			stl::span<const module_pointer> a_modules)
 		{
-			assert(a_log != nullptr);
-			a_log->critical("STACK:"sv);
+			a_log.critical("STACK:"sv);
 
 			const auto tib = reinterpret_cast<const ::NT_TIB*>(::NtCurrentTeb());
 			const auto base = tib ? static_cast<const std::size_t*>(tib->StackBase) : nullptr;
 			if (!base) {
-				a_log->critical("\tFAILED TO READ TIB"sv);
+				a_log.critical("\tFAILED TO READ TIB"sv);
 			} else {
 				const auto rsp = reinterpret_cast<const std::size_t*>(a_context.Rsp);
 				stl::span stack{ rsp, base };
@@ -383,7 +374,7 @@ namespace Crash
 							stack.subspan(off, std::min<std::size_t>(stack.size() - off, blockSize)),
 							a_modules);
 					for (const auto& data : analysis) {
-						a_log->critical(
+						a_log.critical(
 							format,
 							idx * sizeof(std::size_t),
 							stack[idx],
@@ -395,20 +386,19 @@ namespace Crash
 		}
 
 		void print_sysinfo(
-			std::shared_ptr<spdlog::logger> a_log)
+			spdlog::logger& a_log)
 		{
-			assert(a_log != nullptr);
-			a_log->critical("SYSTEM SPECS:"sv);
+			a_log.critical("SYSTEM SPECS:"sv);
 
 			const auto os = iware::system::OS_info();
-			a_log->critical(
+			a_log.critical(
 				FMT_STRING("\tOS: {} v{}.{}.{}"),
 				os.full_name,
 				os.major,
 				os.minor,
 				os.patch);
 
-			a_log->critical(
+			a_log.critical(
 				FMT_STRING("\tCPU: {} {}"),
 				iware::cpu::vendor(),
 				iware::cpu::model_name());
@@ -435,7 +425,7 @@ namespace Crash
 			const auto gpus = iware::gpu::device_properties();
 			for (std::size_t i = 0; i < gpus.size(); ++i) {
 				const auto& gpu = gpus[i];
-				a_log->critical(
+				a_log.critical(
 					FMT_STRING("\tGPU #{}: {} {}"),
 					i + 1,
 					vendor(gpu.vendor),
@@ -448,24 +438,26 @@ namespace Crash
 			};
 
 			const auto mem = iware::system::memory();
-			a_log->critical(
+			a_log.critical(
 				FMT_STRING("\tPHYSICAL MEMORY: {:.02f} GB/{:.02f} GB"),
 				gibibyte(mem.physical_total - mem.physical_available),
 				gibibyte(mem.physical_total));
 		}
 
-#define SETTING_CASE(a_enum, a_type)                                                \
-	case toml::node_type::a_enum:                                                   \
-		if (const auto ptr = dynamic_cast<const AutoTOML::a_type*>(setting); ptr) { \
-			value = fmt::to_string(ptr->get());                                     \
-		}                                                                           \
+#define SETTING_CASE(a_enum, a_type)                                              \
+	case toml::node_type::a_enum:                                                 \
+		{                                                                         \
+			assert(dynamic_cast<const AutoTOML::a_type*>(setting));               \
+			/* NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) */ \
+			const auto ptr = static_cast<const AutoTOML::a_type*>(setting);       \
+			value = fmt::to_string(ptr->get());                                   \
+		}                                                                         \
 		break
 
 		void print_settings(
-			std::shared_ptr<spdlog::logger> a_log)
+			spdlog::logger& a_log)
 		{
-			assert(a_log != nullptr);
-			a_log->critical("SETTINGS:"sv);
+			a_log.critical("SETTINGS:"sv);
 
 			const auto groups = []() {
 				const auto& src = AutoTOML::ISetting::get_settings();
@@ -500,12 +492,15 @@ namespace Crash
 			std::string value;
 			for (const auto& [group, settings] : groups) {
 				assert(!settings.empty());
-				a_log->critical(
+				a_log.critical(
 					FMT_STRING("\t[{}]"),
 					group);
 
 				for (const auto setting : settings) {
-					assert(setting != nullptr);
+					if (!setting) {
+						assert(false);
+						continue;
+					}
 
 					value = "UNKNOWN"sv;
 					switch (setting->type()) {
@@ -513,9 +508,11 @@ namespace Crash
 						SETTING_CASE(floating_point, fSetting);
 						SETTING_CASE(integer, iSetting);
 						SETTING_CASE(string, sSetting);
+					default:
+						break;
 					}
 
-					a_log->critical(
+					a_log.critical(
 						FMT_STRING("\t\t{}: {}"),
 						setting->key(),
 						value);
@@ -528,7 +525,7 @@ namespace Crash
 		std::int32_t __stdcall UnhandledExceptions(::EXCEPTION_POINTERS* a_exception) noexcept
 		{
 #ifndef NDEBUG
-			for (; !WinAPI::IsDebuggerPresent();) {}
+			while (!WinAPI::IsDebuggerPresent()) {}
 #endif
 
 			try {
@@ -536,7 +533,7 @@ namespace Crash
 				std::lock_guard l{ sync };
 
 				const auto modules = Modules::get_loaded_modules();
-				const auto cmodules = stl::make_span(modules.begin(), modules.end());
+				const stl::span cmodules{ modules.begin(), modules.end() };
 				const auto log = get_log();
 
 				const auto print = [&](auto&& a_functor) {
@@ -553,22 +550,24 @@ namespace Crash
 					log->flush();
 				};
 
-				log->critical("v{}", Version::NAME);
+				const auto runtimeVer = REL::Module::get().version();
+				log->critical(FMT_STRING("Fallout 4 v{}.{}.{}"), runtimeVer[0], runtimeVer[1], runtimeVer[2]);
+				log->critical(FMT_STRING("Buffout 4 v{}"), Version::NAME);
 				log->flush();
 
-				print([&]() { print_exception(log, *a_exception->ExceptionRecord, cmodules); });
-				print([&]() { print_settings(log); });
-				print([&]() { print_sysinfo(log); });
+				print([&]() { print_exception(*log, *a_exception->ExceptionRecord, cmodules); });
+				print([&]() { print_settings(*log); });
+				print([&]() { print_sysinfo(*log); });
 
 				print([&]() {
 					const Callstack callstack{ *a_exception->ExceptionRecord };
-					callstack.print(log, cmodules);
+					callstack.print(*log, cmodules);
 				});
 
-				print([&]() { print_registers(log, *a_exception->ContextRecord, cmodules); });
-				print([&]() { print_stack(log, *a_exception->ContextRecord, cmodules); });
-				print([&]() { print_modules(log, cmodules); });
-				print([&]() { print_plugins(log); });
+				print([&]() { print_registers(*log, *a_exception->ContextRecord, cmodules); });
+				print([&]() { print_stack(*log, *a_exception->ContextRecord, cmodules); });
+				print([&]() { print_modules(*log, cmodules); });
+				print([&]() { print_plugins(*log); });
 			} catch (...) {}
 
 			WinAPI::TerminateProcess(

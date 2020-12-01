@@ -4,6 +4,8 @@
 
 namespace Crash::Introspection::F4
 {
+	using filter_results = std::vector<std::pair<std::string, std::string>>;
+
 	namespace BSResource
 	{
 		class LooseFileStreamBase
@@ -12,7 +14,7 @@ namespace Crash::Introspection::F4
 			using value_type = RE::BSResource::LooseFileStreamBase;
 
 			static void filter(
-				std::vector<std::pair<std::string, std::string>>& a_results,
+				filter_results& a_results,
 				const void* a_ptr) noexcept
 			{
 				const auto stream = static_cast<const value_type*>(a_ptr);
@@ -51,7 +53,7 @@ namespace Crash::Introspection::F4
 				using value_type = RE::BSScript::NF_util::NativeFunctionBase;
 
 				static void filter(
-					std::vector<std::pair<std::string, std::string>>& a_results,
+					filter_results& a_results,
 					const void* a_ptr) noexcept
 				{
 					const auto function = static_cast<const value_type*>(a_ptr);
@@ -88,13 +90,13 @@ namespace Crash::Introspection::F4
 			using value_type = RE::BSScript::ObjectTypeInfo;
 
 			static void filter(
-				std::vector<std::pair<std::string, std::string>>& a_results,
+				filter_results& a_results,
 				const void* a_ptr) noexcept
 			{
 				const auto info = static_cast<const value_type*>(a_ptr);
 
 				try {
-					const auto name = info->GetName();
+					const std::string_view name = info->name;
 					a_results.emplace_back(
 						"Name"sv,
 						name);
@@ -109,7 +111,7 @@ namespace Crash::Introspection::F4
 		using value_type = RE::NiObjectNET;
 
 		static void filter(
-			std::vector<std::pair<std::string, std::string>>& a_results,
+			filter_results& a_results,
 			const void* a_ptr) noexcept
 		{
 			const auto object = static_cast<const value_type*>(a_ptr);
@@ -129,7 +131,7 @@ namespace Crash::Introspection::F4
 		using value_type = RE::NiStream;
 
 		static void filter(
-			std::vector<std::pair<std::string, std::string>>& a_results,
+			filter_results& a_results,
 			const void* a_ptr) noexcept
 		{
 			const auto stream = static_cast<const value_type*>(a_ptr);
@@ -149,7 +151,7 @@ namespace Crash::Introspection::F4
 		using value_type = RE::NiTexture;
 
 		static void filter(
-			std::vector<std::pair<std::string, std::string>>& a_results,
+			filter_results& a_results,
 			const void* a_ptr) noexcept
 		{
 			const auto texture = static_cast<const value_type*>(a_ptr);
@@ -169,7 +171,7 @@ namespace Crash::Introspection::F4
 		using value_type = RE::TESForm;
 
 		static void filter(
-			std::vector<std::pair<std::string, std::string>>& a_results,
+			filter_results& a_results,
 			const void* a_ptr) noexcept
 		{
 			const auto form = static_cast<const value_type*>(a_ptr);
@@ -208,7 +210,7 @@ namespace Crash::Introspection::F4
 		using value_type = RE::TESFullName;
 
 		static void filter(
-			std::vector<std::pair<std::string, std::string>>& a_results,
+			filter_results& a_results,
 			const void* a_ptr) noexcept
 		{
 			const auto component = static_cast<const value_type*>(a_ptr);
@@ -218,6 +220,40 @@ namespace Crash::Introspection::F4
 				a_results.emplace_back(
 					"Full Name"sv,
 					fullName);
+			} catch (...) {}
+		}
+	};
+
+	class TESObjectREFR
+	{
+	public:
+		using value_type = RE::TESObjectREFR;
+
+		static void filter(
+			filter_results& a_results,
+			const void* a_ptr) noexcept
+		{
+			const auto ref = static_cast<const value_type*>(a_ptr);
+
+			try {
+				const auto objRef = ref->data.objectReference;
+				if (objRef) {
+					filter_results xResults;
+					TESForm::filter(xResults, objRef);
+
+					a_results.emplace_back(
+						"Object Reference"sv,
+						""sv);
+					for (auto& [key, value] : xResults) {
+						a_results.emplace_back(
+							fmt::format(FMT_STRING("\t{}"), key),
+							std::move(value));
+					}
+				} else {
+					a_results.emplace_back(
+						"Object Reference"sv,
+						"None"sv);
+				}
 			} catch (...) {}
 		}
 	};
@@ -241,13 +277,26 @@ namespace Crash::Introspection
 
 	namespace detail
 	{
-		class Integer
+		class IType
 		{
 		public:
-			[[nodiscard]] std::string name() const { return "(size_t)"s; }
+			virtual ~IType() = default;
+
+			[[nodiscard]] std::string name() const { return get_name(); }
+
+		protected:
+			[[nodiscard]] virtual std::string get_name() const = 0;
 		};
 
-		class Pointer
+		class Integer :
+			public IType
+		{
+		protected:
+			[[nodiscard]] std::string get_name() const override { return "(size_t)"s; }  // NOLINT(readability-convert-member-functions-to-static)
+		};
+
+		class Pointer :
+			public IType
 		{
 		public:
 			Pointer() noexcept = default;
@@ -260,7 +309,8 @@ namespace Crash::Introspection
 				}
 			}
 
-			[[nodiscard]] std::string name() const
+		protected:
+			[[nodiscard]] std::string get_name() const override
 			{
 				if (_module) {
 					const auto address = reinterpret_cast<std::uintptr_t>(_ptr);
@@ -278,16 +328,19 @@ namespace Crash::Introspection
 			const void* _ptr{ nullptr };
 		};
 
-		class Polymorphic
+		class Polymorphic :
+			public IType
 		{
 		public:
-			Polymorphic(std::string_view a_mangled) noexcept :
+			explicit Polymorphic(std::string_view a_mangled) noexcept :
 				_mangled{ a_mangled }
 			{
+				// NOLINTNEXTLINE(readability-simplify-subscript-expr)
 				assert(_mangled.size() > 1 && _mangled.data()[_mangled.size()] == '\0');
 			}
 
-			[[nodiscard]] std::string name() const
+		protected:
+			[[nodiscard]] std::string get_name() const override
 			{
 				const auto demangle = [](const char* a_in, char* a_out, std::uint32_t a_size) {
 					static std::mutex m;
@@ -309,7 +362,7 @@ namespace Crash::Introspection
 							static_cast<std::uint32_t>(0x8000));  // Disable enum/class/struct/union prefix
 				};
 
-				std::array<char, 0x1000> buf;
+				std::array<char, 0x1000> buf{ '\0' };
 				const auto len = demangle(
 					_mangled.data() + 1,
 					buf.data(),
@@ -328,7 +381,8 @@ namespace Crash::Introspection
 			std::string_view _mangled;
 		};
 
-		class F4Polymorphic
+		class F4Polymorphic :
+			public IType
 		{
 		public:
 			F4Polymorphic(
@@ -343,10 +397,11 @@ namespace Crash::Introspection
 				assert(_ptr != nullptr);
 			}
 
-			[[nodiscard]] std::string name() const
+		protected:
+			[[nodiscard]] std::string get_name() const override
 			{
 				auto result = _poly.name();
-				std::vector<std::pair<std::string, std::string>> xInfo;
+				F4::filter_results xInfo;
 
 				const auto moduleBase = REL::Module::get().base();
 				const auto hierarchy = _col->classDescriptor.get();
@@ -364,12 +419,6 @@ namespace Crash::Introspection
 				}
 
 				if (!xInfo.empty()) {
-					std::sort(
-						xInfo.begin(),
-						xInfo.end(),
-						[](auto&& a_lhs, auto&& a_rhs) {
-							return a_lhs.first < a_rhs.first;
-						});
 					for (const auto& [key, value] : xInfo) {
 						result += fmt::format(
 							FMT_STRING("\n\t\t{}: {}"),
@@ -391,6 +440,7 @@ namespace Crash::Introspection
 				std::make_pair(".?AVNiTexture@@"sv, F4::NiTexture::filter),
 				std::make_pair(".?AVTESForm@@"sv, F4::TESForm::filter),
 				std::make_pair(".?AVTESFullName@@"sv, F4::TESFullName::filter),
+				std::make_pair(".?AVTESObjectREFR@@"sv, F4::TESObjectREFR::filter),
 			});
 
 			Polymorphic _poly;
@@ -398,51 +448,192 @@ namespace Crash::Introspection
 			const void* _ptr{ nullptr };
 		};
 
-		using analysis_result =
-			std::variant<
-				Integer,
-				Pointer,
-				Polymorphic,
-				F4Polymorphic>;
+		class String :
+			public IType
+		{
+		public:
+			String(std::string_view a_str) noexcept :
+				_str(a_str)
+			{}
 
-		[[nodiscard]] auto analyze_pointer(
+		protected:
+			[[nodiscard]] std::string get_name() const override
+			{
+				return fmt::format(
+					FMT_STRING("(char*) \"{}\""),
+					_str);
+			}
+
+		private:
+			std::string_view _str;
+		};
+
+		template <class...>
+		struct largest_of;
+
+		template <class Last>
+		struct largest_of<Last>
+		{
+			static constexpr std::size_t value = sizeof(Last);
+		};
+
+		template <class First, class Second, class... Rest>
+		struct largest_of<First, Second, Rest...>
+		{
+			static constexpr std::size_t value =
+				largest_of<
+					std::conditional_t<
+						(sizeof(First) >= sizeof(Second)),
+						First,
+						Second>,
+					Rest...>::value;
+		};
+
+		template <class... Args>
+		inline constexpr std::size_t largest_of_v = largest_of<Args...>::value;
+
+		template <class... Args>
+		struct aligned_storage_for
+		{
+			alignas(Args...) std::byte c[largest_of_v<Args...>]{};
+			bool free{ true };
+		};
+
+		using analysis_storage = aligned_storage_for<
+			Integer,
+			Pointer,
+			Polymorphic,
+			F4Polymorphic,
+			String>;
+
+		[[nodiscard]] analysis_storage& get_analysis_storage() noexcept
+		{
+			thread_local analysis_storage storage;
+			return storage;
+		}
+
+		struct storage_deleter
+		{
+			void operator()(IType* a_type)
+			{
+				auto& storage = get_analysis_storage();
+				assert(!storage.free);
+				std::destroy_at(a_type);
+				storage.free = true;
+			}
+		};
+
+		using analysis_result = std::unique_ptr<IType, storage_deleter>;
+
+		template <class T, class... Args>
+		[[nodiscard]] analysis_result make_result(Args&&... a_args)
+		{
+			auto& storage = get_analysis_storage();
+			assert(storage.free);
+			const auto ptr = std::construct_at(
+				reinterpret_cast<T*>(storage.c),
+				std::forward<Args>(a_args)...);
+			storage.free = false;
+
+			static_assert(sizeof(T) <= std::extent_v<decltype(storage.c)>);
+			static_assert(std::is_base_of_v<IType, T>);
+
+			return analysis_result{ ptr };
+		}
+
+		[[nodiscard]] auto analyze_polymorphic(
 			void* a_ptr,
 			stl::span<const module_pointer> a_modules) noexcept
-			-> analysis_result
+			-> std::optional<analysis_result>
 		{
 			try {
 				const auto vtable = *reinterpret_cast<void**>(a_ptr);
 				const auto mod = get_module_for_pointer(vtable, a_modules);
 				if (!mod || !mod->in_rdata_range(vtable)) {
-					return Pointer{ a_ptr, a_modules };
+					return std::nullopt;
 				}
 
 				const auto col =
 					*reinterpret_cast<RE::RTTI::CompleteObjectLocator**>(
 						reinterpret_cast<std::size_t*>(vtable) - 1);
 				if (mod != get_module_for_pointer(col, a_modules) || !mod->in_rdata_range(col)) {
-					return Pointer{ a_ptr, a_modules };
+					return std::nullopt;
 				}
 
 				const auto typeDesc =
 					reinterpret_cast<RE::RTTI::TypeDescriptor*>(
 						mod->address() + col->typeDescriptor.offset());
 				if (mod != get_module_for_pointer(typeDesc, a_modules) || !mod->in_data_range(typeDesc)) {
-					return Pointer{ a_ptr, a_modules };
+					return std::nullopt;
 				}
 
 				if (*reinterpret_cast<const void**>(typeDesc) != mod->type_info()) {
-					return Pointer{ a_ptr, a_modules };
+					return std::nullopt;
 				}
 
-				if (_stricmp(mod->name().data(), "Fallout4.exe") == 0) {
-					return F4Polymorphic{ typeDesc->mangled_name(), col, a_ptr };
+				if (_stricmp(mod->name().data(), util::module_name().c_str()) == 0) {
+					return make_result<F4Polymorphic>(typeDesc->mangled_name(), col, a_ptr);
 				} else {
-					return Polymorphic{ typeDesc->mangled_name() };
+					return make_result<Polymorphic>(typeDesc->mangled_name());
 				}
 			} catch (...) {
-				return Pointer{ a_ptr, a_modules };
+				return std::nullopt;
 			}
+		}
+
+		[[nodiscard]] auto analyze_string(void* a_ptr) noexcept
+			-> std::optional<analysis_result>
+		{
+			try {
+				const auto printable = [](char a_ch) noexcept {
+					if (' ' <= a_ch && a_ch <= '~') {
+						return true;
+					} else {
+						switch (a_ch) {
+						case '\t':
+						case '\n':
+							return true;
+						default:
+							return false;
+						}
+					}
+				};
+
+				const auto str = static_cast<const char*>(a_ptr);
+				constexpr std::size_t max = 1000;
+				std::size_t len = 0;
+				for (; len < max && str[len] != '\0'; ++len) {
+					if (!printable(str[len])) {
+						return std::nullopt;
+					}
+				}
+
+				if (len == 0 || len >= max) {
+					return std::nullopt;
+				}
+
+				return make_result<String>(std::string_view{ str, len });
+			} catch (...) {
+				return std::nullopt;
+			}
+		}
+
+		[[nodiscard]] auto analyze_pointer(
+			void* a_ptr,
+			stl::span<const module_pointer> a_modules) noexcept
+			-> analysis_result
+		{
+			auto poly = analyze_polymorphic(a_ptr, a_modules);
+			if (poly) {
+				return *std::move(poly);
+			}
+
+			auto str = analyze_string(a_ptr);
+			if (str) {
+				return *std::move(str);
+			}
+
+			return make_result<Pointer>(a_ptr, a_modules);
 		}
 
 		[[nodiscard]] auto analyze_integer(
@@ -454,12 +645,10 @@ namespace Crash::Introspection
 				if (a_value != 0) {
 					*reinterpret_cast<const volatile std::byte*>(a_value);
 					return analyze_pointer(reinterpret_cast<void*>(a_value), a_modules);
-				} else {
-					return Integer{};
 				}
-			} catch (...) {
-				return Integer{};
-			}
+			} catch (...) {}
+
+			return make_result<Integer>();
 		}
 	}
 
@@ -470,16 +659,13 @@ namespace Crash::Introspection
 		std::vector<std::string> results;
 		results.resize(a_data.size());
 		std::for_each(
-			std::execution::parallel_unsequenced_policy{},
+			std::execution::par_unseq,
 			a_data.begin(),
 			a_data.end(),
 			[&](auto& a_val) {
 				const auto result = detail::analyze_integer(a_val, a_modules);
 				const auto pos = std::addressof(a_val) - a_data.data();
-				results[pos] =
-					std::visit(
-						[](auto&& a_val) { return a_val.name(); },
-						result);
+				results[pos] = result->name();
 			});
 		return results;
 	}

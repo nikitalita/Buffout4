@@ -67,9 +67,9 @@ namespace Crash::Modules
 			[[nodiscard]] const void* get() const noexcept { return _vtable; }
 
 		private:
-			[[nodiscard]] auto type_descriptor(
+			[[nodiscard]] static auto type_descriptor(
 				std::string_view a_name,
-				stl::span<const std::byte> a_data) const
+				stl::span<const std::byte> a_data)
 				-> const RE::RTTI::TypeDescriptor*
 			{
 				constexpr std::size_t offset = 0x10;  // offset of name into type descriptor
@@ -82,10 +82,10 @@ namespace Crash::Modules
                            nullptr;
 			}
 
-			[[nodiscard]] auto complete_object_locator(
+			[[nodiscard]] static auto complete_object_locator(
 				const RE::RTTI::TypeDescriptor* a_typeDesc,
 				stl::span<const std::byte> a_module,
-				stl::span<const std::byte> a_rdata) const
+				stl::span<const std::byte> a_rdata)
 				-> const RE::RTTI::CompleteObjectLocator*
 			{
 				assert(a_typeDesc != nullptr);
@@ -119,9 +119,9 @@ namespace Crash::Modules
 				return nullptr;
 			}
 
-			[[nodiscard]] const void* virtual_table(
+			[[nodiscard]] static const void* virtual_table(
 				const RE::RTTI::CompleteObjectLocator* a_col,
-				stl::span<const std::byte> a_rdata) const
+				stl::span<const std::byte> a_rdata)
 			{
 				assert(a_col != nullptr);
 
@@ -186,9 +186,9 @@ namespace Crash::Modules
 			{
 				using result_t = std::unique_ptr<Module>;
 
-				const auto name = get_name(a_module);
+				auto name = get_name(a_module);
 				const auto image = get_image(a_module);
-				if (_stricmp(name.c_str(), "Fallout4.exe") == 0) {
+				if (_stricmp(name.c_str(), util::module_name().c_str()) == 0) {
 					return result_t{ new Fallout4(std::move(name), image) };
 				} else {
 					return result_t{ new Module(std::move(name), image) };
@@ -205,13 +205,13 @@ namespace Crash::Modules
 
 			[[nodiscard]] static std::string get_name(::HMODULE a_module)
 			{
-				std::vector<char> buf;
+				std::vector<wchar_t> buf;
 				buf.reserve(MAX_PATH);
 				buf.resize(MAX_PATH / 2);
 				std::uint32_t result = 0;
 				do {
 					buf.resize(buf.size() * 2);
-					result = ::GetModuleFileNameA(
+					result = ::GetModuleFileNameW(
 						a_module,
 						buf.data(),
 						static_cast<std::uint32_t>(buf.size()));

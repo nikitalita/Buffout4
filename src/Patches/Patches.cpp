@@ -31,7 +31,7 @@ namespace Patches
 			HavokMemorySystemPatch::Install();
 		}
 
-		if (*Settings::MemoryManager) {
+		if (*Settings::MemoryManager || *Settings::MemoryManagerDebug) {
 			MemoryManagerPatch::Install();
 		}
 

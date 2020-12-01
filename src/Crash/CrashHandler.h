@@ -16,11 +16,11 @@ namespace Crash
 
 		Callstack(boost::stacktrace::stacktrace a_stacktrace) :
 			_stacktrace{ std::move(a_stacktrace) },
-			_frames{ stl::make_span(_stacktrace.begin(), _stacktrace.end()) }
+			_frames{ _stacktrace.begin(), _stacktrace.end() }
 		{}
 
 		void print(
-			std::shared_ptr<spdlog::logger> a_log,
+			spdlog::logger& a_log,
 			stl::span<const std::unique_ptr<Modules::Module>> a_modules) const;
 
 	private:
@@ -29,10 +29,10 @@ namespace Crash
 		[[nodiscard]] std::string get_format(std::size_t a_nameWidth) const;
 
 		void print_probable_callstack(
-			std::shared_ptr<spdlog::logger> a_log,
+			spdlog::logger& a_log,
 			stl::span<const std::unique_ptr<Modules::Module>> a_modules) const;
 
-		void print_raw_callstack(std::shared_ptr<spdlog::logger> a_log) const;
+		void print_raw_callstack(spdlog::logger& a_log) const;
 
 		boost::stacktrace::stacktrace _stacktrace;
 		stl::span<const boost::stacktrace::frame> _frames;

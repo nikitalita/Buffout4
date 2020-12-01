@@ -29,7 +29,9 @@
 #pragma warning(disable: 4706)  // assignment within conditional expression
 #include <boost/algorithm/searching/knuth_morris_pratt.hpp>
 #include <boost/container/map.hpp>
+#include <boost/nowide/convert.hpp>
 #include <boost/stacktrace.hpp>
+#include <botan/hash.h>
 #include <fmt/chrono.h>
 #include <frozen/map.h>
 #include <infoware/cpu.hpp>
@@ -127,45 +129,16 @@ namespace stl
 	using F4SE::util::adjust_pointer;
 	using F4SE::util::emplace_vtable;
 
-	template <class, class = void>
-	struct iter_reference;
-
-	template <class T>
-	struct iter_reference<
-		T,
-		std::void_t<
-			decltype(*std::declval<T&>())>>
-	{
-		using type = decltype(*std::declval<T&>());
-	};
-
-	template <class T>
-	using iter_reference_t = typename iter_reference<T>::type;
-
-	template <
-		class It,
-		class End,
-		std::enable_if_t<
-			std::conjunction_v<
-				std::is_base_of<
-					std::random_access_iterator_tag,
-					typename std::iterator_traits<It>::iterator_category>,
-				std::negation<
-					std::is_convertible<End, std::size_t>>>,
-			int> = 0>
-	[[nodiscard]] auto make_span(It a_first, End a_last)
-		-> span<
-			std::remove_reference_t<
-				iter_reference_t<It>>>
-	{
-		if (a_first != a_last) {
-			return { std::addressof(*a_first), static_cast<std::size_t>(a_last - a_first) };
-		} else {
-			return {};
-		}
-	}
-
 	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
+}
+
+namespace util
+{
+	[[nodiscard]] inline std::string module_name()
+	{
+		const auto filename = REL::Module::get().filename();
+		return boost::nowide::narrow(filename.data(), filename.length());
+	}
 }
 
 using namespace std::literals;

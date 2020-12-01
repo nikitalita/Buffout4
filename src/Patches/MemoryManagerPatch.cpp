@@ -121,8 +121,8 @@ namespace Patches
 			Crash::Callstack callstack{ std::move(it->second.second) };
 			const auto modules = Crash::Modules::get_loaded_modules();
 			callstack.print(
-				log,
-				stl::make_span(modules.begin(), modules.end()));
+				*log,
+				stl::span{ modules.begin(), modules.end() });
 
 			log->flush();
 			stl::report_and_fail("A bad deallocation has resulted in a crash. Please see Buffout4.log for more details."sv);

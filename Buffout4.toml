@@ -22,3 +22,6 @@ SmallBlockAllocator = true        # Replaces the small block memory allocators w
 [Warnings]
 CreateTexture2D = true   # Warns when a call to CreateTexture2D fails
 ImageSpaceAdapter = true # Warns on bad IMAD definitions which will corrupt your memory and crash your game
+
+[Compatibility]
+F4EE = false # Patches various LooksMenu bugs

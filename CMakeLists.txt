@@ -1,71 +1,17 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.19)
 
 # ---- Cache build vars ----
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "")
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-set(VCPKG_OVERLAY_TRIPLETS "triplets" CACHE STRING "")
-set(VCPKG_TARGET_TRIPLET "x64-windows-static-custom" CACHE STRING "")
-
-set(MY_CXX_FLAGS "")
-string(
-	APPEND
-	MY_CXX_FLAGS
-)
-string(STRIP "${MY_CXX_FLAGS}" MY_CXX_FLAGS)
-set(VCPKG_CXX_FLAGS "${MY_CXX_FLAGS}" CACHE STRING "" FORCE)
-
-set(MY_CXX_FLAGS_DEBUG "")
-string(
-	APPEND
-	MY_CXX_FLAGS_DEBUG
-	
-	" /JMC "	# Just My Code debugging
-	" /Zc:inline- "	# Keep unreferenced COMDAT
-)
-string(STRIP "${MY_CXX_FLAGS_DEBUG}" MY_CXX_FLAGS_DEBUG)
-set(VCPKG_CXX_FLAGS_DEBUG "${MY_CXX_FLAGS_DEBUG}" CACHE STRING "" FORCE)
-
-set(MY_CXX_FLAGS_RELEASE "")
-string(
-	APPEND
-	MY_CXX_FLAGS_RELEASE
-	
-	" /JMC- "	# Disable Just My Code debugging
-	" /Ob3 "	# Inline Function Expansion
-	" /Zc:inline "	# Remove unreferenced COMDAT
-)
-string(STRIP "${MY_CXX_FLAGS_RELEASE}" MY_CXX_FLAGS_RELEASE)
-set(VCPKG_CXX_FLAGS_RELEASE "${MY_CXX_FLAGS_RELEASE}" CACHE STRING "" FORCE)
-
-set(MY_LINKER_FLAGS_DEBUG "")
-string(
-	APPEND
-	MY_LINKER_FLAGS_DEBUG
-	
-	" /INCREMENTAL "	# Link Incrementally
-	" /OPT:NOICF "	# Optimizations (prevent identical COMDAT folding)
-	" /OPT:NOREF "	# Optimizations (keep functions/data never referenced)
-)
-string(STRIP "${MY_LINKER_FLAGS_DEBUG}" MY_LINKER_FLAGS_DEBUG)
-set(VCPKG_LINKER_FLAGS_DEBUG "${MY_LINKER_FLAGS_DEBUG}" CACHE STRING "" FORCE)
-
-set(MY_LINKER_FLAGS_RELEASE "")
-string(
-	APPEND
-	MY_LINKER_FLAGS_RELEASE
-	
-	" /INCREMENTAL:NO "	# Link Incrementally
-	" /OPT:ICF "	# Optimizations (perform identical COMDAT folding)
-	" /OPT:REF "	# Optimizations (eliminate functions/data never referenced)
-)
-string(STRIP "${MY_LINKER_FLAGS_RELEASE}" MY_LINKER_FLAGS_RELEASE)
-set(VCPKG_LINKER_FLAGS_RELEASE "${MY_LINKER_FLAGS_RELEASE}" CACHE STRING "" FORCE)
+set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/triplets" CACHE STRING "")
+set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-custom" CACHE STRING "")
 
 # ---- Project ----
 
 project(
 	Buffout4
-	VERSION 1.17.1
+	VERSION 1.18.0
 	LANGUAGES CXX
 )
 
@@ -106,7 +52,6 @@ if (MSVC)
 	string(REPLACE " " ";" MY_CXX_FLAGS_RELEASE "${VCPKG_CXX_FLAGS_RELEASE}")
 	
 	add_compile_options(
-		/EHa	# Enables standard C++ stack unwinding. Catches synchronous/asynchronous with catch(...) syntax
 		/MP	# Build with Multiple Processes
 		/sdl	# Enable Additional Security Checks
 		/Zi	# Debug Information Format
@@ -144,11 +89,14 @@ if (MSVC)
 		
 		${MY_CXX_FLAGS}
 		"$<$<CONFIG:DEBUG>:${MY_CXX_FLAGS_DEBUG}>"
-		"$<$<CONFIG:RELEASE>:${MY_CXX_FLAGS_RELEASE}>"
+		"$<$<CONFIG:RELEASE>:${MY_CXX_FLAGS_RELEASE};/Zc:inline;/JMC->"
 	)
-	
+		
 	# fix a warning with /Ob2 being overridden with /Ob3
-	string(REPLACE "/Ob2" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+	string(REPLACE "/Ob2" "/Ob3" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+	
+	# fix a warning with /EHsc being overridden with /EHa
+	string(REPLACE "/EHsc" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
 # ---- Dependencies ----
@@ -158,7 +106,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_DEBUG_RUNTIME ON)
 
 add_subdirectory($ENV{CommonLibF4Path} CommonLibF4)
@@ -166,6 +114,7 @@ add_subdirectory($ENV{CommonLibF4Path} CommonLibF4)
 find_package(Boost
 	REQUIRED
 	COMPONENTS
+		nowide
 		stacktrace_windbg
 )
 find_package(fmt REQUIRED CONFIG)
@@ -180,8 +129,8 @@ find_package(TBB
 )
 find_package(tomlplusplus REQUIRED CONFIG)
 
-find_path(ROBIN_HOOD_HASHING_INCLUDE_DIRS "robin_hood.h")
-find_path(XBYAK_INCLUDE_DIRS "xbyak/xbyak.h")
+find_path(ROBIN_HOOD_HASHING_INCLUDE_DIRS "robin_hood.h" REQUIRED)
+find_path(XBYAK_INCLUDE_DIRS "xbyak/xbyak.h" REQUIRED)
 
 # ---- Add source files ----
 
@@ -221,25 +170,14 @@ set_property(
 		${PROJECT_NAME}
 		CommonLibF4
 	PROPERTY
-		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
 )
 
 target_compile_features(
 	${PROJECT_NAME}
-	PUBLIC
-		cxx_std_17
+	PRIVATE
+		cxx_std_20
 )
-
-if (MSVC)
-	target_compile_options(
-		${PROJECT_NAME}
-		PRIVATE
-			/TP	# Specify Source File Type (C++)
-			
-			# disable warnings
-			/wd4324 # 'struct_name' : structure was padded due to __declspec(align())
-	)
-endif()
 
 target_include_directories(
 	${PROJECT_NAME}
@@ -252,10 +190,12 @@ target_include_directories(
 )
 
 target_link_libraries(${PROJECT_NAME}
-	PUBLIC
+	PRIVATE
 		Boost::headers
+		Boost::nowide
 		Boost::stacktrace_windbg
-		CommonLibF4
+		"${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:DEBUG>:debug/>lib/botan.lib"
+		CommonLibF4::CommonLibF4
 		Dbghelp.lib
 		fmt::fmt
 		frozen::frozen
@@ -266,14 +206,18 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 if (MSVC)
-	string(REPLACE " " ";" MY_LINKER_FLAGS_DEBUG "${VCPKG_LINKER_FLAGS_DEBUG}")
-	string(REPLACE " " ";" MY_LINKER_FLAGS_RELEASE "${VCPKG_LINKER_FLAGS_RELEASE}")
+	target_compile_options(
+		${PROJECT_NAME}
+		PRIVATE			
+			# disable warnings
+			/wd4324 # 'struct_name' : structure was padded due to __declspec(align())
+	)
 	
 	target_link_options(
 		${PROJECT_NAME}
 		PRIVATE
-			"$<$<CONFIG:DEBUG>:${MY_LINKER_FLAGS_DEBUG}>"
-			"$<$<CONFIG:RELEASE>:${MY_LINKER_FLAGS_RELEASE};/DEBUG:FULL>"
+			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
+			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL>"
 	)
 endif()
 
@@ -283,7 +227,7 @@ target_precompile_headers(
 		src/PCH.h
 )
 
-# ---- Post build ----
+# ---- File copying ----
 
 add_custom_command(
 	TARGET ${PROJECT_NAME}

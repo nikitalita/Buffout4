@@ -3,7 +3,9 @@
 * [Boost](https://www.boost.org/)
 	* Algorithm
 	* Container
+	* Nowide
 	* Stacktrace
+* [Botan](https://github.com/randombit/botan)
 * [CommonLibF4](https://github.com/Ryan-rsm-McKenzie/CommonLibF4)
 * [fmt](https://github.com/fmtlib/fmt)
 * [Frozen](https://github.com/serge-sans-paille/frozen)
