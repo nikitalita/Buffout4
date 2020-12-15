@@ -116,15 +116,23 @@ namespace Patches
 			log->set_pattern("%v"s);
 			log->set_level(spdlog::level::trace);
 			log->flush_on(spdlog::level::off);
-			log->critical("");
 
-			Crash::Callstack callstack{ std::move(it->second.second) };
 			const auto modules = Crash::Modules::get_loaded_modules();
-			callstack.print(
-				*log,
-				stl::span{ modules.begin(), modules.end() });
+			std::array stacktraces{
+				std::move(it->second.second),
+				boost::stacktrace::stacktrace{}
+			};
 
-			log->flush();
+			for (auto& trace : stacktraces) {
+				Crash::Callstack callstack{ std::move(trace) };
+
+				log->critical("");
+				callstack.print(
+					*log,
+					stl::span{ modules.begin(), modules.end() });
+				log->flush();
+			}
+
 			stl::report_and_fail("A bad deallocation has resulted in a crash. Please see Buffout4.log for more details."sv);
 		} else {
 			Deallocate(a_this, a_mem, a_alignmentRequired);

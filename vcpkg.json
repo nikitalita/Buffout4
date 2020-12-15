@@ -5,6 +5,7 @@
   "homepage": "https://github.com/Ryan-rsm-McKenzie/Buffout4",
   "license": "MIT",
   "dependencies": [
+    "autotoml",
     "boost-algorithm",
     "boost-atomic",
     "boost-container",
@@ -27,7 +28,6 @@
     "span-lite",
     "spdlog",
     "tbb",
-    "tomlplusplus",
     "xbyak"
   ]
 }

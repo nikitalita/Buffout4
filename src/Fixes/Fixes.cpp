@@ -3,7 +3,7 @@
 #include "Fixes/ActorIsHostileToActorFix.h"
 #include "Fixes/CellInitFix.h"
 #include "Fixes/EncounterZoneResetFix.h"
-#include "Fixes/FaderMenuFix.h"
+#include "Fixes/GreyMovies.h"
 #include "Fixes/MovementPlannerFix.h"
 #include "Fixes/PackageAllocateLocationFix.h"
 #include "Fixes/SafeExit.h"
@@ -24,8 +24,8 @@ namespace Fixes
 			CellInitFix::Install();
 		}
 
-		if (*Settings::FaderMenu) {
-			FaderMenuFix::Install();
+		if (*Settings::GreyMovies) {
+			GreyMovies::Install();
 		}
 
 		if (*Settings::MovementPlanner) {

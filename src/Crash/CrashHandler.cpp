@@ -497,10 +497,7 @@ namespace Crash
 					group);
 
 				for (const auto setting : settings) {
-					if (!setting) {
-						assert(false);
-						continue;
-					}
+					assert(setting != nullptr);
 
 					value = "UNKNOWN"sv;
 					switch (setting->type()) {

@@ -6,6 +6,13 @@ namespace Crash::Introspection::F4
 {
 	using filter_results = std::vector<std::pair<std::string, std::string>>;
 
+	[[nodiscard]] std::string quoted(std::string_view a_str)
+	{
+		return fmt::format(
+			FMT_STRING("\"{}\""),
+			a_str);
+	}
+
 	namespace BSResource
 	{
 		class LooseFileStreamBase
@@ -62,14 +69,14 @@ namespace Crash::Introspection::F4
 						const std::string_view name = function->name;
 						a_results.emplace_back(
 							"Function"sv,
-							name);
+							quoted(name));
 					} catch (...) {}
 
 					try {
 						const std::string_view objName = function->objName;
 						a_results.emplace_back(
 							"Object"sv,
-							objName);
+							quoted(objName));
 					} catch (...) {}
 
 					try {
@@ -77,7 +84,7 @@ namespace Crash::Introspection::F4
 						if (!stateName.empty()) {
 							a_results.emplace_back(
 								"State"sv,
-								stateName);
+								quoted(stateName));
 						}
 					} catch (...) {}
 				}
@@ -99,7 +106,7 @@ namespace Crash::Introspection::F4
 					const std::string_view name = info->name;
 					a_results.emplace_back(
 						"Name"sv,
-						name);
+						quoted(name));
 				} catch (...) {}
 			}
 		};
@@ -120,7 +127,7 @@ namespace Crash::Introspection::F4
 				const auto name = object->GetName();
 				a_results.emplace_back(
 					"Name"sv,
-					name);
+					quoted(name));
 			} catch (...) {}
 		}
 	};
@@ -140,7 +147,7 @@ namespace Crash::Introspection::F4
 				const auto fileName = stream->GetFileName();
 				a_results.emplace_back(
 					"File Name"sv,
-					fileName);
+					quoted(fileName));
 			} catch (...) {}
 		}
 	};
@@ -160,7 +167,7 @@ namespace Crash::Introspection::F4
 				const auto name = texture->GetName();
 				a_results.emplace_back(
 					"Name"sv,
-					name);
+					quoted(name));
 			} catch (...) {}
 		}
 	};
@@ -181,7 +188,7 @@ namespace Crash::Introspection::F4
 				const auto filename = file ? file->GetFilename() : ""sv;
 				a_results.emplace_back(
 					"File"sv,
-					filename);
+					quoted(filename));
 			} catch (...) {}
 
 			try {
@@ -201,6 +208,15 @@ namespace Crash::Introspection::F4
 						FMT_STRING("0x{:08X}"),
 						formID));
 			} catch (...) {}
+
+			try {
+				const auto formType = form->GetFormType();
+				a_results.emplace_back(
+					"Form Type"sv,
+					fmt::format(
+						FMT_STRING("{:02}"),
+						formType));
+			} catch (...) {}
 		}
 	};
 
@@ -219,7 +235,7 @@ namespace Crash::Introspection::F4
 				const auto fullName = component->GetFullName();
 				a_results.emplace_back(
 					"Full Name"sv,
-					fullName);
+					quoted(fullName));
 			} catch (...) {}
 		}
 	};
@@ -277,26 +293,13 @@ namespace Crash::Introspection
 
 	namespace detail
 	{
-		class IType
+		class Integer
 		{
 		public:
-			virtual ~IType() = default;
-
-			[[nodiscard]] std::string name() const { return get_name(); }
-
-		protected:
-			[[nodiscard]] virtual std::string get_name() const = 0;
+			[[nodiscard]] std::string name() const { return "(size_t)"s; }  // NOLINT(readability-convert-member-functions-to-static)
 		};
 
-		class Integer :
-			public IType
-		{
-		protected:
-			[[nodiscard]] std::string get_name() const override { return "(size_t)"s; }  // NOLINT(readability-convert-member-functions-to-static)
-		};
-
-		class Pointer :
-			public IType
+		class Pointer
 		{
 		public:
 			Pointer() noexcept = default;
@@ -309,8 +312,7 @@ namespace Crash::Introspection
 				}
 			}
 
-		protected:
-			[[nodiscard]] std::string get_name() const override
+			[[nodiscard]] std::string name() const
 			{
 				if (_module) {
 					const auto address = reinterpret_cast<std::uintptr_t>(_ptr);
@@ -328,8 +330,7 @@ namespace Crash::Introspection
 			const void* _ptr{ nullptr };
 		};
 
-		class Polymorphic :
-			public IType
+		class Polymorphic
 		{
 		public:
 			explicit Polymorphic(std::string_view a_mangled) noexcept :
@@ -339,8 +340,7 @@ namespace Crash::Introspection
 				assert(_mangled.size() > 1 && _mangled.data()[_mangled.size()] == '\0');
 			}
 
-		protected:
-			[[nodiscard]] std::string get_name() const override
+			[[nodiscard]] std::string name() const
 			{
 				const auto demangle = [](const char* a_in, char* a_out, std::uint32_t a_size) {
 					static std::mutex m;
@@ -381,8 +381,7 @@ namespace Crash::Introspection
 			std::string_view _mangled;
 		};
 
-		class F4Polymorphic :
-			public IType
+		class F4Polymorphic
 		{
 		public:
 			F4Polymorphic(
@@ -397,8 +396,7 @@ namespace Crash::Introspection
 				assert(_ptr != nullptr);
 			}
 
-		protected:
-			[[nodiscard]] std::string get_name() const override
+			[[nodiscard]] std::string name() const
 			{
 				auto result = _poly.name();
 				F4::filter_results xInfo;
@@ -448,16 +446,14 @@ namespace Crash::Introspection
 			const void* _ptr{ nullptr };
 		};
 
-		class String :
-			public IType
+		class String
 		{
 		public:
 			String(std::string_view a_str) noexcept :
 				_str(a_str)
 			{}
 
-		protected:
-			[[nodiscard]] std::string get_name() const override
+			[[nodiscard]] std::string name() const
 			{
 				return fmt::format(
 					FMT_STRING("(char*) \"{}\""),
@@ -468,77 +464,18 @@ namespace Crash::Introspection
 			std::string_view _str;
 		};
 
-		template <class...>
-		struct largest_of;
-
-		template <class Last>
-		struct largest_of<Last>
-		{
-			static constexpr std::size_t value = sizeof(Last);
-		};
-
-		template <class First, class Second, class... Rest>
-		struct largest_of<First, Second, Rest...>
-		{
-			static constexpr std::size_t value =
-				largest_of<
-					std::conditional_t<
-						(sizeof(First) >= sizeof(Second)),
-						First,
-						Second>,
-					Rest...>::value;
-		};
-
-		template <class... Args>
-		inline constexpr std::size_t largest_of_v = largest_of<Args...>::value;
-
-		template <class... Args>
-		struct aligned_storage_for
-		{
-			alignas(Args...) std::byte c[largest_of_v<Args...>]{};
-			bool free{ true };
-		};
-
-		using analysis_storage = aligned_storage_for<
+		using analysis_result = std::variant<
 			Integer,
 			Pointer,
 			Polymorphic,
 			F4Polymorphic,
 			String>;
 
-		[[nodiscard]] analysis_storage& get_analysis_storage() noexcept
-		{
-			thread_local analysis_storage storage;
-			return storage;
-		}
-
-		struct storage_deleter
-		{
-			void operator()(IType* a_type)
-			{
-				auto& storage = get_analysis_storage();
-				assert(!storage.free);
-				std::destroy_at(a_type);
-				storage.free = true;
-			}
-		};
-
-		using analysis_result = std::unique_ptr<IType, storage_deleter>;
-
 		template <class T, class... Args>
-		[[nodiscard]] analysis_result make_result(Args&&... a_args)
+		[[nodiscard]] analysis_result make_result(Args&&... a_args) noexcept(
+			std::is_nothrow_constructible_v<T, Args...>)
 		{
-			auto& storage = get_analysis_storage();
-			assert(storage.free);
-			const auto ptr = std::construct_at(
-				reinterpret_cast<T*>(storage.c),
-				std::forward<Args>(a_args)...);
-			storage.free = false;
-
-			static_assert(sizeof(T) <= std::extent_v<decltype(storage.c)>);
-			static_assert(std::is_base_of_v<IType, T>);
-
-			return analysis_result{ ptr };
+			return analysis_result(std::in_place_type_t<T>{}, std::forward<Args>(a_args)...);
 		}
 
 		[[nodiscard]] auto analyze_polymorphic(
@@ -623,13 +560,11 @@ namespace Crash::Introspection
 			stl::span<const module_pointer> a_modules) noexcept
 			-> analysis_result
 		{
-			auto poly = analyze_polymorphic(a_ptr, a_modules);
-			if (poly) {
+			if (auto poly = analyze_polymorphic(a_ptr, a_modules); poly) {
 				return *std::move(poly);
 			}
 
-			auto str = analyze_string(a_ptr);
-			if (str) {
+			if (auto str = analyze_string(a_ptr); str) {
 				return *std::move(str);
 			}
 
@@ -665,7 +600,9 @@ namespace Crash::Introspection
 			[&](auto& a_val) {
 				const auto result = detail::analyze_integer(a_val, a_modules);
 				const auto pos = std::addressof(a_val) - a_data.data();
-				results[pos] = result->name();
+				results[pos] = std::visit(
+					[](const auto& a_analysis) { return a_analysis.name(); },
+					result);
 			});
 		return results;
 	}

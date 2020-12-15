@@ -1,5 +1,4 @@
 set(headers ${headers}
-	include/AutoTOML.hpp
 	src/PCH.h
 	src/Settings.h
 	src/Compatibility/Compatibility.h
@@ -10,8 +9,8 @@ set(headers ${headers}
 	src/Fixes/ActorIsHostileToActorFix.h
 	src/Fixes/CellInitFix.h
 	src/Fixes/EncounterZoneResetFix.h
-	src/Fixes/FaderMenuFix.h
 	src/Fixes/Fixes.h
+	src/Fixes/GreyMovies.h
 	src/Fixes/MovementPlannerFix.h
 	src/Fixes/PackageAllocateLocationFix.h
 	src/Fixes/SafeExit.h

@@ -32,7 +32,7 @@ public:
 	static inline bSetting ActorIsHostileToActor{ "Fixes"s, "ActorIsHostileToActor"s, true };
 	static inline bSetting CellInit{ "Fixes"s, "CellInit"s, true };
 	static inline bSetting EncounterZoneReset{ "Fixes"s, "EncounterZoneReset"s, true };
-	static inline bSetting FaderMenu{ "Fixes"s, "FaderMenu"s, true };
+	static inline bSetting GreyMovies{ "Fixes"s, "GreyMovies"s, true };
 	static inline bSetting MovementPlanner{ "Fixes"s, "MovementPlanner"s, true };
 	static inline bSetting PackageAllocateLocation{ "Fixes"s, "PackageAllocateLocation"s, true };
 	static inline bSetting SafeExit{ "Fixes"s, "SafeExit"s, true };

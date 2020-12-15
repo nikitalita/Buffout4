@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.19)
 
 # ---- Cache build vars ----
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "")
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/ports" CACHE STRING "")
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/triplets" CACHE STRING "")
 set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-custom" CACHE STRING "")
 
@@ -11,7 +11,7 @@ set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-custom" CACHE STRING "")
 
 project(
 	Buffout4
-	VERSION 1.18.0
+	VERSION 1.19.0
 	LANGUAGES CXX
 )
 
@@ -39,7 +39,6 @@ endif()
 # ---- Globals ----
 
 add_compile_definitions(
-	"$<$<BOOL:${MSVC}>:_UNICODE>"
 	BOOST_STACKTRACE_LINK
 	BOOST_STACKTRACE_USE_WINDBG
 	F4SE_SUPPORT_XBYAK
@@ -47,6 +46,10 @@ add_compile_definitions(
 )
 
 if (MSVC)
+	add_compile_definitions(
+		_UNICODE
+	)
+	
 	string(REPLACE " " ";" MY_CXX_FLAGS "${VCPKG_CXX_FLAGS}")
 	string(REPLACE " " ";" MY_CXX_FLAGS_DEBUG "${VCPKG_CXX_FLAGS_DEBUG}")
 	string(REPLACE " " ";" MY_CXX_FLAGS_RELEASE "${VCPKG_CXX_FLAGS_RELEASE}")
@@ -128,9 +131,9 @@ find_package(TBB
 	CONFIG
 )
 find_package(tomlplusplus REQUIRED CONFIG)
+find_package(xbyak REQUIRED CONFIG)
 
 find_path(ROBIN_HOOD_HASHING_INCLUDE_DIRS "robin_hood.h" REQUIRED)
-find_path(XBYAK_INCLUDE_DIRS "xbyak/xbyak.h" REQUIRED)
 
 # ---- Add source files ----
 
@@ -183,13 +186,12 @@ target_include_directories(
 	${PROJECT_NAME}
 	PRIVATE 
 		${CMAKE_CURRENT_BINARY_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${ROBIN_HOOD_HASHING_INCLUDE_DIRS}
-		${XBYAK_INCLUDE_DIRS}
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(
+	${PROJECT_NAME}
 	PRIVATE
 		Boost::headers
 		Boost::nowide
@@ -203,6 +205,7 @@ target_link_libraries(${PROJECT_NAME}
 		spdlog::spdlog
 		TBB::tbbmalloc
 		tomlplusplus::tomlplusplus
+		xbyak::xbyak
 )
 
 if (MSVC)
