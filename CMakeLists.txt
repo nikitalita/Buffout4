@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.19)
 
 # ---- Cache build vars ----
 
+set(Boost_USE_STATIC_RUNTIME OFF CACHE BOOL "")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "")
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/ports" CACHE STRING "")
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/triplets" CACHE STRING "")
@@ -49,18 +51,18 @@ if (MSVC)
 	add_compile_definitions(
 		_UNICODE
 	)
-	
+
 	string(REPLACE " " ";" MY_CXX_FLAGS "${VCPKG_CXX_FLAGS}")
 	string(REPLACE " " ";" MY_CXX_FLAGS_DEBUG "${VCPKG_CXX_FLAGS_DEBUG}")
 	string(REPLACE " " ";" MY_CXX_FLAGS_RELEASE "${VCPKG_CXX_FLAGS_RELEASE}")
-	
+
 	add_compile_options(
 		/MP	# Build with Multiple Processes
 		/sdl	# Enable Additional Security Checks
 		/Zi	# Debug Information Format
-		
+
 		/permissive-	# Standards conformance
-		
+
 		/Zc:alignedNew	# C++17 over-aligned allocation
 		/Zc:auto	# Deduce Variable Type
 		/Zc:char8_t
@@ -82,22 +84,22 @@ if (MSVC)
 		/Zc:tlsGuards
 		/Zc:trigraphs	# Trigraphs Substitution
 		/Zc:wchar_t	# wchar_t Is Native Type
-		
+
 		/experimental:external
 		/external:anglebrackets
 		/external:W0
-		
+
 		/W4	# Warning level
 		/WX	# Warning level (warnings are errors)
-		
+
 		${MY_CXX_FLAGS}
 		"$<$<CONFIG:DEBUG>:${MY_CXX_FLAGS_DEBUG}>"
 		"$<$<CONFIG:RELEASE>:${MY_CXX_FLAGS_RELEASE};/Zc:inline;/JMC->"
 	)
-		
+
 	# fix a warning with /Ob2 being overridden with /Ob3
 	string(REPLACE "/Ob2" "/Ob3" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-	
+
 	# fix a warning with /EHsc being overridden with /EHa
 	string(REPLACE "/EHsc" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
@@ -109,12 +111,13 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_DEBUG_RUNTIME ON)
 
-add_subdirectory($ENV{CommonLibF4Path} CommonLibF4)
+add_subdirectory("$ENV{CommonLibF4Path}" CommonLibF4)
 
-find_package(Boost
+find_package(
+	Boost
+	MODULE
 	REQUIRED
 	COMPONENTS
 		nowide
@@ -124,7 +127,8 @@ find_package(fmt REQUIRED CONFIG)
 find_package(frozen REQUIRED CONFIG)
 find_package(infoware REQUIRED CONFIG)
 find_package(spdlog REQUIRED CONFIG)
-find_package(TBB
+find_package(
+	TBB
 	REQUIRED
 	COMPONENTS
 		tbbmalloc
@@ -168,14 +172,6 @@ add_library(
 	Buffout4.toml
 )
 
-set_property(
-	TARGET
-		${PROJECT_NAME}
-		CommonLibF4
-	PROPERTY
-		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
-)
-
 target_compile_features(
 	${PROJECT_NAME}
 	PRIVATE
@@ -184,7 +180,7 @@ target_compile_features(
 
 target_include_directories(
 	${PROJECT_NAME}
-	PRIVATE 
+	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${ROBIN_HOOD_HASHING_INCLUDE_DIRS}
@@ -211,11 +207,11 @@ target_link_libraries(
 if (MSVC)
 	target_compile_options(
 		${PROJECT_NAME}
-		PRIVATE			
+		PRIVATE
 			# disable warnings
 			/wd4324 # 'struct_name' : structure was padded due to __declspec(align())
 	)
-	
+
 	target_link_options(
 		${PROJECT_NAME}
 		PRIVATE

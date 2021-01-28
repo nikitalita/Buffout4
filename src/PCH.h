@@ -15,6 +15,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -40,9 +41,9 @@
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <tbb/scalable_allocator.h>
-#pragma warning(pop)
 
 #include "AutoTOML.hpp"
+#pragma warning(pop)
 
 namespace WinAPI
 {
@@ -124,10 +125,10 @@ namespace logger
 
 namespace stl
 {
+	using F4SE::stl::adjust_pointer;
+	using F4SE::stl::emplace_vtable;
 	using F4SE::stl::report_and_fail;
-	using F4SE::stl::span;
-	using F4SE::util::adjust_pointer;
-	using F4SE::util::emplace_vtable;
+	using std::span;
 
 	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 }

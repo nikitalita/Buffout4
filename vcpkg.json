@@ -7,7 +7,6 @@
   "dependencies": [
     "autotoml",
     "boost-algorithm",
-    "boost-atomic",
     "boost-container",
     "boost-iostreams",
     "boost-iterator",
@@ -25,7 +24,6 @@
       ]
     },
     "robin-hood-hashing",
-    "span-lite",
     "spdlog",
     "tbb",
     "xbyak"

@@ -279,11 +279,11 @@ namespace Crash
 			if (datahandler) {
 				const auto& [files, smallfiles] = datahandler->compiledFileCollection;
 
-				const auto fileFormat = [&](const auto& a_files) {
+				const auto fileFormat = [&]() {
 					return "\t[{:>02X}]{:"s +
-					       (!a_files.empty() ? "5"s : "1"s) +
+					       (!smallfiles.empty() ? "5"s : "1"s) +
 					       "}{}"s;
-				}(smallfiles);
+				}();
 
 				for (const auto file : files) {
 					a_log.critical(

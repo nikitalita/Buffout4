@@ -1,13 +1,12 @@
 #pragma once
 
-class Settings
+namespace Settings
 {
-public:
 	using ISetting = AutoTOML::ISetting;
 	using bSetting = AutoTOML::bSetting;
 	using iSetting = AutoTOML::iSetting;
 
-	static void load()
+	inline void load()
 	{
 		try {
 			const auto table = toml::parse_file("Data/F4SE/Plugins/Buffout4.toml"s);
@@ -29,37 +28,27 @@ public:
 		}
 	}
 
-	static inline bSetting ActorIsHostileToActor{ "Fixes"s, "ActorIsHostileToActor"s, true };
-	static inline bSetting CellInit{ "Fixes"s, "CellInit"s, true };
-	static inline bSetting EncounterZoneReset{ "Fixes"s, "EncounterZoneReset"s, true };
-	static inline bSetting GreyMovies{ "Fixes"s, "GreyMovies"s, true };
-	static inline bSetting MovementPlanner{ "Fixes"s, "MovementPlanner"s, true };
-	static inline bSetting PackageAllocateLocation{ "Fixes"s, "PackageAllocateLocation"s, true };
-	static inline bSetting SafeExit{ "Fixes"s, "SafeExit"s, true };
-	static inline bSetting UnalignedLoad{ "Fixes"s, "UnalignedLoad"s, true };
-	static inline bSetting UtilityShader{ "Fixes"s, "UtilityShader"s, true };
+	inline bSetting ActorIsHostileToActor{ "Fixes"s, "ActorIsHostileToActor"s, true };
+	inline bSetting CellInit{ "Fixes"s, "CellInit"s, true };
+	inline bSetting EncounterZoneReset{ "Fixes"s, "EncounterZoneReset"s, true };
+	inline bSetting GreyMovies{ "Fixes"s, "GreyMovies"s, true };
+	inline bSetting MovementPlanner{ "Fixes"s, "MovementPlanner"s, true };
+	inline bSetting PackageAllocateLocation{ "Fixes"s, "PackageAllocateLocation"s, true };
+	inline bSetting SafeExit{ "Fixes"s, "SafeExit"s, true };
+	inline bSetting UnalignedLoad{ "Fixes"s, "UnalignedLoad"s, true };
+	inline bSetting UtilityShader{ "Fixes"s, "UtilityShader"s, true };
 
-	static inline bSetting Achievements{ "Patches"s, "Achievements"s, true };
-	static inline bSetting BSTextureStreamerLocalHeap{ "Patches"s, "BSTextureStreamerLocalHeap"s, true };
-	static inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
-	static inline iSetting MaxStdIO{ "Patches"s, "MaxStdIO"s, -1 };
-	static inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };
-	static inline bSetting MemoryManagerDebug{ "Patches"s, "MemoryManagerDebug"s, false };
-	static inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
-	static inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
+	inline bSetting Achievements{ "Patches"s, "Achievements"s, true };
+	inline bSetting BSTextureStreamerLocalHeap{ "Patches"s, "BSTextureStreamerLocalHeap"s, true };
+	inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
+	inline iSetting MaxStdIO{ "Patches"s, "MaxStdIO"s, -1 };
+	inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };
+	inline bSetting MemoryManagerDebug{ "Patches"s, "MemoryManagerDebug"s, false };
+	inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
+	inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
 
-	static inline bSetting CreateTexture2D{ "Warnings"s, "CreateTexture2D"s, true };
-	static inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };
+	inline bSetting CreateTexture2D{ "Warnings"s, "CreateTexture2D"s, true };
+	inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };
 
-	static inline bSetting F4EE{ "Compatibility"s, "F4EE"s, true };
-
-private:
-	Settings() = delete;
-	Settings(const Settings&) = delete;
-	Settings(Settings&&) = delete;
-
-	~Settings() = delete;
-
-	Settings& operator=(const Settings&) = delete;
-	Settings& operator=(Settings&&) = delete;
-};
+	inline bSetting F4EE{ "Compatibility"s, "F4EE"s, true };
+}
