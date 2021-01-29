@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hash.h"
+
 namespace Compatibility
 {
 	class F4EE
@@ -11,19 +13,10 @@ namespace Compatibility
 				// 1.6.20
 				constexpr auto precalc = "D5467FEA7D6A722E0ED87B5FB857B5E0C9FDBE57B060ADB711013ED27565688D3D4514F99E4DF02109273ED69330E5272AD76822EB15717FEBC11AF409BA60F1"sv;
 
-				const auto sha = Botan::HashFunction::create("SHA-512"s);
 				boost::iostreams::mapped_file_source file("data/f4se/plugins/f4ee.dll");
-				if (sha && file.is_open()) {
-					const auto hash = sha->process(
-						reinterpret_cast<const std::uint8_t*>(file.data()),
-						file.size());
-					std::string hashStr;
-					hashStr.reserve(hash.size() * 2);
-					for (const auto byte : hash) {
-						hashStr += fmt::format(FMT_STRING("{:02X}"), byte);
-					}
-
-					if (precalc == hashStr) {
+				if (file.is_open()) {
+					const auto hash = Hash::SHA512({ reinterpret_cast<const std::byte*>(file.data()), file.size() });
+					if (hash && precalc == *hash) {
 						return true;
 					} else {
 						logger::error(
@@ -33,7 +26,7 @@ namespace Compatibility
 								"\tfound \"{}\""),
 							typeid(F4EE).name(),
 							precalc,
-							hashStr);
+							hash ? *hash : "FAILURE"sv);
 					}
 				}
 

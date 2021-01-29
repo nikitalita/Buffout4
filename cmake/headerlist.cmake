@@ -1,4 +1,5 @@
 set(headers ${headers}
+	src/Hash.h
 	src/PCH.h
 	src/Settings.h
 	src/Compatibility/Compatibility.h

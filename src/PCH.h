@@ -32,7 +32,6 @@
 #include <boost/container/map.hpp>
 #include <boost/nowide/convert.hpp>
 #include <boost/stacktrace.hpp>
-#include <botan/hash.h>
 #include <fmt/chrono.h>
 #include <frozen/map.h>
 #include <infoware/cpu.hpp>
@@ -128,6 +127,7 @@ namespace stl
 	using F4SE::stl::adjust_pointer;
 	using F4SE::stl::emplace_vtable;
 	using F4SE::stl::report_and_fail;
+	using F4SE::stl::scope_exit;
 
 	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 }

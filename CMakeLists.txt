@@ -192,7 +192,7 @@ target_link_libraries(
 		Boost::headers
 		Boost::nowide
 		Boost::stacktrace_windbg
-		"${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:DEBUG>:debug/>lib/botan.lib"
+		Bcrypt.lib
 		CommonLibF4::CommonLibF4
 		Dbghelp.lib
 		fmt::fmt
