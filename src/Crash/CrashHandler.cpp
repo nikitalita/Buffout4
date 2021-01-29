@@ -65,12 +65,12 @@ namespace Crash
 			it = _stacktrace.cbegin();
 		}
 
-		_frames = stl::span(it, _stacktrace.cend());
+		_frames = std::span(it, _stacktrace.cend());
 	}
 
 	void Callstack::print(
 		spdlog::logger& a_log,
-		stl::span<const module_pointer> a_modules) const
+		std::span<const module_pointer> a_modules) const
 	{
 		print_probable_callstack(a_log, a_modules);
 	}
@@ -93,7 +93,7 @@ namespace Crash
 
 	void Callstack::print_probable_callstack(
 		spdlog::logger& a_log,
-		stl::span<const module_pointer> a_modules) const
+		std::span<const module_pointer> a_modules) const
 	{
 		a_log.critical("PROBABLE CALL STACK:"sv);
 
@@ -185,7 +185,7 @@ namespace Crash
 		void print_exception(
 			spdlog::logger& a_log,
 			const ::EXCEPTION_RECORD& a_exception,
-			stl::span<const module_pointer> a_modules)
+			std::span<const module_pointer> a_modules)
 		{
 			const auto eptr = a_exception.ExceptionAddress;
 			const auto eaddr = reinterpret_cast<std::uintptr_t>(a_exception.ExceptionAddress);
@@ -242,7 +242,7 @@ namespace Crash
 
 		void print_modules(
 			spdlog::logger& a_log,
-			stl::span<const module_pointer> a_modules)
+			std::span<const module_pointer> a_modules)
 		{
 			a_log.critical("MODULES:"sv);
 
@@ -305,7 +305,7 @@ namespace Crash
 		void print_registers(
 			spdlog::logger& a_log,
 			const ::CONTEXT& a_context,
-			stl::span<const module_pointer> a_modules)
+			std::span<const module_pointer> a_modules)
 		{
 			a_log.critical("REGISTERS:"sv);
 
@@ -346,7 +346,7 @@ namespace Crash
 		void print_stack(
 			spdlog::logger& a_log,
 			const ::CONTEXT& a_context,
-			stl::span<const module_pointer> a_modules)
+			std::span<const module_pointer> a_modules)
 		{
 			a_log.critical("STACK:"sv);
 
@@ -356,7 +356,7 @@ namespace Crash
 				a_log.critical("\tFAILED TO READ TIB"sv);
 			} else {
 				const auto rsp = reinterpret_cast<const std::size_t*>(a_context.Rsp);
-				stl::span stack{ rsp, base };
+				std::span stack{ rsp, base };
 
 				const auto format = [&]() {
 					return "\t[RSP+{:<"s +
@@ -530,7 +530,7 @@ namespace Crash
 				std::lock_guard l{ sync };
 
 				const auto modules = Modules::get_loaded_modules();
-				const stl::span cmodules{ modules.begin(), modules.end() };
+				const std::span cmodules{ modules.begin(), modules.end() };
 				const auto log = get_log();
 
 				const auto print = [&](auto&& a_functor) {

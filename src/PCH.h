@@ -128,7 +128,6 @@ namespace stl
 	using F4SE::stl::adjust_pointer;
 	using F4SE::stl::emplace_vtable;
 	using F4SE::stl::report_and_fail;
-	using std::span;
 
 	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
 }

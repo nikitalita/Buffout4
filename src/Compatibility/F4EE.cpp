@@ -64,7 +64,7 @@ namespace Compatibility
 		assert(p.getSize() <= a_size);
 		REL::safe_write(
 			a_dst,
-			stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+			std::span{ p.getCode<const std::byte*>(), p.getSize() });
 	}
 
 	void F4EE::SetMorphValues(std::uintptr_t a_base)
@@ -106,7 +106,7 @@ namespace Compatibility
 			assert(p.getSize() <= size);
 			REL::safe_write(
 				dst,
-				stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+				std::span{ p.getCode<const std::byte*>(), p.getSize() });
 		}
 	}
 }

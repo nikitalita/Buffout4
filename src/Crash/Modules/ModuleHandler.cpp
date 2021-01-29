@@ -55,9 +55,9 @@ namespace Crash::Modules
 		public:
 			VTable(
 				std::string_view a_name,
-				stl::span<const std::byte> a_module,
-				stl::span<const std::byte> a_data,
-				stl::span<const std::byte> a_rdata)
+				std::span<const std::byte> a_module,
+				std::span<const std::byte> a_data,
+				std::span<const std::byte> a_rdata)
 			{
 				const auto typeDesc = type_descriptor(a_name, a_data);
 				const auto col = typeDesc ? complete_object_locator(typeDesc, a_module, a_rdata) : nullptr;
@@ -69,7 +69,7 @@ namespace Crash::Modules
 		private:
 			[[nodiscard]] static auto type_descriptor(
 				std::string_view a_name,
-				stl::span<const std::byte> a_data)
+				std::span<const std::byte> a_data)
 				-> const RE::RTTI::TypeDescriptor*
 			{
 				constexpr std::size_t offset = 0x10;  // offset of name into type descriptor
@@ -84,8 +84,8 @@ namespace Crash::Modules
 
 			[[nodiscard]] static auto complete_object_locator(
 				const RE::RTTI::TypeDescriptor* a_typeDesc,
-				stl::span<const std::byte> a_module,
-				stl::span<const std::byte> a_rdata)
+				std::span<const std::byte> a_module,
+				std::span<const std::byte> a_rdata)
 				-> const RE::RTTI::CompleteObjectLocator*
 			{
 				assert(a_typeDesc != nullptr);
@@ -121,7 +121,7 @@ namespace Crash::Modules
 
 			[[nodiscard]] static const void* virtual_table(
 				const RE::RTTI::CompleteObjectLocator* a_col,
-				stl::span<const std::byte> a_rdata)
+				std::span<const std::byte> a_rdata)
 			{
 				assert(a_col != nullptr);
 
@@ -196,7 +196,7 @@ namespace Crash::Modules
 			}
 
 		private:
-			[[nodiscard]] static stl::span<const std::byte> get_image(::HMODULE a_module)
+			[[nodiscard]] static std::span<const std::byte> get_image(::HMODULE a_module)
 			{
 				const auto dosHeader = reinterpret_cast<const ::IMAGE_DOS_HEADER*>(a_module);
 				const auto ntHeader = stl::adjust_pointer<::IMAGE_NT_HEADERS64>(dosHeader, dosHeader->e_lfanew);
@@ -228,13 +228,13 @@ namespace Crash::Modules
 		return get_frame_info(a_frame);
 	}
 
-	Module::Module(std::string a_name, stl::span<const std::byte> a_image) :
+	Module::Module(std::string a_name, std::span<const std::byte> a_image) :
 		_name(std::move(a_name)),
 		_image(a_image)
 	{
 		auto dosHeader = reinterpret_cast<const ::IMAGE_DOS_HEADER*>(_image.data());
 		auto ntHeader = stl::adjust_pointer<::IMAGE_NT_HEADERS64>(dosHeader, dosHeader->e_lfanew);
-		stl::span sections(
+		std::span sections(
 			IMAGE_FIRST_SECTION(ntHeader),
 			ntHeader->FileHeader.NumberOfSections);
 
@@ -252,7 +252,7 @@ namespace Crash::Modules
 					return std::memcmp(name.data(), a_elem.Name, len) == 0;
 				});
 			if (it != sections.end()) {
-				section = stl::span{ it->VirtualAddress + _image.data(), it->SizeOfRawData };
+				section = std::span{ it->VirtualAddress + _image.data(), it->SizeOfRawData };
 			}
 		}
 

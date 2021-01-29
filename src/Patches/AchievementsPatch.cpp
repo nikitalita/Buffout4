@@ -71,7 +71,7 @@ namespace Patches
 		assert(p.getSize() < size);
 		REL::safe_write(
 			target.address(),
-			stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+			std::span{ p.getCode<const std::byte*>(), p.getSize() });
 
 		logger::info("installed {}"sv, typeid(AchievementsPatch).name());
 	}

@@ -49,7 +49,7 @@ namespace Patches
 
 			void BlockAllocBatch(void** a_ptrsOut, std::int32_t a_numPtrs, std::int32_t a_blockSize) override
 			{
-				stl::span range{ a_ptrsOut, static_cast<std::size_t>(a_numPtrs) };
+				std::span range{ a_ptrsOut, static_cast<std::size_t>(a_numPtrs) };
 				std::for_each(
 					range.begin(),
 					range.end(),
@@ -63,7 +63,7 @@ namespace Patches
 
 			void BlockFreeBatch(void** a_ptrsIn, std::int32_t a_numPtrs, std::int32_t) override
 			{
-				stl::span range{ a_ptrsIn, static_cast<std::size_t>(a_numPtrs) };
+				std::span range{ a_ptrsIn, static_cast<std::size_t>(a_numPtrs) };
 				std::for_each(
 					range.begin(),
 					range.end(),

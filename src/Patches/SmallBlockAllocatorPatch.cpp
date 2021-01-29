@@ -92,7 +92,7 @@ namespace Patches
 			assert(p.getSize() <= funcSize);
 			REL::safe_write(
 				target.address(),
-				stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+				std::span{ p.getCode<const std::byte*>(), p.getSize() });
 			REL::safe_fill(
 				target.address() + p.getSize(),
 				REL::INT3,
@@ -121,7 +121,7 @@ namespace Patches
 			REL::Relocation<std::uintptr_t> target{ REL::ID(id) };
 			REL::safe_write(
 				target.address(),
-				stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+				std::span{ p.getCode<const std::byte*>(), p.getSize() });
 			REL::safe_fill(
 				target.address() + p.getSize(),
 				REL::INT3,

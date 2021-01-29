@@ -71,7 +71,7 @@ namespace Patches
 		assert(p.getSize() <= size);
 		REL::safe_write(
 			target.address(),
-			stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+			std::span{ p.getCode<const std::byte*>(), p.getSize() });
 	}
 
 	void MemoryManagerPatch::AutoScrapBuffer::Dtor()
@@ -98,7 +98,7 @@ namespace Patches
 			assert(p.getSize() <= size);
 			REL::safe_write(
 				dst,
-				stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+				std::span{ p.getCode<const std::byte*>(), p.getSize() });
 		}
 
 		{
@@ -129,7 +129,7 @@ namespace Patches
 				log->critical("");
 				callstack.print(
 					*log,
-					stl::span{ modules.begin(), modules.end() });
+					std::span{ modules.begin(), modules.end() });
 				log->flush();
 			}
 

@@ -21,7 +21,7 @@ namespace Crash
 
 		void print(
 			spdlog::logger& a_log,
-			stl::span<const std::unique_ptr<Modules::Module>> a_modules) const;
+			std::span<const std::unique_ptr<Modules::Module>> a_modules) const;
 
 	private:
 		[[nodiscard]] static std::string get_size_string(std::size_t a_size);
@@ -30,12 +30,12 @@ namespace Crash
 
 		void print_probable_callstack(
 			spdlog::logger& a_log,
-			stl::span<const std::unique_ptr<Modules::Module>> a_modules) const;
+			std::span<const std::unique_ptr<Modules::Module>> a_modules) const;
 
 		void print_raw_callstack(spdlog::logger& a_log) const;
 
 		boost::stacktrace::stacktrace _stacktrace;
-		stl::span<const boost::stacktrace::frame> _frames;
+		std::span<const boost::stacktrace::frame> _frames;
 	};
 
 	void Install();

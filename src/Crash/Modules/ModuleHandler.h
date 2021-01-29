@@ -43,15 +43,15 @@ namespace Crash
 		protected:
 			friend class detail::Factory;
 
-			Module(std::string a_name, stl::span<const std::byte> a_image);
+			Module(std::string a_name, std::span<const std::byte> a_image);
 
 			[[nodiscard]] virtual std::string get_frame_info(const boost::stacktrace::frame& a_frame) const;
 
 		private:
 			std::string _name;
-			stl::span<const std::byte> _image;
-			stl::span<const std::byte> _data;
-			stl::span<const std::byte> _rdata;
+			std::span<const std::byte> _image;
+			std::span<const std::byte> _data;
+			std::span<const std::byte> _rdata;
 			const RE::msvc::type_info* _typeInfo{ nullptr };
 		};
 

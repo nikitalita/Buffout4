@@ -279,7 +279,7 @@ namespace Crash::Introspection
 {
 	[[nodiscard]] const Modules::Module* get_module_for_pointer(
 		const void* a_ptr,
-		stl::span<const module_pointer> a_modules) noexcept
+		std::span<const module_pointer> a_modules) noexcept
 	{
 		const auto it = std::lower_bound(
 			a_modules.rbegin(),
@@ -304,7 +304,7 @@ namespace Crash::Introspection
 		public:
 			Pointer() noexcept = default;
 
-			Pointer(const void* a_ptr, stl::span<const module_pointer> a_modules) noexcept :
+			Pointer(const void* a_ptr, std::span<const module_pointer> a_modules) noexcept :
 				_module(get_module_for_pointer(a_ptr, a_modules))
 			{
 				if (_module) {
@@ -403,7 +403,7 @@ namespace Crash::Introspection
 
 				const auto moduleBase = REL::Module::get().base();
 				const auto hierarchy = _col->classDescriptor.get();
-				const stl::span bases(
+				const std::span bases(
 					reinterpret_cast<std::uint32_t*>(hierarchy->baseClassArray.offset() + moduleBase),
 					hierarchy->numBaseClasses);
 				for (const auto rva : bases) {
@@ -480,7 +480,7 @@ namespace Crash::Introspection
 
 		[[nodiscard]] auto analyze_polymorphic(
 			void* a_ptr,
-			stl::span<const module_pointer> a_modules) noexcept
+			std::span<const module_pointer> a_modules) noexcept
 			-> std::optional<analysis_result>
 		{
 			try {
@@ -557,7 +557,7 @@ namespace Crash::Introspection
 
 		[[nodiscard]] auto analyze_pointer(
 			void* a_ptr,
-			stl::span<const module_pointer> a_modules) noexcept
+			std::span<const module_pointer> a_modules) noexcept
 			-> analysis_result
 		{
 			if (auto poly = analyze_polymorphic(a_ptr, a_modules); poly) {
@@ -573,7 +573,7 @@ namespace Crash::Introspection
 
 		[[nodiscard]] auto analyze_integer(
 			std::size_t a_value,
-			stl::span<const module_pointer> a_modules) noexcept
+			std::span<const module_pointer> a_modules) noexcept
 			-> analysis_result
 		{
 			try {
@@ -588,8 +588,8 @@ namespace Crash::Introspection
 	}
 
 	std::vector<std::string> analyze_data(
-		stl::span<const std::size_t> a_data,
-		stl::span<const module_pointer> a_modules)
+		std::span<const std::size_t> a_data,
+		std::span<const module_pointer> a_modules)
 	{
 		std::vector<std::string> results;
 		results.resize(a_data.size());

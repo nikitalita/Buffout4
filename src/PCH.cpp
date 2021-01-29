@@ -104,6 +104,6 @@ namespace stl
 		assert(p.getSize() <= a_size);
 		REL::safe_write(
 			a_from,
-			stl::span{ p.getCode<const std::byte*>(), p.getSize() });
+			std::span{ p.getCode<const std::byte*>(), p.getSize() });
 	}
 }
