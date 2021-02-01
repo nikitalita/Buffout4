@@ -44,9 +44,9 @@
 
 #include <xbyak/xbyak.h>
 
-namespace Patches
+namespace Patches::AchievementsPatch
 {
-	namespace
+	namespace detail
 	{
 		struct Patch :
 			Xbyak::CodeGenerator
@@ -59,20 +59,20 @@ namespace Patches
 		};
 	}
 
-	void AchievementsPatch::Install()
+	void Install()
 	{
 		constexpr std::size_t size = 0x73;
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1432894) };
 
 		REL::safe_fill(target.address(), REL::INT3, size);
 
-		Patch p;
+		detail::Patch p;
 		p.ready();
 		assert(p.getSize() < size);
 		REL::safe_write(
 			target.address(),
 			std::span{ p.getCode<const std::byte*>(), p.getSize() });
 
-		logger::info("installed {}"sv, typeid(AchievementsPatch).name());
+		logger::info("installed Achievements patch"sv);
 	}
 }

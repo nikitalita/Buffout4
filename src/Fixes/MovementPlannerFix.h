@@ -1,24 +1,24 @@
 #pragma once
 
-namespace Fixes
+namespace Fixes::MovementPlannerFix
 {
-	class MovementPlannerFix
+	namespace detail
 	{
-	public:
-		static void Install()
+		struct CanWarpOnPathFailure
 		{
-			REL::Relocation<std::uintptr_t> target{ REL::ID(1403049), 0x30 };
-			auto& trampoline = F4SE::GetTrampoline();
-			_original = trampoline.write_call<5>(target.address(), CanWarpOnPathFailure);
-			logger::info("installed {}"sv, typeid(MovementPlannerFix).name());
-		}
+			static bool thunk(const RE::Actor* a_actor)
+			{
+				return a_actor ? func(a_actor) : true;
+			}
 
-	private:
-		static bool CanWarpOnPathFailure(const RE::Actor* a_actor)
-		{
-			return a_actor ? _original(a_actor) : true;
-		}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+	}
 
-		static inline REL::Relocation<decltype(CanWarpOnPathFailure)> _original;
-	};
+	inline void Install()
+	{
+		REL::Relocation<std::uintptr_t> target{ REL::ID(1403049), 0x30 };
+		stl::write_thunk_call<5, detail::CanWarpOnPathFailure>(target.address());
+		logger::info("installed MovementPlanner fix"sv);
+	}
 }

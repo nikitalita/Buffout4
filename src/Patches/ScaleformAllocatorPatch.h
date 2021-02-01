@@ -1,58 +1,61 @@
 #pragma once
 
-namespace Patches
+namespace Patches::ScaleformAllocatorPatch
 {
-	class ScaleformAllocatorPatch :
-		public RE::Scaleform::SysAlloc
+	namespace detail
 	{
-	public:
-		[[nodiscard]] static ScaleformAllocatorPatch* GetSingleton()
+		class Allocator :
+			public RE::Scaleform::SysAlloc
 		{
-			static ScaleformAllocatorPatch singleton;
-			return std::addressof(singleton);
-		}
+		public:
+			[[nodiscard]] static Allocator* GetSingleton()
+			{
+				static Allocator singleton;
+				return std::addressof(singleton);
+			}
 
-		static void Install()
+		protected:
+			void* Alloc(std::size_t a_size, std::size_t a_align) override
+			{
+				return a_size > 0 ?
+                           scalable_aligned_malloc(a_size, a_align) :
+                           nullptr;
+			}
+
+			void Free(void* a_ptr, std::size_t, std::size_t) override
+			{
+				scalable_aligned_free(a_ptr);
+			}
+
+			void* Realloc(void* a_oldPtr, std::size_t, std::size_t a_newSize, std::size_t a_align) override
+			{
+				return scalable_aligned_realloc(a_oldPtr, a_newSize, a_align);
+			}
+
+		private:
+			Allocator() = default;
+			Allocator(const Allocator&) = delete;
+			Allocator(Allocator&&) = delete;
+			~Allocator() = default;
+			Allocator& operator=(const Allocator&) = delete;
+			Allocator& operator=(Allocator&&) = delete;
+		};
+
+		struct Init
 		{
-			REL::Relocation<std::uintptr_t> target{ REL::ID(903830), 0xEC };
-			auto& trampoline = F4SE::GetTrampoline();
-			_init = trampoline.write_call<5>(target.address(), Init);
-			logger::info("installed {}"sv, typeid(ScaleformAllocatorPatch).name());
-		}
+			static void thunk(const RE::Scaleform::MemoryHeap::HeapDesc& a_rootHeapDesc, RE::Scaleform::SysAllocBase*)
+			{
+				func(a_rootHeapDesc, Allocator::GetSingleton());
+			}
 
-	protected:
-		void* Alloc(std::size_t a_size, std::size_t a_align) override
-		{
-			return a_size > 0 ?
-                       scalable_aligned_malloc(a_size, a_align) :
-                       nullptr;
-		}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+	}
 
-		void Free(void* a_ptr, std::size_t, std::size_t) override
-		{
-			scalable_aligned_free(a_ptr);
-		}
-
-		void* Realloc(void* a_oldPtr, std::size_t, std::size_t a_newSize, std::size_t a_align) override
-		{
-			return scalable_aligned_realloc(a_oldPtr, a_newSize, a_align);
-		}
-
-	private:
-		static void Init(const RE::Scaleform::MemoryHeap::HeapDesc& a_rootHeapDesc, RE::Scaleform::SysAllocBase*)
-		{
-			_init(a_rootHeapDesc, GetSingleton());
-		}
-
-		ScaleformAllocatorPatch() = default;
-		ScaleformAllocatorPatch(const ScaleformAllocatorPatch&) = delete;
-		ScaleformAllocatorPatch(ScaleformAllocatorPatch&&) = delete;
-
-		~ScaleformAllocatorPatch() = default;
-
-		ScaleformAllocatorPatch& operator=(const ScaleformAllocatorPatch&) = delete;
-		ScaleformAllocatorPatch& operator=(ScaleformAllocatorPatch&&) = delete;
-
-		static inline REL::Relocation<decltype(Init)> _init;
-	};
+	inline void Install()
+	{
+		REL::Relocation<std::uintptr_t> target{ REL::ID(903830), 0xEC };
+		stl::write_thunk_call<5, detail::Init>(target.address());
+		logger::info("installed ScaleformAllocator patch"sv);
+	}
 }

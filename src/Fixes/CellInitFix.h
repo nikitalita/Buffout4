@@ -1,14 +1,10 @@
 #pragma once
 
-namespace Fixes
+namespace Fixes::CellInitFix
 {
-	class CellInitFix
+	namespace detail
 	{
-	public:
-		static void Install();
-
-	private:
-		static RE::BGSLocation* GetLocation(const RE::TESObjectCELL* a_cell)
+		inline RE::BGSLocation* GetLocation(const RE::TESObjectCELL* a_cell)
 		{
 			const auto xLoc =
 				a_cell && a_cell->extraList ?
@@ -27,5 +23,7 @@ namespace Fixes
 
 			return loc;
 		}
-	};
+	}
+
+	void Install();
 }

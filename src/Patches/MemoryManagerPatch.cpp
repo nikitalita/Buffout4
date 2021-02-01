@@ -47,96 +47,102 @@
 
 #include <xbyak/xbyak.h>
 
-namespace Patches
+namespace Patches::MemoryManagerPatch::detail
 {
-	void MemoryManagerPatch::AutoScrapBuffer::CtorShort()
+	namespace AutoScrapBuffer
 	{
-		struct Patch :
-			Xbyak::CodeGenerator
-		{
-			Patch()
-			{
-				mov(qword[rcx], 0);
-				mov(rax, rcx);
-				ret();
-			}
-		};
-
-		REL::Relocation<std::uintptr_t> target{ REL::ID(1571567) };
-		constexpr std::size_t size = 0x1C;
-		REL::safe_fill(target.address(), REL::INT3, size);
-
-		Patch p;
-		p.ready();
-		assert(p.getSize() <= size);
-		REL::safe_write(
-			target.address(),
-			std::span{ p.getCode<const std::byte*>(), p.getSize() });
-	}
-
-	void MemoryManagerPatch::AutoScrapBuffer::Dtor()
-	{
-		REL::Relocation<std::uintptr_t> base{ REL::ID(68625) };
-
+		void CtorShort()
 		{
 			struct Patch :
 				Xbyak::CodeGenerator
 			{
 				Patch()
 				{
-					xor_(rax, rax);
-					cmp(rbx, rax);
+					mov(qword[rcx], 0);
+					mov(rax, rcx);
+					ret();
 				}
 			};
 
-			const auto dst = base.address() + 0x9;
-			constexpr std::size_t size = 0x1D;
-			REL::safe_fill(dst, REL::NOP, size);
+			REL::Relocation<std::uintptr_t> target{ REL::ID(1571567) };
+			constexpr std::size_t size = 0x1C;
+			REL::safe_fill(target.address(), REL::INT3, size);
 
 			Patch p;
 			p.ready();
 			assert(p.getSize() <= size);
 			REL::safe_write(
-				dst,
+				target.address(),
 				std::span{ p.getCode<const std::byte*>(), p.getSize() });
 		}
 
+		void Dtor()
 		{
-			const auto dst = base.address() + 0x26;
-			REL::safe_write(dst, std::uint8_t{ 0x74 });  // jnz -> jz
+			REL::Relocation<std::uintptr_t> base{ REL::ID(68625) };
+
+			{
+				struct Patch :
+					Xbyak::CodeGenerator
+				{
+					Patch()
+					{
+						xor_(rax, rax);
+						cmp(rbx, rax);
+					}
+				};
+
+				const auto dst = base.address() + 0x9;
+				constexpr std::size_t size = 0x1D;
+				REL::safe_fill(dst, REL::NOP, size);
+
+				Patch p;
+				p.ready();
+				assert(p.getSize() <= size);
+				REL::safe_write(
+					dst,
+					std::span{ p.getCode<const std::byte*>(), p.getSize() });
+			}
+
+			{
+				const auto dst = base.address() + 0x26;
+				REL::safe_write(dst, std::uint8_t{ 0x74 });  // jnz -> jz
+			}
 		}
 	}
 
-	void MemoryManagerPatch::MemoryManager::DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired)
+	namespace MemoryManager
 	{
-		auto access = MemoryTraces::get().access();
-		const auto it = access->find(a_mem);
-		if (it != access->end() && it->second.first != a_alignmentRequired) {
-			const auto log = spdlog::default_logger();
-			log->set_pattern("%v"s);
-			log->set_level(spdlog::level::trace);
-			log->flush_on(spdlog::level::off);
+		void DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired)
+		{
+			auto access = MemoryTraces::get().access();
+			const auto it = access->find(a_mem);
+			if (it != access->end() && it->second.first != a_alignmentRequired) {
+				const auto log = spdlog::default_logger();
+				log->set_pattern("%v"s);
+				log->set_level(spdlog::level::trace);
+				log->flush_on(spdlog::level::off);
 
-			const auto modules = Crash::Modules::get_loaded_modules();
-			std::array stacktraces{
-				std::move(it->second.second),
-				boost::stacktrace::stacktrace{}
-			};
+				const auto modules = Crash::Modules::get_loaded_modules();
+				std::array stacktraces{
+					std::move(it->second.second),
+					boost::stacktrace::stacktrace{}
+				};
 
-			for (auto& trace : stacktraces) {
-				Crash::Callstack callstack{ std::move(trace) };
+				for (auto& trace : stacktraces) {
+					Crash::Callstack callstack{ std::move(trace) };
 
-				log->critical("");
-				callstack.print(
-					*log,
-					std::span{ modules.begin(), modules.end() });
-				log->flush();
+					log->critical("");
+					callstack.print(
+						*log,
+						std::span{ modules.begin(), modules.end() });
+					log->flush();
+				}
+
+				stl::report_and_fail("A bad deallocation has resulted in a crash. Please see Buffout4.log for more details."sv);
+			} else {
+				Deallocate(a_this, a_mem, a_alignmentRequired);
+				access->erase(a_mem);
 			}
-
-			stl::report_and_fail("A bad deallocation has resulted in a crash. Please see Buffout4.log for more details."sv);
-		} else {
-			Deallocate(a_this, a_mem, a_alignmentRequired);
-			access->erase(a_mem);
 		}
 	}
 }

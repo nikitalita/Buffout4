@@ -1,37 +1,28 @@
 #pragma once
 
-namespace Patches
+namespace Patches::BSTextureStreamerLocalHeapPatch
 {
-	class BSTextureStreamerLocalHeapPatch
+	namespace detail
 	{
-	public:
-		static void Install()
-		{
-			WriteStubs();
-			WriteHooks();
-			logger::info("installed {}"sv, typeid(BSTextureStreamerLocalHeapPatch).name());
-		}
-
-	private:
-		static void* Allocate(RE::BSTextureStreamer::LocalHeap*, std::uint32_t a_size)
+		inline void* Allocate(RE::BSTextureStreamer::LocalHeap*, std::uint32_t a_size)
 		{
 			return a_size > 0 ?
                        scalable_aligned_malloc(a_size, 0x10) :
                        nullptr;
 		}
 
-		static RE::BSTextureStreamer::LocalHeap* Ctor(RE::BSTextureStreamer::LocalHeap* a_this)
+		inline RE::BSTextureStreamer::LocalHeap* Ctor(RE::BSTextureStreamer::LocalHeap* a_this)
 		{
 			std::memset(a_this, 0, sizeof(RE::BSTextureStreamer::LocalHeap));
 			return a_this;
 		}
 
-		static void Deallocate(RE::BSTextureStreamer::LocalHeap*, void* a_ptr)
+		inline void Deallocate(RE::BSTextureStreamer::LocalHeap*, void* a_ptr)
 		{
 			scalable_aligned_free(a_ptr);
 		}
 
-		static void WriteHooks()
+		inline void WriteHooks()
 		{
 			using tuple_t = std::tuple<std::uint64_t, std::size_t, void*>;
 			const std::array todo{
@@ -47,7 +38,7 @@ namespace Patches
 			}
 		}
 
-		static void WriteStubs()
+		inline void WriteStubs()
 		{
 			using tuple_t = std::tuple<std::uint64_t, std::size_t>;
 			const std::array todo{
@@ -61,5 +52,12 @@ namespace Patches
 				REL::safe_write(target.address(), REL::RET);
 			}
 		}
-	};
+	}
+
+	inline void Install()
+	{
+		detail::WriteStubs();
+		detail::WriteHooks();
+		logger::info("installed BSTextureStreamerLocalHeap patch"sv);
+	}
 }

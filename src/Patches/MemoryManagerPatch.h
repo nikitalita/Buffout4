@@ -1,19 +1,9 @@
 #pragma once
 
-namespace Patches
+namespace Patches::MemoryManagerPatch
 {
-	class MemoryManagerPatch
+	namespace detail
 	{
-	public:
-		static void Install()
-		{
-			AutoScrapBuffer::Install();
-			MemoryManager::Install();
-			ScrapHeap::Install();
-			logger::info("installed {}"sv, typeid(MemoryManagerPatch).name());
-		}
-
-	private:
 		class MemoryTraces
 		{
 		public:
@@ -76,41 +66,29 @@ namespace Patches
 			value_type _traces;
 		};
 
-		class AutoScrapBuffer
+		namespace AutoScrapBuffer
 		{
-		public:
-			static void Install()
-			{
-				CtorLong();
-				CtorShort();
-				Dtor();
-			}
-
-		private:
-			static void CtorLong()
+			inline void CtorLong()
 			{
 				REL::Relocation<std::uintptr_t> target{ REL::ID(1305199), 0x1D };
 				constexpr std::size_t size = 0x15;
 				REL::safe_fill(target.address(), REL::NOP, size);
 			}
 
-			static void CtorShort();
-			static void Dtor();
-		};
+			void CtorShort();
+			void Dtor();
 
-		class MemoryManager
-		{
-		public:
-			static void Install()
+			inline void Install()
 			{
-				StubInit();
-				ReplaceAllocRoutines();
-				RE::MemoryManager::GetSingleton().RegisterMemoryManager();
-				RE::BSThreadEvent::InitSDM();
+				CtorLong();
+				CtorShort();
+				Dtor();
 			}
+		}
 
-		private:
-			static void* Allocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
+		namespace MemoryManager
+		{
+			inline void* Allocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				if (a_size > 0) {
 					return a_alignmentRequired ?
@@ -121,7 +99,7 @@ namespace Patches
 				}
 			}
 
-			static void* DbgAllocate(RE::MemoryManager* a_this, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
+			inline void* DbgAllocate(RE::MemoryManager* a_this, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				const auto result = Allocate(a_this, a_size, a_alignment, a_alignmentRequired);
 				if (result && a_size == sizeof(RE::NiNode)) {
@@ -133,23 +111,23 @@ namespace Patches
 				return result;
 			}
 
-			static void Deallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
+			inline void Deallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
 			{
 				a_alignmentRequired ?
                     scalable_aligned_free(a_mem) :
                     scalable_free(a_mem);
 			}
 
-			static void DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired);
+			void DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired);
 
-			static void* Reallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
+			inline void* Reallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				return a_alignmentRequired ?
                            scalable_aligned_realloc(a_oldMem, a_newSize, a_alignment) :
                            scalable_realloc(a_oldMem, a_newSize);
 			}
 
-			static void* DbgReallocate(RE::MemoryManager* a_this, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
+			inline void* DbgReallocate(RE::MemoryManager* a_this, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				auto access = MemoryTraces::get().access();
 				const auto result = Reallocate(a_this, a_oldMem, a_newSize, a_alignment, a_alignmentRequired);
@@ -162,7 +140,7 @@ namespace Patches
 				return result;
 			}
 
-			static void ReplaceAllocRoutines()
+			inline void ReplaceAllocRoutines()
 			{
 				using tuple_t = std::tuple<std::uint64_t, std::size_t, void*>;
 				const std::array todo{
@@ -178,44 +156,44 @@ namespace Patches
 				}
 			}
 
-			static void StubInit()
+			inline void StubInit()
 			{
 				REL::Relocation<std::uintptr_t> target{ REL::ID(597736) };
 				REL::safe_fill(target.address(), REL::INT3, 0x9C);
 				REL::safe_write(target.address(), REL::RET);
 			}
-		};
 
-		class ScrapHeap
-		{
-		public:
-			static void Install()
+			inline void Install()
 			{
-				WriteStubs();
-				WriteHooks();
+				StubInit();
+				ReplaceAllocRoutines();
+				RE::MemoryManager::GetSingleton().RegisterMemoryManager();
+				RE::BSThreadEvent::InitSDM();
 			}
+		}
 
-		private:
-			static void* Allocate(RE::ScrapHeap*, std::size_t a_size, std::size_t a_alignment)
+		namespace ScrapHeap
+		{
+			inline void* Allocate(RE::ScrapHeap*, std::size_t a_size, std::size_t a_alignment)
 			{
 				return a_size > 0 ?
                            scalable_aligned_malloc(a_size, a_alignment) :
                            nullptr;
 			}
 
-			static RE::ScrapHeap* Ctor(RE::ScrapHeap* a_this)
+			inline RE::ScrapHeap* Ctor(RE::ScrapHeap* a_this)
 			{
 				std::memset(a_this, 0, sizeof(RE::ScrapHeap));
 				stl::emplace_vtable(a_this);
 				return a_this;
 			}
 
-			static void Deallocate(RE::ScrapHeap*, void* a_mem)
+			inline void Deallocate(RE::ScrapHeap*, void* a_mem)
 			{
 				scalable_aligned_free(a_mem);
 			}
 
-			static void WriteHooks()
+			inline void WriteHooks()
 			{
 				using tuple_t = std::tuple<std::uint64_t, std::size_t, void*>;
 				const std::array todo{
@@ -231,7 +209,7 @@ namespace Patches
 				}
 			}
 
-			static void WriteStubs()
+			inline void WriteStubs()
 			{
 				using tuple_t = std::tuple<std::uint64_t, std::size_t>;
 				const std::array todo{
@@ -249,6 +227,20 @@ namespace Patches
 					REL::safe_write(target.address(), REL::RET);
 				}
 			}
-		};
-	};
+
+			inline void Install()
+			{
+				WriteStubs();
+				WriteHooks();
+			}
+		}
+	}
+
+	inline void Install()
+	{
+		detail::AutoScrapBuffer::Install();
+		detail::MemoryManager::Install();
+		detail::ScrapHeap::Install();
+		logger::info("installed MemoryManager patch"sv);
+	}
 }

@@ -1,24 +1,24 @@
 #pragma once
 
-namespace Fixes
+namespace Fixes::PackageAllocateLocationFix
 {
-	class PackageAllocateLocationFix
+	namespace detail
 	{
-	public:
-		static void Install()
+		struct GetPrimitive
 		{
-			REL::Relocation<std::uintptr_t> target{ REL::ID(1248203), 0x141 };
-			auto& trampoline = F4SE::GetTrampoline();
-			_GetPrimitive = trampoline.write_call<5>(target.address(), GetPrimitive);
-			logger::info("installed {}"sv, typeid(PackageAllocateLocationFix).name());
-		}
+			static RE::BGSPrimitive* thunk(const RE::ExtraDataList* a_this)
+			{
+				return a_this ? func(a_this) : nullptr;
+			}
 
-	private:
-		static RE::BGSPrimitive* GetPrimitive(const RE::ExtraDataList* a_this)
-		{
-			return a_this ? _GetPrimitive(a_this) : nullptr;
-		}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+	}
 
-		static inline REL::Relocation<decltype(GetPrimitive)> _GetPrimitive;
-	};
+	inline void Install()
+	{
+		REL::Relocation<std::uintptr_t> target{ REL::ID(1248203), 0x141 };
+		stl::write_thunk_call<5, detail::GetPrimitive>(target.address());
+		logger::info("installed PackageAllocateLocation fix"sv);
+	}
 }

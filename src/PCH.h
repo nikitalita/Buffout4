@@ -131,6 +131,13 @@ namespace stl
 	using F4SE::stl::to_underlying;
 
 	void asm_jump(std::uintptr_t a_from, std::size_t a_size, std::uintptr_t a_to);
+
+	template <std::size_t N, class T>
+	void write_thunk_call(std::uintptr_t a_src)
+	{
+		auto& trampoline = F4SE::GetTrampoline();
+		T::func = trampoline.write_call<N>(a_src, T::thunk);
+	}
 }
 
 namespace util

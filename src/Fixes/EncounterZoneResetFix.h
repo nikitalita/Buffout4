@@ -1,53 +1,54 @@
 #pragma once
 
-namespace Fixes
+namespace Fixes::EncounterZoneResetFix
 {
-	class EncounterZoneResetFix :
-		public RE::BSTEventSink<RE::CellAttachDetachEvent>
+	namespace detail
 	{
-	public:
-		[[nodiscard]] static EncounterZoneResetFix* GetSingleton()
+		class Sink :
+			public RE::BSTEventSink<RE::CellAttachDetachEvent>
 		{
-			static EncounterZoneResetFix singleton;
-			return std::addressof(singleton);
-		}
-
-		static void Install()
-		{
-			auto& cells = RE::CellAttachDetachEventSource::CellAttachDetachEventSourceSingleton::GetSingleton();
-			cells.source.RegisterSink(GetSingleton());
-			logger::info("installed {}"sv, typeid(EncounterZoneResetFix).name());
-		}
-
-	private:
-		EncounterZoneResetFix() = default;
-		EncounterZoneResetFix(const EncounterZoneResetFix&) = delete;
-		EncounterZoneResetFix(EncounterZoneResetFix&&) = delete;
-
-		~EncounterZoneResetFix() = default;
-
-		EncounterZoneResetFix& operator=(const EncounterZoneResetFix&) = delete;
-		EncounterZoneResetFix& operator=(EncounterZoneResetFix&&) = delete;
-
-		RE::BSEventNotifyControl ProcessEvent(const RE::CellAttachDetachEvent& a_event, RE::BSTEventSource<RE::CellAttachDetachEvent>*) override
-		{
-			switch (*a_event.type) {
-			case RE::CellAttachDetachEvent::EVENT_TYPE::kPreDetach:
-				{
-					const auto cell = a_event.cell;
-					const auto ez = cell ? cell->GetEncounterZone() : nullptr;
-					const auto calendar = RE::Calendar::GetSingleton();
-					if (ez && calendar) {
-						ez->SetDetachTime(
-							static_cast<std::uint32_t>(calendar->GetHoursPassed()));
-					}
-				}
-				break;
-			default:
-				break;
+		public:
+			[[nodiscard]] static Sink* GetSingleton()
+			{
+				static Sink singleton;
+				return std::addressof(singleton);
 			}
 
-			return RE::BSEventNotifyControl::kContinue;
-		}
-	};
+		private:
+			Sink() = default;
+			Sink(const Sink&) = delete;
+			Sink(Sink&&) = delete;
+			~Sink() = default;
+			Sink& operator=(const Sink&) = delete;
+			Sink& operator=(Sink&&) = delete;
+
+			RE::BSEventNotifyControl ProcessEvent(const RE::CellAttachDetachEvent& a_event, RE::BSTEventSource<RE::CellAttachDetachEvent>*) override
+			{
+				switch (*a_event.type) {
+				case RE::CellAttachDetachEvent::EVENT_TYPE::kPreDetach:
+					{
+						const auto cell = a_event.cell;
+						const auto ez = cell ? cell->GetEncounterZone() : nullptr;
+						const auto calendar = RE::Calendar::GetSingleton();
+						if (ez && calendar) {
+							ez->SetDetachTime(
+								static_cast<std::uint32_t>(calendar->GetHoursPassed()));
+						}
+					}
+					break;
+				default:
+					break;
+				}
+
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+	}
+
+	inline void Install()
+	{
+		auto& cells = RE::CellAttachDetachEventSource::CellAttachDetachEventSourceSingleton::GetSingleton();
+		cells.source.RegisterSink(detail::Sink::GetSingleton());
+		logger::info("installed EncounterZoneReset fix"sv);
+	}
 }

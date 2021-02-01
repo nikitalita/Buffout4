@@ -44,9 +44,9 @@
 
 #include <xbyak/xbyak.h>
 
-namespace Fixes
+namespace Fixes::CellInitFix
 {
-	namespace
+	namespace detail
 	{
 		struct Patch :
 			Xbyak::CodeGenerator
@@ -60,11 +60,11 @@ namespace Fixes
 		};
 	}
 
-	void CellInitFix::Install()
+	void Install()
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(868663), 0x3E };
 
-		Patch p{ reinterpret_cast<std::uintptr_t>(&GetLocation) };
+		detail::Patch p{ reinterpret_cast<std::uintptr_t>(detail::GetLocation) };
 		p.ready();
 
 		auto& trampoline = F4SE::GetTrampoline();
@@ -72,6 +72,6 @@ namespace Fixes
 			target.address(),
 			trampoline.allocate(p));
 
-		logger::info("installed {}"sv, typeid(CellInitFix).name());
+		logger::info("installed CellInit fix"sv);
 	}
 }

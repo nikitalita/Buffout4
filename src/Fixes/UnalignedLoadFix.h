@@ -1,25 +1,16 @@
 #pragma once
 
-namespace Fixes
+namespace Fixes::UnalignedLoadFix
 {
-	class UnalignedLoadFix
+	namespace detail
 	{
-	public:
-		static void Install()
-		{
-			ApplySkinningToGeometry();
-			CreateCommandBuffer();
-			logger::info("installed {}"sv, typeid(UnalignedLoadFix).name());
-		}
-
-	private:
-		static void ApplySkinningToGeometry()
+		inline void ApplySkinningToGeometry()
 		{
 			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), 0x172 + 0x2 };
 			REL::safe_write(target.address(), std::uint32_t{ 0x10 });
 		}
 
-		static void CreateCommandBuffer()
+		inline void CreateCommandBuffer()
 		{
 			constexpr std::array offsets{
 				0x320,
@@ -33,5 +24,12 @@ namespace Fixes
 				REL::safe_write(base.address() + off + 0x1, std::uint8_t{ 0x11 });  // movaps -> movups
 			}
 		}
-	};
+	}
+
+	inline void Install()
+	{
+		detail::ApplySkinningToGeometry();
+		detail::CreateCommandBuffer();
+		logger::info("installed UnalignedLoad fix"sv);
+	}
 }

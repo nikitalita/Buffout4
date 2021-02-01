@@ -437,12 +437,12 @@ namespace Patches::WorkshopMenuPatch
 		}
 	}
 
-	void Install()
+	inline void Install()
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1515994) };
 		constexpr std::size_t size = 0x24F;
 		REL::safe_fill(target.address(), REL::NOP, size);
 		stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(detail::BuildWorkShopMenuNodeTree));
-		logger::info("installed WorkshopMenuPatch"sv);
+		logger::info("installed WorkshopMenu patch"sv);
 	}
 }

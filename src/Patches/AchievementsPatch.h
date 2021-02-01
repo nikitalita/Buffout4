@@ -1,10 +1,6 @@
 #pragma once
 
-namespace Patches
+namespace Patches::AchievementsPatch
 {
-	class AchievementsPatch
-	{
-	public:
-		static void Install();
-	};
+	void Install();
 }

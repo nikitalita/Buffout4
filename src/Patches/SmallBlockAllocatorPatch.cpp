@@ -44,34 +44,31 @@
 
 #include <xbyak/xbyak.h>
 
-namespace Patches
+namespace Patches::SmallBlockAllocatorPatch::detail
 {
-	namespace
+	struct AllocPatch :
+		Xbyak::CodeGenerator
 	{
-		struct AllocPatch :
-			Xbyak::CodeGenerator
+		AllocPatch(std::size_t a_size, std::uintptr_t a_target)
 		{
-			AllocPatch(std::size_t a_size, std::uintptr_t a_target)
-			{
-				mov(rcx, a_size);
-				mov(rdx, a_target);
-				jmp(rdx);
-			}
-		};
+			mov(rcx, a_size);
+			mov(rdx, a_target);
+			jmp(rdx);
+		}
+	};
 
-		struct DeallocPatch :
-			Xbyak::CodeGenerator
+	struct DeallocPatch :
+		Xbyak::CodeGenerator
+	{
+		DeallocPatch(std::uintptr_t a_target)
 		{
-			DeallocPatch(std::uintptr_t a_target)
-			{
-				mov(rcx, rdx);
-				mov(rdx, a_target);
-				jmp(rdx);
-			}
-		};
-	}
+			mov(rcx, rdx);
+			mov(rdx, a_target);
+			jmp(rdx);
+		}
+	};
 
-	void SmallBlockAllocatorPatch::InstallAllocations()
+	void InstallAllocations()
 	{
 		constexpr std::size_t funcSize = 0xAC;
 		constexpr std::array todo{
@@ -100,7 +97,7 @@ namespace Patches
 		}
 	}
 
-	void SmallBlockAllocatorPatch::InstallDeallocations()
+	void InstallDeallocations()
 	{
 		constexpr std::size_t funcSize = 0xB4;
 		constexpr std::array todo{
