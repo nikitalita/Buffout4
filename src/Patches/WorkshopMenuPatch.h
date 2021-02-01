@@ -4,41 +4,6 @@ namespace Patches::WorkshopMenuPatch
 {
 	namespace detail
 	{
-#if 0
-		[[nodiscard]] inline bool CompareRecursive(
-			const RE::Workshop::WorkshopMenuNode& a_lhs,
-			const RE::Workshop::WorkshopMenuNode& a_rhs)
-		{
-			if (a_lhs.filterKeyword == a_rhs.filterKeyword &&
-				a_lhs.children.size() == a_rhs.children.size() &&
-				a_lhs.recipe == a_rhs.recipe &&
-				a_lhs.sourceFormListRecipe == a_rhs.sourceFormListRecipe &&
-				a_lhs.form == a_rhs.form &&
-				a_lhs.row == a_rhs.row) {
-				const auto getChildren = [](const RE::Workshop::WorkshopMenuNode& a_node) {
-					std::vector<const RE::Workshop::WorkshopMenuNode*> children(
-						a_node.children.begin(),
-						a_node.children.end());
-					std::sort(children.begin(), children.end(), LessThan);
-					return children;
-				};
-
-				const auto lChildren = getChildren(a_lhs);
-				const auto rChildren = getChildren(a_rhs);
-
-				for (std::size_t i = 0; i < lChildren.size(); ++i) {
-					assert(lChildren[i] && rChildren[i]);
-					if (!CompareRecursive(*lChildren[i], *rChildren[i])) {
-						return false;
-					}
-				}
-				return true;
-			} else {
-				return false;
-			}
-		}
-#endif
-
 		class CompareFactory
 		{
 		private:
@@ -129,7 +94,12 @@ namespace Patches::WorkshopMenuPatch
 
 			[[nodiscard]] RE::Workshop::WorkshopMenuNode& operator()()
 			{
-				const auto& child = _parent.children.emplace_back(new RE::Workshop::WorkshopMenuNode);
+				const auto mem = _allocate(_mm, sizeof(RE::Workshop::WorkshopMenuNode), 0, false);
+				assert(mem != nullptr);
+				const auto& child =
+					_parent.children.emplace_back(
+						std::construct_at(
+							std::launder(static_cast<RE::Workshop::WorkshopMenuNode*>(mem))));
 				child->parent = &_parent;
 				child->uniqueID = ++_uniqueID;
 				child->row = _parent.row + 1;
@@ -142,8 +112,12 @@ namespace Patches::WorkshopMenuPatch
 			}
 
 		private:
+			using Allocate_t = void*(RE::MemoryManager&, std::size_t, std::uint32_t, bool);
+
 			RE::Workshop::WorkshopMenuNode& _parent;
 			std::uint32_t& _uniqueID;
+			RE::MemoryManager& _mm{ RE::MemoryManager::GetSingleton() };
+			Allocate_t* _allocate{ reinterpret_cast<Allocate_t*>(REL::ID(652767).address()) };
 		};
 
 		class LookupTable
@@ -151,6 +125,7 @@ namespace Patches::WorkshopMenuPatch
 		public:
 			using key_type = RE::BGSKeyword*;
 			using mapped_type = std::vector<std::reference_wrapper<RE::BGSConstructibleObject>>;
+			using value_type = std::pair<const key_type, mapped_type>;
 
 			LookupTable() { assert(_currentWorkshop != nullptr); }
 
@@ -175,7 +150,7 @@ namespace Patches::WorkshopMenuPatch
 			}
 
 		private:
-			using WorkshopCanShowRecipe_t = bool(RE::BGSConstructibleObject* a_recipe, RE::BGSKeyword* a_filter);
+			using IsTrueForAllButFunction_t = bool(const RE::TESCondition&, RE::ConditionCheckParams&, RE::SCRIPT_OUTPUT);
 
 			[[nodiscard]] bool WorkshopCanShowRecipe(RE::BGSConstructibleObject& a_recipe, RE::BGSKeyword* a_filter)
 			{
@@ -192,18 +167,18 @@ namespace Patches::WorkshopMenuPatch
 					}
 				}
 
-				std::sort(_canShowCache.begin(), _canShowCache.end());
-				const auto hasKeyword = [&](const RE::BGSKeyword* a_keyword) noexcept {
-					const auto it = std::lower_bound(_canShowCache.begin(), _canShowCache.end(), a_keyword);
-					return it != _canShowCache.end() && *it == a_keyword;
+				std::sort(_canShowCache.data(), _canShowCache.data() + _canShowCache.size());
+				const auto hasKeyword = [](const auto& a_container, const RE::BGSKeyword* a_keyword) noexcept {
+					const auto it = std::lower_bound(a_container.begin(), a_container.end(), a_keyword);
+					return it != a_container.end() && *it == a_keyword;
 				};
 
 				constexpr auto hasPerk = static_cast<RE::SCRIPT_OUTPUT>(0x11C0);
-				RE::ConditionCheckParams params;
-				params.actionRef = _player.get();
-				params.targetRef = _player.get();
-				if (((!a_filter && _canShowCache.empty()) || hasKeyword(a_filter)) &&
-					(hasKeyword(_workshopAlwaysShowIcon) || a_recipe.conditions.IsTrueForAllButFunction(params, hasPerk)) &&
+				std::array<std::byte, sizeof(RE::ConditionCheckParams)> paramStorage;
+				std::memcpy(paramStorage.data(), &_params, paramStorage.size());
+				auto& params = *std::launder(reinterpret_cast<RE::ConditionCheckParams*>(paramStorage.data()));
+				if (((!a_filter && _canShowCache.empty()) || hasKeyword(_canShowCache, a_filter)) &&
+					(hasKeyword(_canShowCache, _workshopAlwaysShowIcon) || _isTrueForAllButFunction(a_recipe.conditions, params, hasPerk)) &&
 					_currentWorkshop->HasKeyword(a_recipe.benchKeyword, _currentInstance.get())) {
 					return true;
 				}
@@ -211,8 +186,8 @@ namespace Patches::WorkshopMenuPatch
 				return false;
 			}
 
-			std::map<key_type, mapped_type> _lookupCache;
-			std::vector<const RE::BGSKeyword*> _canShowCache;
+			std::map<key_type, mapped_type, std::less<key_type>, tbb::scalable_allocator<value_type>> _lookupCache;
+			std::vector<const RE::BGSKeyword*, tbb::scalable_allocator<const RE::BGSKeyword*>> _canShowCache;
 			const mapped_type _cobjs = []() {
 				mapped_type result;
 				if (const auto dhandler = RE::TESDataHandler::GetSingleton(); dhandler) {
@@ -253,8 +228,51 @@ namespace Patches::WorkshopMenuPatch
                         nullptr;
 				return xInst ? xInst->data : nullptr;
 			}();
-			const RE::NiPointer<RE::PlayerCharacter> _player{ RE::PlayerCharacter::GetSingleton() };
+			IsTrueForAllButFunction_t* const _isTrueForAllButFunction{ reinterpret_cast<IsTrueForAllButFunction_t*>(REL::ID(1182457).address()) };
+			const RE::ConditionCheckParams _params = []() {
+				const auto player = RE::PlayerCharacter::GetSingleton();
+				RE::ConditionCheckParams params;
+				params.actionRef = player;
+				params.targetRef = player;
+				return params;
+			}();
 		};
+
+#if 0
+		[[nodiscard]] inline bool CompareRecursive(
+			const CompareFactory& a_comp,
+			const RE::Workshop::WorkshopMenuNode& a_lhs,
+			const RE::Workshop::WorkshopMenuNode& a_rhs)
+		{
+			if (a_lhs.filterKeyword == a_rhs.filterKeyword &&
+				a_lhs.children.size() == a_rhs.children.size() &&
+				a_lhs.recipe == a_rhs.recipe &&
+				a_lhs.sourceFormListRecipe == a_rhs.sourceFormListRecipe &&
+				a_lhs.form == a_rhs.form &&
+				a_lhs.row == a_rhs.row) {
+				const auto getChildren = [&](const RE::Workshop::WorkshopMenuNode& a_node) {
+					std::vector<const RE::Workshop::WorkshopMenuNode*> children(
+						a_node.children.begin(),
+						a_node.children.end());
+					std::sort(children.begin(), children.end(), a_comp.less());
+					return children;
+				};
+
+				const auto lChildren = getChildren(a_lhs);
+				const auto rChildren = getChildren(a_rhs);
+
+				for (std::size_t i = 0; i < lChildren.size(); ++i) {
+					assert(lChildren[i] && rChildren[i]);
+					if (!CompareRecursive(a_comp, *lChildren[i], *rChildren[i])) {
+						return false;
+					}
+				}
+				return true;
+			} else {
+				return false;
+			}
+		}
+#endif
 
 		inline void FixupChildren(
 			const CompareFactory& a_comp,
@@ -273,7 +291,9 @@ namespace Patches::WorkshopMenuPatch
 			}
 		}
 
-		inline void MakeLeaf(NodeFactory a_factory, RE::BGSConstructibleObject& a_cobj)
+		inline void MakeLeaf(
+			NodeFactory a_factory,
+			RE::BGSConstructibleObject& a_cobj)
 		{
 			assert(a_cobj.createdItem != nullptr);
 			const auto make = [&](RE::TESForm* a_form) -> decltype(auto) {
