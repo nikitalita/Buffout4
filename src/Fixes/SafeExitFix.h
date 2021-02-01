@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Fixes::SafeExit
+namespace Fixes::SafeExitFix
 {
 	namespace detail
 	{

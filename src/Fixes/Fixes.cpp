@@ -3,10 +3,10 @@
 #include "Fixes/ActorIsHostileToActorFix.h"
 #include "Fixes/CellInitFix.h"
 #include "Fixes/EncounterZoneResetFix.h"
-#include "Fixes/GreyMovies.h"
+#include "Fixes/GreyMoviesFix.h"
 #include "Fixes/MovementPlannerFix.h"
 #include "Fixes/PackageAllocateLocationFix.h"
-#include "Fixes/SafeExit.h"
+#include "Fixes/SafeExitFix.h"
 #include "Fixes/UnalignedLoadFix.h"
 #include "Fixes/UtilityShaderFix.h"
 
@@ -25,7 +25,7 @@ namespace Fixes
 		}
 
 		if (*Settings::GreyMovies) {
-			GreyMovies::Install();
+			GreyMoviesFix::Install();
 		}
 
 		if (*Settings::MovementPlanner) {
@@ -37,7 +37,7 @@ namespace Fixes
 		}
 
 		if (*Settings::SafeExit) {
-			SafeExit::Install();
+			SafeExitFix::Install();
 		}
 
 		if (*Settings::UnalignedLoad) {

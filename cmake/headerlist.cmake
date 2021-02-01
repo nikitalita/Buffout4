@@ -11,10 +11,10 @@ set(headers ${headers}
 	src/Fixes/CellInitFix.h
 	src/Fixes/EncounterZoneResetFix.h
 	src/Fixes/Fixes.h
-	src/Fixes/GreyMovies.h
+	src/Fixes/GreyMoviesFix.h
 	src/Fixes/MovementPlannerFix.h
 	src/Fixes/PackageAllocateLocationFix.h
-	src/Fixes/SafeExit.h
+	src/Fixes/SafeExitFix.h
 	src/Fixes/UnalignedLoadFix.h
 	src/Fixes/UtilityShaderFix.h
 	src/Patches/AchievementsPatch.h

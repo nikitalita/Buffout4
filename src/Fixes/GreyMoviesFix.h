@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Fixes::GreyMovies
+namespace Fixes::GreyMoviesFix
 {
 	namespace detail
 	{
