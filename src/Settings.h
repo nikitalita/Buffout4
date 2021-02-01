@@ -46,6 +46,7 @@ namespace Settings
 	inline bSetting MemoryManagerDebug{ "Patches"s, "MemoryManagerDebug"s, false };
 	inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
 	inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
+	inline bSetting WorkshopMenu{ "Patches"s, "WorkshopMenu"s, true };
 
 	inline bSetting CreateTexture2D{ "Warnings"s, "CreateTexture2D"s, true };
 	inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };

@@ -7,6 +7,7 @@
 #include "Patches/MemoryManagerPatch.h"
 #include "Patches/ScaleformAllocatorPatch.h"
 #include "Patches/SmallBlockAllocatorPatch.h"
+#include "Patches/WorkshopMenuPatch.h"
 
 namespace Patches
 {
@@ -41,6 +42,10 @@ namespace Patches
 
 		if (*Settings::SmallBlockAllocator) {
 			SmallBlockAllocatorPatch::Install();
+		}
+
+		if (*Settings::WorkshopMenu) {
+			WorkshopMenuPatch::Install();
 		}
 	}
 }
