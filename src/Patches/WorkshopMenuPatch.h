@@ -9,9 +9,11 @@ namespace Patches::WorkshopMenuPatch
 		private:
 			struct eq_t
 			{
+				template <class T>
 				[[nodiscard]] bool operator()(
-					const RE::msvc::unique_ptr<RE::Workshop::WorkshopMenuNode>& a_lhs,
-					const RE::msvc::unique_ptr<RE::Workshop::WorkshopMenuNode>& a_rhs) const noexcept
+					const T& a_lhs,
+					const T& a_rhs) const noexcept  //
+					requires(std::same_as<std::remove_cv_t<typename std::pointer_traits<T>::element_type>, RE::Workshop::WorkshopMenuNode>)
 				{
 					assert(a_lhs && a_rhs);
 					return a_lhs->filterKeyword == a_rhs->filterKeyword &&
@@ -23,9 +25,11 @@ namespace Patches::WorkshopMenuPatch
 
 			struct less_t
 			{
+				template <class T>
 				[[nodiscard]] bool operator()(
-					const RE::msvc::unique_ptr<RE::Workshop::WorkshopMenuNode>& a_lhs,
-					const RE::msvc::unique_ptr<RE::Workshop::WorkshopMenuNode>& a_rhs) const noexcept
+					const T& a_lhs,
+					const T& a_rhs) const noexcept  //
+					requires(std::same_as<std::remove_cv_t<typename std::pointer_traits<T>::element_type>, RE::Workshop::WorkshopMenuNode>)
 				{
 					assert(a_lhs && a_rhs);
 
@@ -152,6 +156,42 @@ namespace Patches::WorkshopMenuPatch
 		private:
 			using IsTrueForAllButFunction_t = bool(const RE::TESCondition&, RE::ConditionCheckParams&, RE::SCRIPT_OUTPUT);
 
+			template <class Key, class T, template <class> class Allocator>
+			using map_t = std::map<Key, T, std::less<Key>, Allocator<std::pair<const Key, T>>>;
+
+			template <class T, template <class> class Allocator>
+			using vector_t = std::vector<T, Allocator<T>>;
+
+			template <class C, class T>
+			[[nodiscard]] __forceinline static bool Contains(const C& a_haystack, T&& a_needle)
+			{
+				const auto it = std::lower_bound(a_haystack.begin(), a_haystack.end(), a_needle);
+				return it != a_haystack.end() && *it == a_needle;
+			}
+
+			[[nodiscard]] bool HasKeyword(const RE::BGSKeyword* a_keyword)
+			{
+				assert(_currentWorkshop != nullptr);
+
+				if (const auto it = _hasKeywordCache.find(a_keyword); it != _hasKeywordCache.end()) {
+					return it->second;
+				} else {
+					const auto ins = _hasKeywordCache.emplace(
+						a_keyword,
+						_currentWorkshop->HasKeyword(a_keyword, _currentInstance.get()));
+					return ins.first->second;
+				}
+			}
+
+			[[nodiscard]] __forceinline bool HasStoredItem(const RE::TESForm& a_item) const
+			{
+				const auto needle =
+					&a_item == _splineEndpointMarker && _workshopSplineObject ?
+                        _workshopSplineObject->GetFormID() :
+                        a_item.GetFormID();
+				return Contains(_storedItems, needle);
+			}
+
 			[[nodiscard]] bool WorkshopCanShowRecipe(RE::BGSConstructibleObject& a_recipe, RE::BGSKeyword* a_filter)
 			{
 				assert(_currentWorkshop != nullptr);
@@ -166,29 +206,29 @@ namespace Patches::WorkshopMenuPatch
 						_canShowCache.push_back(_filters[index]);
 					}
 				}
-
 				std::sort(_canShowCache.data(), _canShowCache.data() + _canShowCache.size());
-				const auto hasKeyword = [](const auto& a_container, const RE::BGSKeyword* a_keyword) noexcept {
-					const auto it = std::lower_bound(a_container.begin(), a_container.end(), a_keyword);
-					return it != a_container.end() && *it == a_keyword;
-				};
 
 				constexpr auto hasPerk = static_cast<RE::SCRIPT_OUTPUT>(0x11C0);
 				std::array<std::byte, sizeof(RE::ConditionCheckParams)> paramStorage;
 				std::memcpy(paramStorage.data(), &_params, paramStorage.size());
 				auto& params = *std::launder(reinterpret_cast<RE::ConditionCheckParams*>(paramStorage.data()));
-				if (((!a_filter && _canShowCache.empty()) || hasKeyword(_canShowCache, a_filter)) &&
-					(hasKeyword(_canShowCache, _workshopAlwaysShowIcon) || _isTrueForAllButFunction(a_recipe.conditions, params, hasPerk)) &&
-					_currentWorkshop->HasKeyword(a_recipe.benchKeyword, _currentInstance.get())) {
+
+				if (((!a_filter && _canShowCache.empty()) ||
+						Contains(_canShowCache, a_filter)) &&
+					(HasStoredItem(*a_recipe.createdItem) ||
+						Contains(_canShowCache, _workshopAlwaysShowIcon) ||
+						_isTrueForAllButFunction(a_recipe.conditions, params, hasPerk)) &&
+					HasKeyword(a_recipe.benchKeyword)) {
 					return true;
 				}
 
 				return false;
 			}
 
-			std::map<key_type, mapped_type, std::less<key_type>, tbb::scalable_allocator<value_type>> _lookupCache;
-			std::vector<const RE::BGSKeyword*, tbb::scalable_allocator<const RE::BGSKeyword*>> _canShowCache;
-			const mapped_type _cobjs = []() {
+			map_t<key_type, mapped_type, tbb::scalable_allocator> _lookupCache;
+			map_t<const RE::BGSKeyword*, bool, tbb::scalable_allocator> _hasKeywordCache;  // avoid duplicate checks
+			vector_t<const RE::BGSKeyword*, tbb::scalable_allocator> _canShowCache;        // avoid malloc/free overhead
+			const mapped_type _cobjs = []() {                                              // pre-filter cobjs
 				mapped_type result;
 				if (const auto dhandler = RE::TESDataHandler::GetSingleton(); dhandler) {
 					for (const auto cobj : dhandler->GetFormArray<RE::BGSConstructibleObject>()) {
@@ -209,6 +249,7 @@ namespace Patches::WorkshopMenuPatch
 					return {};
 				}
 			}();
+			const RE::TESForm* const _workshopSplineObject{ REL::Relocation<RE::BGSDefaultObject*>(REL::ID(678816))->form };
 			const RE::BGSKeyword* const _badKeyword = []() {
 				const auto dobj = RE::BGSDefaultObjectManager::GetSingleton();
 				return dobj ?
@@ -216,20 +257,45 @@ namespace Patches::WorkshopMenuPatch
                            nullptr;
 			}();
 			const RE::BGSKeyword* const _workshopAlwaysShowIcon = []() {
-				REL::Relocation<RE::BGSDefaultObject*> workshopAlwaysShowIcon{ REL::ID(1581182) };
-				const auto form = workshopAlwaysShowIcon->form;
+				REL::Relocation<RE::BGSDefaultObject*> dobj{ REL::ID(1581182) };
+				const auto form = dobj->form;
 				return form ? form->As<RE::BGSKeyword>() : nullptr;
 			}();
+			const RE::TESObjectSTAT* const _splineEndpointMarker{ *REL::Relocation<RE::TESObjectSTAT**>(REL::ID(1116891)) };
 			const RE::NiPointer<RE::TESObjectREFR> _currentWorkshop{ REL::Relocation<RE::ObjectRefHandle*>(REL::ID(737927))->get() };
-			const RE::BSTSmartPointer<RE::TBO_InstanceData> _currentInstance = [&]() {
+			const RE::BSAutoWriteLock _extraLock = [&]() {  // avoid constantly locking/unlocking the same extralist
+				return RE::BSAutoWriteLock(
+					_currentWorkshop && _currentWorkshop->extraList ?
+                        &_currentWorkshop->extraList->extraRWLock :
+                        nullptr);
+			}();
+			const RE::BSTSmartPointer<RE::TBO_InstanceData> _currentInstance = [&]() {  // avoid looking up the same instance data every time
 				const auto xInst =
 					_currentWorkshop && _currentWorkshop->extraList ?
                         _currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
                         nullptr;
 				return xInst ? xInst->data : nullptr;
 			}();
-			IsTrueForAllButFunction_t* const _isTrueForAllButFunction{ reinterpret_cast<IsTrueForAllButFunction_t*>(REL::ID(1182457).address()) };
-			const RE::ConditionCheckParams _params = []() {
+			const std::vector<std::uint32_t> _storedItems = [&]() {
+				std::vector<std::uint32_t> result;
+				const auto xWorkshop =
+					_currentWorkshop && _currentWorkshop->extraList ?
+                        _currentWorkshop->extraList->GetByType<RE::Workshop::ExtraData>() :
+                        nullptr;
+				if (xWorkshop) {
+					for (const auto item : xWorkshop->deletedItems) {
+						if (item && item->count > 0) {
+							result.push_back(item->formID);
+						}
+					}
+					std::sort(result.begin(), result.end());
+				}
+				return result;
+			}();
+			IsTrueForAllButFunction_t* const _isTrueForAllButFunction{ REL::Relocation<IsTrueForAllButFunction_t*>(REL::ID(1182457)).get() };
+			const RE::ConditionCheckParams _params = []() {  // use intrinsics to quickly initialize arguments
+				static_assert(std::is_trivially_copy_constructible_v<RE::ConditionCheckParams>);
+				static_assert(std::is_trivially_destructible_v<RE::ConditionCheckParams>);
 				const auto player = RE::PlayerCharacter::GetSingleton();
 				RE::ConditionCheckParams params;
 				params.actionRef = player;
@@ -240,35 +306,62 @@ namespace Patches::WorkshopMenuPatch
 
 #if 0
 		[[nodiscard]] inline bool CompareRecursive(
-			const CompareFactory& a_comp,
 			const RE::Workshop::WorkshopMenuNode& a_lhs,
 			const RE::Workshop::WorkshopMenuNode& a_rhs)
 		{
+			const auto getChildren = [&](const RE::Workshop::WorkshopMenuNode& a_node) {
+				std::vector<const RE::Workshop::WorkshopMenuNode*> children;
+				children.reserve(a_node.children.size());
+				for (const auto& child : a_node.children) {
+					children.push_back(child.get());
+				}
+				std::sort(children.begin(), children.end(), [](auto&& a_lhs, auto&& a_rhs) noexcept {
+#define CASE(a_name)                                                            \
+	if (!!a_lhs->a_name != !!a_rhs->a_name || a_lhs->a_name != a_rhs->a_name) { \
+		return !!a_lhs->a_name != !!a_rhs->a_name ?                             \
+                   !!a_lhs->a_name :                                            \
+                   a_lhs->a_name->GetFormID() < a_rhs->a_name->GetFormID();     \
+	}
+					// clang-format off
+					CASE(filterKeyword)
+					else CASE(recipe)
+					else CASE(form)
+					else return false;
+					// clang-format on
+#undef CONTROL
+				});
+				return children;
+			};
+
+			const auto lChildren = getChildren(a_lhs);
+			const auto rChildren = getChildren(a_rhs);
+
 			if (a_lhs.filterKeyword == a_rhs.filterKeyword &&
 				a_lhs.children.size() == a_rhs.children.size() &&
 				a_lhs.recipe == a_rhs.recipe &&
 				a_lhs.sourceFormListRecipe == a_rhs.sourceFormListRecipe &&
 				a_lhs.form == a_rhs.form &&
 				a_lhs.row == a_rhs.row) {
-				const auto getChildren = [&](const RE::Workshop::WorkshopMenuNode& a_node) {
-					std::vector<const RE::Workshop::WorkshopMenuNode*> children(
-						a_node.children.begin(),
-						a_node.children.end());
-					std::sort(children.begin(), children.end(), a_comp.less());
-					return children;
-				};
-
-				const auto lChildren = getChildren(a_lhs);
-				const auto rChildren = getChildren(a_rhs);
-
 				for (std::size_t i = 0; i < lChildren.size(); ++i) {
 					assert(lChildren[i] && rChildren[i]);
-					if (!CompareRecursive(a_comp, *lChildren[i], *rChildren[i])) {
+					if (!CompareRecursive(*lChildren[i], *rChildren[i])) {
 						return false;
 					}
 				}
 				return true;
 			} else {
+				const auto [lIt, rIt] = std::mismatch(
+					lChildren.begin(),
+					lChildren.end(),
+					rChildren.begin(),
+					rChildren.end(),
+					[](auto&& a_lhs, auto&& a_rhs) noexcept {
+						return a_lhs->filterKeyword == a_rhs->filterKeyword &&
+					           a_lhs->recipe == a_rhs->recipe &&
+					           a_lhs->form == a_rhs->form;
+					});
+				[[maybe_unused]] const auto lPos = lIt - lChildren.begin();
+				[[maybe_unused]] const auto rPos = rIt - rChildren.begin();
 				return false;
 			}
 		}
@@ -351,19 +444,18 @@ namespace Patches::WorkshopMenuPatch
 			case RE::ENUM_FORM_ID::kFLST:
 				{
 					auto& flst = static_cast<RE::BGSListForm&>(a_form);
-					const auto front = flst.arrayOfForms.size() >= 2 ?  // must have at least 1 keyword + 1 element to show up
-                                           flst.arrayOfForms.front() :
-                                           nullptr;
+					const auto front = !flst.arrayOfForms.empty() ? flst.arrayOfForms.front() : nullptr;
 					if (front && front->Is<RE::BGSKeyword>()) {
 						auto& kywd = static_cast<RE::BGSKeyword&>(*front);
 						auto& child = make(&kywd);
 						auto& children = child.children;
 						const auto factory = a_factory.clone(child);
-						for (std::uint32_t i = 1; i < flst.arrayOfForms.size(); ++i) {
-							if (const auto lform = flst.arrayOfForms[i]; lform && !lform->IsDeleted()) {
-								if (MakeSubMenu(a_table, a_comp, factory, *lform) && children.back()->children.empty()) {
-									children.pop_back();
-								}
+						for (const auto lform : flst.arrayOfForms) {
+							if (lform &&
+								!lform->IsDeleted() &&
+								MakeSubMenu(a_table, a_comp, factory, *lform) &&
+								children.back()->children.empty()) {
+								children.pop_back();
 							}
 						}
 
@@ -373,6 +465,7 @@ namespace Patches::WorkshopMenuPatch
 				}
 				break;
 			default:
+				assert(false);
 				break;
 			}
 
@@ -386,9 +479,8 @@ namespace Patches::WorkshopMenuPatch
 			a_rootNode.uniqueID = static_cast<std::uint32_t>(-2);
 			a_rootNode.row = static_cast<std::uint16_t>(-2);
 
-			const CompareFactory comp;
 			LookupTable table;
-			MakeSubMenu(table, comp, { a_rootNode, a_rootNode.uniqueID }, a_rootList);
+			MakeSubMenu(table, {}, { a_rootNode, a_rootNode.uniqueID }, a_rootList);
 
 			if (a_rootNode.children.size() == 1) {
 				auto tmp = std::move(a_rootNode.children.front()->children);
@@ -407,6 +499,7 @@ namespace Patches::WorkshopMenuPatch
 			const REL::Relocation<RE::ObjectRefHandle*> hCurrentWorkshop{ REL::ID(737927) };
 			const REL::Relocation<RE::ObjectRefHandle*> hLastWorkshop{ REL::ID(56095) };
 			const REL::Relocation<std::uint16_t*> currentRow{ REL::ID(833923) };
+			const REL::Relocation<RE::Workshop::WorkshopMenuNode*> wireNode{ REL::ID(450339) };
 			const REL::Relocation<RE::Workshop::WorkshopMenuNode*> rootNode{ REL::ID(1421138) };
 			const REL::Relocation<RE::BGSDefaultObject*> rootList{ REL::ID(1514918) };
 
@@ -440,8 +533,8 @@ namespace Patches::WorkshopMenuPatch
 						cobj->createdItem &&
 						cobj->createdItem == splineEndpointMarker &&
 						currentWorkshop->HasKeyword(cobj->benchKeyword, inst.get())) {
-						rootNode->recipe = cobj;
-						rootNode->form = cobj->createdItem;
+						wireNode->recipe = cobj;
+						wireNode->form = cobj->createdItem;
 						break;
 					}
 				}
