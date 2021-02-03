@@ -159,14 +159,17 @@ namespace Patches::WorkshopMenuPatch
 			template <class Key, class T, template <class> class Allocator>
 			using map_t = std::map<Key, T, std::less<Key>, Allocator<std::pair<const Key, T>>>;
 
-			template <class T, template <class> class Allocator>
-			using vector_t = std::vector<T, Allocator<T>>;
-
 			template <class C, class T>
-			[[nodiscard]] __forceinline static bool Contains(const C& a_haystack, T&& a_needle)
+			[[nodiscard]] __forceinline static bool BinarySearch(const C& a_haystack, T&& a_needle)
 			{
 				const auto it = std::lower_bound(a_haystack.begin(), a_haystack.end(), a_needle);
 				return it != a_haystack.end() && *it == a_needle;
+			}
+
+			template <class C, class T>
+			[[nodiscard]] __forceinline static bool LinearSearch(const C& a_haystack, T&& a_needle)
+			{
+				return std::find(a_haystack.begin(), a_haystack.end(), a_needle) != a_haystack.end();
 			}
 
 			[[nodiscard]] bool HasKeyword(const RE::BGSKeyword* a_keyword)
@@ -189,7 +192,7 @@ namespace Patches::WorkshopMenuPatch
 					&a_item == _splineEndpointMarker && _workshopSplineObject ?
                         _workshopSplineObject->GetFormID() :
                         a_item.GetFormID();
-				return Contains(_storedItems, needle);
+				return BinarySearch(_storedItems, needle);
 			}
 
 			[[nodiscard]] bool WorkshopCanShowRecipe(RE::BGSConstructibleObject& a_recipe, RE::BGSKeyword* a_filter)
@@ -199,14 +202,12 @@ namespace Patches::WorkshopMenuPatch
 				assert(a_recipe.createdItem->IsObject() || a_recipe.createdItem->Is<RE::BGSListForm>());
 
 				_canShowCache.clear();
-				_canShowCache.reserve(a_recipe.filterKeywords.size);
 				for (std::uint32_t i = 0; i < a_recipe.filterKeywords.size; ++i) {
 					const auto index = a_recipe.filterKeywords.array[i].keywordIndex;
 					if (index < _filters.size()) {
 						_canShowCache.push_back(_filters[index]);
 					}
 				}
-				std::sort(_canShowCache.data(), _canShowCache.data() + _canShowCache.size());
 
 				constexpr auto hasPerk = static_cast<RE::SCRIPT_OUTPUT>(0x11C0);
 				std::array<std::byte, sizeof(RE::ConditionCheckParams)> paramStorage;
@@ -214,9 +215,9 @@ namespace Patches::WorkshopMenuPatch
 				auto& params = *std::launder(reinterpret_cast<RE::ConditionCheckParams*>(paramStorage.data()));
 
 				if (((!a_filter && _canShowCache.empty()) ||
-						Contains(_canShowCache, a_filter)) &&
+						LinearSearch(_canShowCache, a_filter)) &&
 					(HasStoredItem(*a_recipe.createdItem) ||
-						Contains(_canShowCache, _workshopAlwaysShowIcon) ||
+						LinearSearch(_canShowCache, _workshopAlwaysShowIcon) ||
 						_isTrueForAllButFunction(a_recipe.conditions, params, hasPerk)) &&
 					HasKeyword(a_recipe.benchKeyword)) {
 					return true;
@@ -227,8 +228,12 @@ namespace Patches::WorkshopMenuPatch
 
 			map_t<key_type, mapped_type, tbb::scalable_allocator> _lookupCache;
 			map_t<const RE::BGSKeyword*, bool, tbb::scalable_allocator> _hasKeywordCache;  // avoid duplicate checks
-			vector_t<const RE::BGSKeyword*, tbb::scalable_allocator> _canShowCache;        // avoid malloc/free overhead
-			const mapped_type _cobjs = []() {                                              // pre-filter cobjs
+			std::vector<const RE::BGSKeyword*> _canShowCache = []() {                      // avoid malloc/free overhead
+				decltype(_canShowCache) result;
+				result.reserve(1u << 4);
+				return result;
+			}();
+			const mapped_type _cobjs = []() {  // pre-filter cobjs
 				mapped_type result;
 				if (const auto dhandler = RE::TESDataHandler::GetSingleton(); dhandler) {
 					for (const auto cobj : dhandler->GetFormArray<RE::BGSConstructibleObject>()) {
