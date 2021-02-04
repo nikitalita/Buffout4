@@ -13,7 +13,7 @@ set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-custom" CACHE STRING "")
 
 project(
 	Buffout4
-	VERSION 1.20.1
+	VERSION 1.20.2
 	LANGUAGES CXX
 )
 

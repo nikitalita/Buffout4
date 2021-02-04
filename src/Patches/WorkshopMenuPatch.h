@@ -389,6 +389,32 @@ namespace Patches::WorkshopMenuPatch
 			}
 		}
 
+		inline bool MakeSubMenu(
+			LookupTable&,
+			const CompareFactory&,
+			NodeFactory,
+			RE::TESForm&);
+
+		inline void EnumerateFLST(
+			LookupTable& a_table,
+			const CompareFactory& a_comp,
+			NodeFactory a_factory,
+			RE::Workshop::WorkshopMenuNode& a_node,
+			const RE::BGSListForm& a_flst)
+		{
+			auto& children = a_node.children;
+			for (const auto lform : a_flst.arrayOfForms) {
+				if (lform &&
+					!lform->IsDeleted() &&
+					MakeSubMenu(a_table, a_comp, a_factory, *lform) &&
+					children.back()->children.empty()) {
+					children.pop_back();
+				}
+
+				FixupChildren(a_comp, a_node);
+			}
+		}
+
 		inline void MakeLeaf(
 			NodeFactory a_factory,
 			RE::BGSConstructibleObject& a_cobj)
@@ -414,7 +440,7 @@ namespace Patches::WorkshopMenuPatch
 			}
 		}
 
-		inline bool MakeSubMenu(
+		bool MakeSubMenu(
 			LookupTable& a_table,
 			const CompareFactory& a_comp,
 			NodeFactory a_factory,
@@ -435,13 +461,14 @@ namespace Patches::WorkshopMenuPatch
 					auto& kywd = static_cast<RE::BGSKeyword&>(a_form);
 					const auto& matches = a_table(kywd);
 					if (!matches.empty()) {
+						success = true;
+
 						auto& child = make(&kywd);
 						const auto factory = a_factory.clone(child);
 						for (RE::BGSConstructibleObject& cobj : matches) {
 							MakeLeaf(factory, cobj);
 						}
 
-						success = true;
 						FixupChildren(a_comp, child);
 					}
 				}
@@ -451,21 +478,16 @@ namespace Patches::WorkshopMenuPatch
 					auto& flst = static_cast<RE::BGSListForm&>(a_form);
 					const auto front = !flst.arrayOfForms.empty() ? flst.arrayOfForms.front() : nullptr;
 					if (front && front->Is<RE::BGSKeyword>()) {
+						success = true;
+
 						auto& kywd = static_cast<RE::BGSKeyword&>(*front);
 						auto& child = make(&kywd);
-						auto& children = child.children;
-						const auto factory = a_factory.clone(child);
-						for (const auto lform : flst.arrayOfForms) {
-							if (lform &&
-								!lform->IsDeleted() &&
-								MakeSubMenu(a_table, a_comp, factory, *lform) &&
-								children.back()->children.empty()) {
-								children.pop_back();
-							}
-						}
-
-						success = true;
-						FixupChildren(a_comp, child);
+						EnumerateFLST(
+							a_table,
+							a_comp,
+							a_factory.clone(child),
+							child,
+							flst);
 					}
 				}
 				break;
@@ -481,20 +503,17 @@ namespace Patches::WorkshopMenuPatch
 			RE::Workshop::WorkshopMenuNode& a_rootNode,
 			RE::BGSListForm a_rootList)
 		{
-			a_rootNode.uniqueID = static_cast<std::uint32_t>(-2);
-			a_rootNode.row = static_cast<std::uint16_t>(-2);
+			a_rootNode.uniqueID = static_cast<std::uint32_t>(-1);
+			a_rootNode.row = static_cast<std::uint16_t>(-1);
 
 			LookupTable table;
-			MakeSubMenu(table, {}, { a_rootNode, a_rootNode.uniqueID }, a_rootList);
+			EnumerateFLST(
+				table,
+				{},
+				{ a_rootNode, a_rootNode.uniqueID },
+				a_rootNode,
+				a_rootList);
 
-			if (a_rootNode.children.size() == 1) {
-				auto tmp = std::move(a_rootNode.children.front()->children);
-				a_rootNode.children = std::move(tmp);
-				for (const auto& child : a_rootNode.children) {
-					assert(child != nullptr);
-					child->parent = &a_rootNode;
-				}
-			}
 			a_rootNode.uniqueID = static_cast<std::uint32_t>(-1);
 			a_rootNode.row = 0;
 		}
