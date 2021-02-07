@@ -13,7 +13,7 @@ set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-custom" CACHE STRING "")
 
 project(
 	Buffout4
-	VERSION 1.20.2
+	VERSION 1.20.3
 	LANGUAGES CXX
 )
 
@@ -117,6 +117,7 @@ add_subdirectory("$ENV{CommonLibF4Path}" CommonLibF4)
 
 find_package(
 	Boost
+	QUIET
 	MODULE
 	REQUIRED
 	COMPONENTS
@@ -235,4 +236,29 @@ add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> $ENV{Fallout4Path}/Data/F4SE/Plugins/
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.toml $ENV{Fallout4Path}/Data/F4SE/Plugins/
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}_preload.txt $ENV{Fallout4Path}/Data/F4SE/Plugins/
+)
+
+# ---- Build artifacts ----
+
+set(script "scripts/PackageGen.py")
+
+add_custom_target(
+	"create_artifact"
+	COMMAND
+		"${CMAKE_CURRENT_SOURCE_DIR}/${script}"
+		"--src-dir=\"${CMAKE_CURRENT_SOURCE_DIR}\""
+		"--name=\"${PROJECT_NAME}\""
+		"--dll=\"$<TARGET_FILE:${PROJECT_NAME}>\""
+		"--pdb=\"$<TARGET_PDB_FILE:${PROJECT_NAME}>\""
+	WORKING_DIRECTORY
+		${CMAKE_CURRENT_BINARY_DIR}
+	SOURCES
+		${script}
+)
+
+source_group(
+	TREE
+		${CMAKE_CURRENT_SOURCE_DIR}
+	FILES
+		${script}
 )

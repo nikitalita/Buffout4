@@ -129,7 +129,6 @@ namespace Patches::WorkshopMenuPatch
 		public:
 			using key_type = RE::BGSKeyword*;
 			using mapped_type = std::vector<std::reference_wrapper<RE::BGSConstructibleObject>>;
-			using value_type = std::pair<const key_type, mapped_type>;
 
 			LookupTable() { assert(_currentWorkshop != nullptr); }
 
@@ -140,9 +139,9 @@ namespace Patches::WorkshopMenuPatch
 					return it->second;
 				} else if (_currentWorkshop) {
 					mapped_type results;
-					for (const auto cobj : _cobjs) {
-						if (WorkshopCanShowRecipe(cobj, key)) {
-							results.push_back(cobj);
+					for (const auto& elem : _cobjs) {
+						if (WorkshopCanShowRecipe(elem, key)) {
+							results.push_back(elem.cobj);
 						}
 					}
 					const auto ins = _lookupCache.emplace(key, std::move(results));
@@ -154,10 +153,17 @@ namespace Patches::WorkshopMenuPatch
 			}
 
 		private:
-			using IsTrueForAllButFunction_t = bool(const RE::TESCondition&, RE::ConditionCheckParams&, RE::SCRIPT_OUTPUT);
-
 			template <class Key, class T, template <class> class Allocator>
-			using map_t = std::map<Key, T, std::less<Key>, Allocator<std::pair<const Key, T>>>;
+			using map_t = boost::container::flat_map<Key, T, std::less<Key>, Allocator<std::pair<Key, T>>>;
+
+			struct cobj_t
+			{
+				std::reference_wrapper<RE::BGSConstructibleObject> cobj;
+				std::reference_wrapper<const RE::TESForm> createdItem;
+				const RE::BGSKeyword* benchKeyword{ nullptr };
+				boost::container::small_vector<const RE::BGSKeyword*, 2> filterKeywords;
+				bool conditions{ false };
+			};
 
 			template <class C, class T>
 			[[nodiscard]] __forceinline static bool BinarySearch(const C& a_haystack, T&& a_needle)
@@ -186,7 +192,7 @@ namespace Patches::WorkshopMenuPatch
 				}
 			}
 
-			[[nodiscard]] __forceinline bool HasStoredItem(const RE::TESForm& a_item) const
+			[[nodiscard]] bool HasStoredItem(const RE::TESForm& a_item) const
 			{
 				const auto needle =
 					&a_item == _splineEndpointMarker && _workshopSplineObject ?
@@ -195,64 +201,69 @@ namespace Patches::WorkshopMenuPatch
 				return BinarySearch(_storedItems, needle);
 			}
 
-			[[nodiscard]] bool WorkshopCanShowRecipe(RE::BGSConstructibleObject& a_recipe, RE::BGSKeyword* a_filter)
+			[[nodiscard]] bool WorkshopCanShowRecipe(const cobj_t& a_recipe, RE::BGSKeyword* a_filter)
 			{
-				assert(_currentWorkshop != nullptr);
-				assert(a_recipe.createdItem != nullptr);
-				assert(a_recipe.createdItem->IsObject() || a_recipe.createdItem->Is<RE::BGSListForm>());
-
-				_canShowCache.clear();
-				for (std::uint32_t i = 0; i < a_recipe.filterKeywords.size; ++i) {
-					const auto index = a_recipe.filterKeywords.array[i].keywordIndex;
-					if (index < _filters.size()) {
-						_canShowCache.push_back(_filters[index]);
-					}
-				}
-
-				constexpr auto hasPerk = static_cast<RE::SCRIPT_OUTPUT>(0x11C0);
-				std::array<std::byte, sizeof(RE::ConditionCheckParams)> paramStorage;
-				std::memcpy(paramStorage.data(), &_params, paramStorage.size());
-				auto& params = *std::launder(reinterpret_cast<RE::ConditionCheckParams*>(paramStorage.data()));
-
-				if (((!a_filter && _canShowCache.empty()) ||
-						LinearSearch(_canShowCache, a_filter)) &&
-					(HasStoredItem(*a_recipe.createdItem) ||
-						LinearSearch(_canShowCache, _workshopAlwaysShowIcon) ||
-						_isTrueForAllButFunction(a_recipe.conditions, params, hasPerk)) &&
+				if (((!a_filter && a_recipe.filterKeywords.empty()) ||
+						LinearSearch(a_recipe.filterKeywords, a_filter)) &&
+					(a_recipe.conditions ||
+						HasStoredItem(a_recipe.createdItem) ||
+						LinearSearch(a_recipe.filterKeywords, _workshopAlwaysShowIcon)) &&
 					HasKeyword(a_recipe.benchKeyword)) {
 					return true;
+				} else {
+					return false;
 				}
-
-				return false;
 			}
 
 			map_t<key_type, mapped_type, tbb::scalable_allocator> _lookupCache;
 			map_t<const RE::BGSKeyword*, bool, tbb::scalable_allocator> _hasKeywordCache;  // avoid duplicate checks
-			std::vector<const RE::BGSKeyword*> _canShowCache = []() {                      // avoid malloc/free overhead
-				decltype(_canShowCache) result;
-				result.reserve(1u << 4);
-				return result;
-			}();
-			const mapped_type _cobjs = []() {  // pre-filter cobjs
-				mapped_type result;
+			const std::vector<cobj_t> _cobjs = []() {                                      // pre-filter cobjs
+				const auto filters = []() -> std::span<const RE::BGSKeyword*> {
+					if (const auto keywords = RE::BGSKeyword::GetTypedKeywords(); keywords) {
+						auto& filters = (*keywords)[stl::to_underlying(RE::BGSKeyword::KeywordType::kRecipeFilter)];
+						return { const_cast<const RE::BGSKeyword**>(filters.data()), filters.size() };
+					} else {
+						return {};
+					}
+				}();
+
+				std::vector<cobj_t> result;
 				if (const auto dhandler = RE::TESDataHandler::GetSingleton(); dhandler) {
+					const auto player = RE::PlayerCharacter::GetSingleton();
+					const REL::Relocation<decltype(&RE::TESCondition::IsTrueForAllButFunction)> isTrueForAllButFunction{ REL::ID(1182457) };
+
 					for (const auto cobj : dhandler->GetFormArray<RE::BGSConstructibleObject>()) {
 						if (cobj &&
 							cobj->createdItem &&
 							(cobj->createdItem->Is<RE::BGSListForm>() || cobj->createdItem->IsBoundObject())) {
-							result.emplace_back(*cobj);
+							const auto conditions = [&]() {
+								constexpr auto hasPerk = static_cast<RE::SCRIPT_OUTPUT>(0x11C0);
+
+								RE::ConditionCheckParams params;
+								params.actionRef = player;
+								params.targetRef = player;
+
+								return isTrueForAllButFunction(&cobj->conditions, params, hasPerk);
+							}();
+
+							auto& back = result.emplace_back(
+								*cobj,
+								*cobj->createdItem,
+								cobj->benchKeyword,
+								std::initializer_list<const RE::BGSKeyword*>{},
+								conditions);
+
+							for (std::uint32_t i = 0; i < cobj->filterKeywords.size; ++i) {
+								const auto index = cobj->filterKeywords.array[i].keywordIndex;
+								if (index < filters.size()) {
+									back.filterKeywords.push_back(filters[index]);
+								}
+							}
 						}
 					}
 				}
+
 				return result;
-			}();
-			const std::span<const RE::BGSKeyword*> _filters = []() -> decltype(_filters) {
-				if (const auto keywords = RE::BGSKeyword::GetTypedKeywords(); keywords) {
-					auto& filters = (*keywords)[stl::to_underlying(RE::BGSKeyword::KeywordType::kRecipeFilter)];
-					return { const_cast<const RE::BGSKeyword**>(filters.data()), filters.size() };
-				} else {
-					return {};
-				}
 			}();
 			const RE::TESForm* const _workshopSplineObject{ REL::Relocation<RE::BGSDefaultObject*>(REL::ID(678816))->form };
 			const RE::BGSKeyword* const _badKeyword = []() {
@@ -296,16 +307,6 @@ namespace Patches::WorkshopMenuPatch
 					std::sort(result.begin(), result.end());
 				}
 				return result;
-			}();
-			IsTrueForAllButFunction_t* const _isTrueForAllButFunction{ REL::Relocation<IsTrueForAllButFunction_t*>(REL::ID(1182457)).get() };
-			const RE::ConditionCheckParams _params = []() {  // use intrinsics to quickly initialize arguments
-				static_assert(std::is_trivially_copy_constructible_v<RE::ConditionCheckParams>);
-				static_assert(std::is_trivially_destructible_v<RE::ConditionCheckParams>);
-				const auto player = RE::PlayerCharacter::GetSingleton();
-				RE::ConditionCheckParams params;
-				params.actionRef = player;
-				params.targetRef = player;
-				return params;
 			}();
 		};
 
