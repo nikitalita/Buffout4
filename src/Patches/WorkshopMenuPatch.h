@@ -90,12 +90,6 @@ namespace Patches::WorkshopMenuPatch
 				_uniqueID(a_uniqueID)
 			{}
 
-			NodeFactory(const NodeFactory&) = default;
-			NodeFactory(NodeFactory&&) = default;
-			~NodeFactory() = default;
-			NodeFactory& operator=(const NodeFactory&) = default;
-			NodeFactory& operator=(NodeFactory&&) = default;
-
 			[[nodiscard]] RE::Workshop::WorkshopMenuNode& operator()()
 			{
 				const auto mem = _allocate(_mm, sizeof(RE::Workshop::WorkshopMenuNode), 0, false);
@@ -112,16 +106,23 @@ namespace Patches::WorkshopMenuPatch
 
 			[[nodiscard]] NodeFactory clone(RE::Workshop::WorkshopMenuNode& a_parent) const noexcept
 			{
-				return { a_parent, _uniqueID };
+				return { *this, a_parent };
 			}
 
 		private:
 			using Allocate_t = void*(RE::MemoryManager&, std::size_t, std::uint32_t, bool);
 
+			NodeFactory(const NodeFactory& a_context, RE::Workshop::WorkshopMenuNode& a_parent) noexcept :
+				_parent(a_parent),
+				_uniqueID(a_context._uniqueID),
+				_mm(a_context._mm),
+				_allocate(a_context._allocate)
+			{}
+
 			RE::Workshop::WorkshopMenuNode& _parent;
 			std::uint32_t& _uniqueID;
 			RE::MemoryManager& _mm{ RE::MemoryManager::GetSingleton() };
-			Allocate_t* _allocate{ reinterpret_cast<Allocate_t*>(REL::ID(652767).address()) };
+			Allocate_t* const _allocate{ reinterpret_cast<Allocate_t*>(REL::ID(652767).address()) };
 		};
 
 		class LookupTable
@@ -334,7 +335,7 @@ namespace Patches::WorkshopMenuPatch
 					else CASE(form)
 					else return false;
 					// clang-format on
-#undef CONTROL
+#undef CASE
 				});
 				return children;
 			};
@@ -396,7 +397,7 @@ namespace Patches::WorkshopMenuPatch
 			NodeFactory,
 			RE::TESForm&);
 
-		inline void EnumerateFLST(
+		__forceinline void EnumerateFLST(
 			LookupTable& a_table,
 			const CompareFactory& a_comp,
 			NodeFactory a_factory,

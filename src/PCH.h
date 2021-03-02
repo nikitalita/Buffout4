@@ -15,6 +15,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <span>
 #include <sstream>
 #include <string>
@@ -30,7 +31,6 @@
 #pragma warning(disable: 4706)  // assignment within conditional expression
 #include <boost/algorithm/searching/knuth_morris_pratt.hpp>
 #include <boost/container/flat_map.hpp>
-#include <boost/container/map.hpp>
 #include <boost/container/small_vector.hpp>
 #include <boost/nowide/convert.hpp>
 #include <boost/stacktrace.hpp>

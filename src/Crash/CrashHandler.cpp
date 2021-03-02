@@ -461,7 +461,7 @@ namespace Crash
 
 			const auto groups = []() {
 				const auto& src = AutoTOML::ISetting::get_settings();
-				boost::container::map<
+				boost::container::flat_map<
 					std::string_view,
 					std::vector<AutoTOML::ISetting*>>
 					groups;
