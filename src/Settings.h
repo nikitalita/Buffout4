@@ -39,6 +39,7 @@ namespace Settings
 	inline bSetting UtilityShader{ "Fixes"s, "UtilityShader"s, true };
 
 	inline bSetting Achievements{ "Patches"s, "Achievements"s, true };
+	inline bSetting BSPreCulledObjects{ "Patches"s, "BSPreCulledObjects"s, true };
 	inline bSetting BSTextureStreamerLocalHeap{ "Patches"s, "BSTextureStreamerLocalHeap"s, true };
 	inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
 	inline iSetting MaxStdIO{ "Patches"s, "MaxStdIO"s, -1 };
