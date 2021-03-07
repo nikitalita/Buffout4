@@ -11,6 +11,7 @@ UtilityShader = true           # Fixes a crash when a shader can't be found for 
 
 [Patches]
 Achievements = true               # Enables achievements on modded saves
+BSMTAManager = true               # General rendering performance improvement
 BSPreCulledObjects = true         # General rendering performance improvement
 BSTextureStreamerLocalHeap = true # Replaces the texture streamer's local heap with os allocators
 HavokMemorySystem = true          # Replaces the havok memory system with os allocators

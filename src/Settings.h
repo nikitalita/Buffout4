@@ -1,5 +1,8 @@
 #pragma once
 
+#define MAKE_SETTING(a_type, a_group, a_key, a_value) \
+	inline a_type a_key { a_group##s, #a_key##s, a_value }
+
 namespace Settings
 {
 	using ISetting = AutoTOML::ISetting;
@@ -28,29 +31,32 @@ namespace Settings
 		}
 	}
 
-	inline bSetting ActorIsHostileToActor{ "Fixes"s, "ActorIsHostileToActor"s, true };
-	inline bSetting CellInit{ "Fixes"s, "CellInit"s, true };
-	inline bSetting EncounterZoneReset{ "Fixes"s, "EncounterZoneReset"s, true };
-	inline bSetting GreyMovies{ "Fixes"s, "GreyMovies"s, true };
-	inline bSetting MovementPlanner{ "Fixes"s, "MovementPlanner"s, true };
-	inline bSetting PackageAllocateLocation{ "Fixes"s, "PackageAllocateLocation"s, true };
-	inline bSetting SafeExit{ "Fixes"s, "SafeExit"s, true };
-	inline bSetting UnalignedLoad{ "Fixes"s, "UnalignedLoad"s, true };
-	inline bSetting UtilityShader{ "Fixes"s, "UtilityShader"s, true };
+	MAKE_SETTING(bSetting, "Fixes", ActorIsHostileToActor, true);
+	MAKE_SETTING(bSetting, "Fixes", CellInit, true);
+	MAKE_SETTING(bSetting, "Fixes", EncounterZoneReset, true);
+	MAKE_SETTING(bSetting, "Fixes", GreyMovies, true);
+	MAKE_SETTING(bSetting, "Fixes", MovementPlanner, true);
+	MAKE_SETTING(bSetting, "Fixes", PackageAllocateLocation, true);
+	MAKE_SETTING(bSetting, "Fixes", SafeExit, true);
+	MAKE_SETTING(bSetting, "Fixes", UnalignedLoad, true);
+	MAKE_SETTING(bSetting, "Fixes", UtilityShader, true);
 
-	inline bSetting Achievements{ "Patches"s, "Achievements"s, true };
-	inline bSetting BSPreCulledObjects{ "Patches"s, "BSPreCulledObjects"s, true };
-	inline bSetting BSTextureStreamerLocalHeap{ "Patches"s, "BSTextureStreamerLocalHeap"s, true };
-	inline bSetting HavokMemorySystem{ "Patches"s, "HavokMemorySystem"s, true };
-	inline iSetting MaxStdIO{ "Patches"s, "MaxStdIO"s, -1 };
-	inline bSetting MemoryManager{ "Patches"s, "MemoryManager"s, true };
-	inline bSetting MemoryManagerDebug{ "Patches"s, "MemoryManagerDebug"s, false };
-	inline bSetting ScaleformAllocator{ "Patches"s, "ScaleformAllocator"s, true };
-	inline bSetting SmallBlockAllocator{ "Patches"s, "SmallBlockAllocator"s, true };
-	inline bSetting WorkshopMenu{ "Patches"s, "WorkshopMenu"s, true };
+	MAKE_SETTING(bSetting, "Patches", Achievements, true);
+	MAKE_SETTING(bSetting, "Patches", BSMTAManager, true);
+	MAKE_SETTING(bSetting, "Patches", BSPreCulledObjects, true);
+	MAKE_SETTING(bSetting, "Patches", BSTextureStreamerLocalHeap, true);
+	MAKE_SETTING(bSetting, "Patches", HavokMemorySystem, true);
+	MAKE_SETTING(iSetting, "Patches", MaxStdIO, -1);
+	MAKE_SETTING(bSetting, "Patches", MemoryManager, true);
+	MAKE_SETTING(bSetting, "Patches", MemoryManagerDebug, false);
+	MAKE_SETTING(bSetting, "Patches", ScaleformAllocator, true);
+	MAKE_SETTING(bSetting, "Patches", SmallBlockAllocator, true);
+	MAKE_SETTING(bSetting, "Patches", WorkshopMenu, true);
 
-	inline bSetting CreateTexture2D{ "Warnings"s, "CreateTexture2D"s, true };
-	inline bSetting ImageSpaceAdapter{ "Warnings"s, "ImageSpaceAdapter"s, true };
+	MAKE_SETTING(bSetting, "Warnings", CreateTexture2D, true);
+	MAKE_SETTING(bSetting, "Warnings", ImageSpaceAdapter, true);
 
-	inline bSetting F4EE{ "Compatibility"s, "F4EE"s, true };
+	MAKE_SETTING(bSetting, "Compatibility", F4EE, true);
 }
+
+#undef MAKE_SETTING

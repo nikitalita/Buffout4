@@ -1,6 +1,7 @@
 #include "Patches/Patches.h"
 
 #include "Patches/AchievementsPatch.h"
+#include "Patches/BSMTAManagerPatch.h"
 #include "Patches/BSPreCulledObjectsPatch.h"
 #include "Patches/BSTextureStreamerLocalHeapPatch.h"
 #include "Patches/HavokMemorySystemPatch.h"
@@ -23,6 +24,10 @@ namespace Patches
 	{
 		if (*Settings::Achievements) {
 			AchievementsPatch::Install();
+		}
+
+		if (*Settings::BSMTAManager) {
+			BSMTAManagerPatch::Install();
 		}
 
 		if (*Settings::BSPreCulledObjects) {
