@@ -55,6 +55,7 @@ if (MSVC)
 	add_compile_options(
 		/MP	# Build with Multiple Processes
 		/sdl	# Enable Additional Security Checks
+		/utf-8	# Set Source and Executable character sets to UTF-8
 		/Zi	# Debug Information Format
 
 		/permissive-	# Standards conformance
@@ -88,9 +89,8 @@ if (MSVC)
 		/W4	# Warning level
 		/WX	# Warning level (warnings are errors)
 
-		${MY_CXX_FLAGS}
-		"$<$<CONFIG:DEBUG>:${MY_CXX_FLAGS_DEBUG}>"
-		"$<$<CONFIG:RELEASE>:${MY_CXX_FLAGS_RELEASE};/Zc:inline;/JMC->"
+		"$<$<CONFIG:DEBUG>:>"
+		"$<$<CONFIG:RELEASE>:/Zc:inline;/JMC->"
 	)
 
 	# fix a warning with /Ob2 being overridden with /Ob3
@@ -111,9 +111,9 @@ set(Boost_USE_DEBUG_RUNTIME ON)
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibF4/CommonLibF4" CommonLibF4)
 
+find_package(AutoTOML REQUIRED CONFIG)
 find_package(
 	Boost
-	QUIET
 	MODULE
 	REQUIRED
 	COMPONENTS
@@ -123,6 +123,7 @@ find_package(
 find_package(fmt REQUIRED CONFIG)
 find_package(frozen REQUIRED CONFIG)
 find_package(infoware REQUIRED CONFIG)
+find_package(robin_hood REQUIRED CONFIG)
 find_package(spdlog REQUIRED CONFIG)
 find_package(
 	TBB
@@ -131,10 +132,7 @@ find_package(
 		tbbmalloc
 	CONFIG
 )
-find_package(tomlplusplus REQUIRED CONFIG)
 find_package(xbyak REQUIRED CONFIG)
-
-find_path(ROBIN_HOOD_HASHING_INCLUDE_DIRS "robin_hood.h" REQUIRED)
 
 # ---- Add source files ----
 
@@ -180,12 +178,12 @@ target_include_directories(
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
-		${ROBIN_HOOD_HASHING_INCLUDE_DIRS}
 )
 
 target_link_libraries(
 	${PROJECT_NAME}
 	PRIVATE
+		AutoTOML::AutoTOML
 		Boost::headers
 		Boost::nowide
 		Boost::stacktrace_windbg
@@ -195,6 +193,7 @@ target_link_libraries(
 		fmt::fmt
 		frozen::frozen
 		infoware
+		robin_hood::robin_hood
 		spdlog::spdlog
 		TBB::tbbmalloc
 		tomlplusplus::tomlplusplus

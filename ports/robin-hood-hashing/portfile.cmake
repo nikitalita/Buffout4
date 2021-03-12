@@ -13,7 +13,10 @@ vcpkg_cmake_configure(
 )
 
 vcpkg_cmake_install()
-vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/robin_hood)
+vcpkg_cmake_config_fixup(
+	PACKAGE_NAME robin_hood
+	CONFIG_PATH lib/cmake/robin_hood
+)
 
 file(REMOVE_RECURSE
 	${CURRENT_PACKAGES_DIR}/debug
