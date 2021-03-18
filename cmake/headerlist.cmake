@@ -12,6 +12,7 @@ set(headers ${headers}
 	src/Fixes/EncounterZoneResetFix.h
 	src/Fixes/Fixes.h
 	src/Fixes/GreyMoviesFix.h
+	src/Fixes/MagicEffectApplyEventFix.h
 	src/Fixes/MovementPlannerFix.h
 	src/Fixes/PackageAllocateLocationFix.h
 	src/Fixes/SafeExitFix.h

@@ -44,9 +44,9 @@
 
 #include <xbyak/xbyak.h>
 
-namespace Compatibility
+namespace Compatibility::F4EE::detail
 {
-	void F4EE::SimpleInlinePatch(std::uintptr_t a_dst, std::size_t a_size, std::uintptr_t a_func)
+	void SimpleInlinePatch(std::uintptr_t a_dst, std::size_t a_size, std::uintptr_t a_func)
 	{
 		struct Patch :
 			Xbyak::CodeGenerator
@@ -67,7 +67,7 @@ namespace Compatibility
 			std::span{ p.getCode<const std::byte*>(), p.getSize() });
 	}
 
-	void F4EE::SetMorphValues(std::uintptr_t a_base)
+	void SetMorphValues(std::uintptr_t a_base)
 	{
 		{
 			constexpr std::size_t first = 0x001AB6E;

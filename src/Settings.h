@@ -35,6 +35,7 @@ namespace Settings
 	MAKE_SETTING(bSetting, "Fixes", CellInit, true);
 	MAKE_SETTING(bSetting, "Fixes", EncounterZoneReset, true);
 	MAKE_SETTING(bSetting, "Fixes", GreyMovies, true);
+	MAKE_SETTING(bSetting, "Fixes", MagicEffectApplyEvent, true);
 	MAKE_SETTING(bSetting, "Fixes", MovementPlanner, true);
 	MAKE_SETTING(bSetting, "Fixes", PackageAllocateLocation, true);
 	MAKE_SETTING(bSetting, "Fixes", SafeExit, true);

@@ -13,7 +13,7 @@ set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-custom" CACHE STRING "")
 
 project(
 	Buffout4
-	VERSION 1.21.0
+	VERSION 1.22.0
 	LANGUAGES CXX
 )
 
@@ -35,7 +35,7 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 	message(
 		FATAL_ERROR
 			"In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
-)
+	)
 endif()
 
 # ---- Globals ----

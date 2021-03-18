@@ -4,6 +4,7 @@
 #include "Fixes/CellInitFix.h"
 #include "Fixes/EncounterZoneResetFix.h"
 #include "Fixes/GreyMoviesFix.h"
+#include "Fixes/MagicEffectApplyEventFix.h"
 #include "Fixes/MovementPlannerFix.h"
 #include "Fixes/PackageAllocateLocationFix.h"
 #include "Fixes/SafeExitFix.h"
@@ -26,6 +27,10 @@ namespace Fixes
 
 		if (*Settings::GreyMovies) {
 			GreyMoviesFix::Install();
+		}
+
+		if (*Settings::MagicEffectApplyEvent) {
+			MagicEffectApplyEventFix::Install();
 		}
 
 		if (*Settings::MovementPlanner) {
