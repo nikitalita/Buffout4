@@ -29,7 +29,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE 
 
 project(
 	Buffout4
-	VERSION 1.22.0
+	VERSION 1.23.0
 	LANGUAGES CXX
 )
 
