@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Allocator.h"
+
 namespace Patches::MemoryManagerPatch
 {
 	namespace detail
@@ -91,9 +93,10 @@ namespace Patches::MemoryManagerPatch
 			inline void* Allocate(RE::MemoryManager*, std::size_t a_size, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
 				if (a_size > 0) {
+					auto& heap = Allocator::ProxyHeap::get();
 					return a_alignmentRequired ?
-                               scalable_aligned_malloc(a_size, a_alignment) :
-                               scalable_malloc(a_size);
+                               heap.aligned_alloc(a_alignment, a_size) :
+                               heap.malloc(a_size);
 				} else {
 					return nullptr;
 				}
@@ -113,18 +116,20 @@ namespace Patches::MemoryManagerPatch
 
 			inline void Deallocate(RE::MemoryManager*, void* a_mem, bool a_alignmentRequired)
 			{
+				auto& heap = Allocator::ProxyHeap::get();
 				a_alignmentRequired ?
-                    scalable_aligned_free(a_mem) :
-                    scalable_free(a_mem);
+                    heap.aligned_free(a_mem) :
+                    heap.free(a_mem);
 			}
 
 			void DbgDeallocate(RE::MemoryManager* a_this, void* a_mem, bool a_alignmentRequired);
 
 			inline void* Reallocate(RE::MemoryManager*, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
 			{
+				auto& heap = Allocator::ProxyHeap::get();
 				return a_alignmentRequired ?
-                           scalable_aligned_realloc(a_oldMem, a_newSize, a_alignment) :
-                           scalable_realloc(a_oldMem, a_newSize);
+                           heap.aligned_realloc(a_alignment, a_oldMem, a_newSize) :
+                           heap.realloc(a_oldMem, a_newSize);
 			}
 
 			inline void* DbgReallocate(RE::MemoryManager* a_this, void* a_oldMem, std::size_t a_newSize, std::uint32_t a_alignment, bool a_alignmentRequired)
@@ -163,12 +168,40 @@ namespace Patches::MemoryManagerPatch
 				REL::safe_write(target.address(), REL::RET);
 			}
 
+			struct initterm
+			{
+				static void thunk(std::uintptr_t* a_first, std::uintptr_t* a_last)
+				{
+					void (*const proxy)() = []() {
+						RE::MemoryManager::GetSingleton().RegisterMemoryManager();
+						RE::BSThreadEvent::InitSDM();
+					};
+
+					std::vector<std::uintptr_t> cache(a_first, a_last);
+					constexpr auto preCppInit = 1;
+					if (cache.size() > preCppInit) {
+						cache.insert(
+							cache.begin() + preCppInit + 1,
+							reinterpret_cast<std::uintptr_t>(proxy));
+					} else {
+						cache.push_back(reinterpret_cast<std::uintptr_t>(proxy));
+					}
+
+					func(
+						std::to_address(cache.begin()),
+						std::to_address(cache.end()));
+				}
+
+				static inline REL::Relocation<decltype(thunk)> func;
+			};
+
 			inline void Install()
 			{
 				StubInit();
 				ReplaceAllocRoutines();
-				RE::MemoryManager::GetSingleton().RegisterMemoryManager();
-				RE::BSThreadEvent::InitSDM();
+
+				REL::Relocation<std::uintptr_t> target{ REL::ID(1104651), 0xB3 };
+				stl::write_thunk_call<5, initterm>(target.address());
 			}
 		}
 
@@ -176,8 +209,9 @@ namespace Patches::MemoryManagerPatch
 		{
 			inline void* Allocate(RE::ScrapHeap*, std::size_t a_size, std::size_t a_alignment)
 			{
+				auto& heap = Allocator::ProxyHeap::get();
 				return a_size > 0 ?
-                           scalable_aligned_malloc(a_size, a_alignment) :
+                           heap.aligned_alloc(a_alignment, a_size) :
                            nullptr;
 			}
 
@@ -190,7 +224,8 @@ namespace Patches::MemoryManagerPatch
 
 			inline void Deallocate(RE::ScrapHeap*, void* a_mem)
 			{
-				scalable_aligned_free(a_mem);
+				auto& heap = Allocator::ProxyHeap::get();
+				heap.aligned_free(a_mem);
 			}
 
 			inline void WriteHooks()

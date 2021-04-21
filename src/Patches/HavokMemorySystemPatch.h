@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Allocator.h"
+
 namespace Patches::HavokMemorySystemPatch
 {
 	namespace detail
@@ -11,30 +13,30 @@ namespace Patches::HavokMemorySystemPatch
 			void* BlockAlloc(std::int32_t a_numBytesIn) override
 			{
 				return a_numBytesIn > 0 ?
-                           scalable_aligned_malloc(a_numBytesIn, 0x10) :
+                           _heap.aligned_alloc(0x10, a_numBytesIn) :
                            nullptr;
 			}
 
 			void BlockFree(void* a_ptr, std::int32_t) override
 			{
-				scalable_aligned_free(a_ptr);
+				_heap.aligned_free(a_ptr);
 			}
 
 			void* BufAlloc(std::int32_t& a_reqNumBytesInOut) override
 			{
 				return a_reqNumBytesInOut > 0 ?
-                           scalable_aligned_malloc(a_reqNumBytesInOut, 0x10) :
+                           _heap.aligned_alloc(0x10, a_reqNumBytesInOut) :
                            nullptr;
 			}
 
 			void BufFree(void* a_ptr, std::int32_t) override
 			{
-				scalable_aligned_free(a_ptr);
+				_heap.aligned_free(a_ptr);
 			}
 
 			void* BufRealloc(void* a_old, std::int32_t, std::int32_t& a_reqNumBytesInOut) override
 			{
-				return scalable_aligned_realloc(a_old, a_reqNumBytesInOut, 0x10);
+				return _heap.aligned_realloc(0x10, a_old, a_reqNumBytesInOut);
 			}
 
 			void BlockAllocBatch(void** a_ptrsOut, std::int32_t a_numPtrs, std::int32_t a_blockSize) override
@@ -43,10 +45,10 @@ namespace Patches::HavokMemorySystemPatch
 				std::for_each(
 					range.begin(),
 					range.end(),
-					[=](void*& a_elem) {
+					[&](void*& a_elem) {
 						a_elem =
 							a_blockSize > 0 ?
-                                scalable_aligned_malloc(a_blockSize, 0x10) :
+                                _heap.aligned_alloc(0x10, a_blockSize) :
                                 nullptr;
 					});
 			}
@@ -57,13 +59,16 @@ namespace Patches::HavokMemorySystemPatch
 				std::for_each(
 					range.begin(),
 					range.end(),
-					[](void* a_elem) {
-						scalable_aligned_free(a_elem);
+					[&](void* a_elem) {
+						_heap.aligned_free(a_elem);
 					});
 			}
 
 			void GetMemoryStatistics(MemoryStatistics&) const override { return; }
 			std::int32_t GetAllocatedSize(const void*, std::int32_t a_numBytes) const override { return a_numBytes; }
+
+		private:
+			Allocator::GameHeap _heap;
 		};
 
 		class hkMemorySystem final :

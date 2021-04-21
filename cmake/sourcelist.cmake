@@ -1,4 +1,5 @@
 set(sources ${sources}
+	src/Allocator.cpp
 	src/Hash.cpp
 	src/main.cpp
 	src/PCH.cpp

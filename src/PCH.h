@@ -28,7 +28,6 @@
 #include <vector>
 
 #pragma warning(push)
-#pragma warning(disable: 4706)  // assignment within conditional expression
 #include <boost/algorithm/searching/knuth_morris_pratt.hpp>
 #include <boost/container/flat_map.hpp>
 #include <boost/container/small_vector.hpp>
@@ -41,6 +40,7 @@
 #include <infoware/system.hpp>
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/msvc_sink.h>
 #include <tbb/scalable_allocator.h>
 
 #include "AutoTOML.hpp"
@@ -50,15 +50,7 @@ namespace WinAPI
 {
 	using namespace F4SE::WinAPI;
 
-	inline constexpr auto(DLL_PROCESS_DETACH){ static_cast<unsigned long>(0) };
-	inline constexpr auto(DLL_PROCESS_ATTACH){ static_cast<unsigned long>(1) };
-	inline constexpr auto(DLL_THREAD_ATTACH){ static_cast<unsigned long>(2) };
-	inline constexpr auto(DLL_THREAD_DETACH){ static_cast<unsigned long>(3) };
-
 	inline constexpr auto(EXCEPTION_EXECUTE_HANDLER){ static_cast<int>(1) };
-
-	inline constexpr auto(FALSE){ static_cast<int>(0) };
-	inline constexpr auto(TRUE){ static_cast<int>(1) };
 
 	inline constexpr auto(UNDNAME_NO_MS_KEYWORDS){ static_cast<std::uint32_t>(0x0002) };
 	inline constexpr auto(UNDNAME_NO_FUNCTION_RETURNS){ static_cast<std::uint32_t>(0x0004) };
@@ -73,9 +65,6 @@ namespace WinAPI
 
 	[[nodiscard]] bool(IsDebuggerPresent)() noexcept;
 
-	void(OutputDebugStringA)(
-		const char* a_outputString) noexcept;
-
 	[[nodiscard]] std::uint32_t(UnDecorateSymbolName)(
 		const char* a_name,
 		char* a_outputString,
@@ -83,46 +72,9 @@ namespace WinAPI
 		std::uint32_t a_flags) noexcept;
 }
 
-#ifndef NDEBUG
-#include <spdlog/sinks/base_sink.h>
-
-namespace logger
-{
-	template <class Mutex>
-	class msvc_sink :
-		public spdlog::sinks::base_sink<Mutex>
-	{
-	private:
-		using super = spdlog::sinks::base_sink<Mutex>;
-
-	public:
-		explicit msvc_sink() {}
-
-	protected:
-		void sink_it_(const spdlog::details::log_msg& a_msg) override
-		{
-			spdlog::memory_buf_t formatted;
-			super::formatter_->format(a_msg, formatted);
-			WinAPI::OutputDebugStringA(fmt::to_string(formatted).c_str());
-		}
-
-		void flush_() override {}
-	};
-
-	using msvc_sink_mt = msvc_sink<std::mutex>;
-	using msvc_sink_st = msvc_sink<spdlog::details::null_mutex>;
-
-	using windebug_sink_mt = msvc_sink_mt;
-	using windebug_sink_st = msvc_sink_st;
-}
-#endif
-
 #define DLLEXPORT __declspec(dllexport)
 
-namespace logger
-{
-	using namespace F4SE::log;
-}
+namespace logger = F4SE::log;
 
 namespace stl
 {

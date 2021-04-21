@@ -1,4 +1,5 @@
 set(headers ${headers}
+	src/Allocator.h
 	src/Hash.h
 	src/PCH.h
 	src/Settings.h

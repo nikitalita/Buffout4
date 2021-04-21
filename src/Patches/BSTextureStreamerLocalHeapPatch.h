@@ -1,13 +1,16 @@
 #pragma once
 
+#include "Allocator.h"
+
 namespace Patches::BSTextureStreamerLocalHeapPatch
 {
 	namespace detail
 	{
 		inline void* Allocate(RE::BSTextureStreamer::LocalHeap*, std::uint32_t a_size)
 		{
+			auto& heap = Allocator::ProxyHeap::get();
 			return a_size > 0 ?
-                       scalable_aligned_malloc(a_size, 0x10) :
+                       heap.aligned_alloc(0x10, a_size) :
                        nullptr;
 		}
 
@@ -19,7 +22,8 @@ namespace Patches::BSTextureStreamerLocalHeapPatch
 
 		inline void Deallocate(RE::BSTextureStreamer::LocalHeap*, void* a_ptr)
 		{
-			scalable_aligned_free(a_ptr);
+			auto& heap = Allocator::ProxyHeap::get();
+			heap.aligned_free(a_ptr);
 		}
 
 		inline void WriteHooks()

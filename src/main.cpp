@@ -24,7 +24,7 @@ void F4SEAPI MessageHandler(F4SE::MessagingInterface::Message* a_message)
 void OpenLog()
 {
 #ifndef NDEBUG
-	auto sink = std::make_shared<logger::msvc_sink_mt>();
+	auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
 #else
 	auto path = logger::log_directory();
 	if (!path) {
@@ -48,28 +48,6 @@ void OpenLog()
 	spdlog::set_pattern("%g(%#): [%^%l%$] %v"s);
 
 	logger::info("Buffout4 v{}"sv, Version::NAME);
-}
-
-extern "C" DLLEXPORT int __stdcall DllMain(void*, unsigned long a_reason, void*)
-{
-#ifndef NDEBUG
-	for (; !WinAPI::IsDebuggerPresent();) {}
-#endif
-
-	if (a_reason == WinAPI::DLL_PROCESS_ATTACH) {
-		if (WinAPI::GetModuleHandle(L"CreationKit.exe")) {
-			return WinAPI::FALSE;
-		}
-
-		OpenLog();
-		Settings::load();
-		F4SE::AllocTrampoline(1 << 8);
-		Crash::Install();
-		Patches::Preload();
-		g_preloaded = true;
-	}
-
-	return WinAPI::TRUE;
 }
 
 extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4SE::PluginInfo* a_info)
@@ -110,4 +88,70 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 	Warnings::PreInit();
 
 	return true;
+}
+
+#define WIN32_LEAN_AND_MEAN
+
+#define NOGDICAPMASKS
+#define NOVIRTUALKEYCODES
+#define NOWINMESSAGES
+#define NOWINSTYLES
+#define NOSYSMETRICS
+#define NOMENUS
+#define NOICONS
+#define NOKEYSTATES
+#define NOSYSCOMMANDS
+#define NORASTEROPS
+#define NOSHOWWINDOW
+#define OEMRESOURCE
+#define NOATOM
+#define NOCLIPBOARD
+#define NOCOLOR
+#define NOCTLMGR
+#define NODRAWTEXT
+#define NOGDI
+#define NOKERNEL
+#define NOUSER
+#define NONLS
+#define NOMB
+#define NOMEMMGR
+#define NOMETAFILE
+#define NOMINMAX
+#define NOMSG
+#define NOOPENFILE
+#define NOSCROLL
+#define NOSERVICE
+#define NOSOUND
+#define NOTEXTMETRIC
+#define NOWH
+#define NOWINOFFSETS
+#define NOCOMM
+#define NOKANJI
+#define NOHELP
+#define NOPROFILER
+#define NODEFERWINDOWPOS
+#define NOMCX
+
+#include <Windows.h>
+
+::BOOL WINAPI DllMain(::HINSTANCE, ::DWORD a_reason, ::LPVOID)
+{
+#ifndef NDEBUG
+	for (; !::IsDebuggerPresent();) {}
+#endif
+
+	if (a_reason == DLL_PROCESS_ATTACH) {
+		if (::GetModuleHandleW(L"CreationKit.exe")) {
+			return FALSE;
+		}
+
+		OpenLog();
+		Settings::load();
+		F4SE::AllocTrampoline(1 << 8);
+		Crash::Install();
+		Patches::Preload();
+		g_preloaded = true;
+	}
+
+	return TRUE;
 }

@@ -56,13 +56,6 @@ namespace WinAPI
 			::IsDebuggerPresent());
 	}
 
-	void(OutputDebugStringA)(
-		const char* a_outputString) noexcept
-	{
-		::OutputDebugStringA(
-			static_cast<::LPCSTR>(a_outputString));
-	}
-
 	std::uint32_t(UnDecorateSymbolName)(
 		const char* a_name,
 		char* a_outputString,

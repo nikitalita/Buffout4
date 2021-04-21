@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Allocator.h"
+
 namespace Patches::SmallBlockAllocatorPatch
 {
 	namespace detail
@@ -9,14 +11,16 @@ namespace Patches::SmallBlockAllocatorPatch
 
 		inline void* Allocate(std::size_t a_size)
 		{
+			auto& heap = Allocator::ProxyHeap::get();
 			return a_size > 0 ?
-                       scalable_aligned_malloc(a_size, 0x10) :
+                       heap.aligned_alloc(0x10, a_size) :
                        nullptr;
 		}
 
 		inline void Deallocate(void* a_ptr)
 		{
-			scalable_aligned_free(a_ptr);
+			auto& heap = Allocator::ProxyHeap::get();
+			heap.aligned_free(a_ptr);
 		}
 	}
 
