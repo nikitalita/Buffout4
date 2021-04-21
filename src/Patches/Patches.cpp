@@ -5,6 +5,7 @@
 #include "Patches/BSPreCulledObjectsPatch.h"
 #include "Patches/BSTextureStreamerLocalHeapPatch.h"
 #include "Patches/HavokMemorySystemPatch.h"
+#include "Patches/INISettingCollectionPatch.h"
 #include "Patches/MaxStdIOPatch.h"
 #include "Patches/MemoryManagerPatch.h"
 #include "Patches/ScaleformAllocatorPatch.h"
@@ -40,6 +41,10 @@ namespace Patches
 
 		if (*Settings::HavokMemorySystem) {
 			HavokMemorySystemPatch::Install();
+		}
+
+		if (*Settings::INISettingCollection) {
+			INISettingCollectionPatch::Install();
 		}
 
 		if (*Settings::MemoryManager || *Settings::MemoryManagerDebug) {

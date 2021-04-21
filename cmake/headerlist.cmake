@@ -24,6 +24,7 @@ set(headers ${headers}
 	src/Patches/BSPreCulledObjectsPatch.h
 	src/Patches/BSTextureStreamerLocalHeapPatch.h
 	src/Patches/HavokMemorySystemPatch.h
+	src/Patches/INISettingCollectionPatch.h
 	src/Patches/MaxStdIOPatch.h
 	src/Patches/MemoryManagerPatch.h
 	src/Patches/Patches.h
