@@ -178,15 +178,15 @@ namespace Crash
 			return log;
 		}
 
-#define EXCEPTION_CASE(a_code) \
-	case a_code:               \
-		return " \"" #a_code "\""sv
-
 		void print_exception(
 			spdlog::logger& a_log,
 			const ::EXCEPTION_RECORD& a_exception,
 			std::span<const module_pointer> a_modules)
 		{
+#define EXCEPTION_CASE(a_code) \
+	case a_code:               \
+		return " \"" #a_code "\""sv
+
 			const auto eptr = a_exception.ExceptionAddress;
 			const auto eaddr = reinterpret_cast<std::uintptr_t>(a_exception.ExceptionAddress);
 
@@ -236,9 +236,48 @@ namespace Crash
 				exception,
 				eaddr,
 				post);
-		}
 
 #undef EXCEPTION_CASE
+		}
+
+		void print_f4se_plugins(
+			spdlog::logger& a_log,
+			std::span<const module_pointer> a_modules)
+		{
+			a_log.critical("F4SE PLUGINS:"sv);
+
+			const auto ci = [](std::string_view a_lhs, std::string_view a_rhs) {
+				return a_lhs.length() != a_rhs.length() ?
+                           a_lhs.length() < a_rhs.length() :
+                           _strnicmp(a_lhs.data(), a_rhs.data(), a_lhs.length()) < 0;
+			};
+
+			const auto modules = [&]() {
+				boost::container::flat_set<std::string_view, decltype(ci)> result;
+				for (const auto& mod : a_modules) {
+					result.insert(mod->name());
+				}
+
+				return result;
+			}();
+
+			std::vector<std::string> plugins;
+			std::filesystem::path pluginDir{ "Data/F4SE/Plugins"sv };
+			for (const auto& elem : std::filesystem::directory_iterator(pluginDir)) {
+				if (const auto filename =
+						elem.path().has_filename() ?
+                            std::make_optional(elem.path().filename().string()) :
+                            std::nullopt;
+					filename && modules.contains(*filename)) {
+					plugins.push_back(*std::move(filename));
+				}
+			}
+
+			std::sort(plugins.begin(), plugins.end(), ci);
+			for (const auto& plugin : plugins) {
+				a_log.critical("\t{}", plugin);
+			}
+		}
 
 		void print_modules(
 			spdlog::logger& a_log,
@@ -343,6 +382,79 @@ namespace Crash
 			}
 		}
 
+		void print_settings(
+			spdlog::logger& a_log)
+		{
+#define SETTING_CASE(a_enum, a_type)                                              \
+	case toml::node_type::a_enum:                                                 \
+		{                                                                         \
+			assert(dynamic_cast<const AutoTOML::a_type*>(setting));               \
+			/* NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) */ \
+			const auto ptr = static_cast<const AutoTOML::a_type*>(setting);       \
+			value = fmt::to_string(ptr->get());                                   \
+		}                                                                         \
+		break
+
+			a_log.critical("SETTINGS:"sv);
+
+			const auto groups = []() {
+				const auto& src = AutoTOML::ISetting::get_settings();
+				boost::container::flat_map<
+					std::string_view,
+					std::vector<AutoTOML::ISetting*>>
+					groups;
+				std::for_each(
+					src.begin(),
+					src.end(),
+					[&](auto&& a_elem) {
+						assert(a_elem != nullptr);
+						const auto it = groups.emplace(a_elem->group(), 0).first;
+						assert(it != groups.end());
+						it->second.push_back(a_elem);
+					});
+				std::for_each(
+					groups.begin(),
+					groups.end(),
+					[](auto& a_elem) {
+						std::sort(
+							a_elem.second.begin(),
+							a_elem.second.end(),
+							[](auto&& a_lhs, auto&& a_rhs) {
+								assert(a_lhs != nullptr && a_rhs != nullptr);
+								return a_lhs->key() < a_rhs->key();
+							});
+					});
+				return groups;
+			}();
+
+			std::string value;
+			for (const auto& [group, settings] : groups) {
+				assert(!settings.empty());
+				a_log.critical(
+					FMT_STRING("\t[{}]"),
+					group);
+
+				for (const auto setting : settings) {
+					assert(setting != nullptr);
+
+					value = "UNKNOWN"sv;
+					switch (setting->type()) {
+						SETTING_CASE(boolean, bSetting);
+						SETTING_CASE(floating_point, fSetting);
+						SETTING_CASE(integer, iSetting);
+						SETTING_CASE(string, sSetting);
+					default:
+						break;
+					}
+
+					a_log.critical(
+						FMT_STRING("\t\t{}: {}"),
+						setting->key(),
+						value);
+				}
+			}
+		}
+
 		void print_stack(
 			spdlog::logger& a_log,
 			const ::CONTEXT& a_context,
@@ -444,79 +556,6 @@ namespace Crash
 				gibibyte(mem.physical_total));
 		}
 
-#define SETTING_CASE(a_enum, a_type)                                              \
-	case toml::node_type::a_enum:                                                 \
-		{                                                                         \
-			assert(dynamic_cast<const AutoTOML::a_type*>(setting));               \
-			/* NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) */ \
-			const auto ptr = static_cast<const AutoTOML::a_type*>(setting);       \
-			value = fmt::to_string(ptr->get());                                   \
-		}                                                                         \
-		break
-
-		void print_settings(
-			spdlog::logger& a_log)
-		{
-			a_log.critical("SETTINGS:"sv);
-
-			const auto groups = []() {
-				const auto& src = AutoTOML::ISetting::get_settings();
-				boost::container::flat_map<
-					std::string_view,
-					std::vector<AutoTOML::ISetting*>>
-					groups;
-				std::for_each(
-					src.begin(),
-					src.end(),
-					[&](auto&& a_elem) {
-						assert(a_elem != nullptr);
-						const auto it = groups.emplace(a_elem->group(), 0).first;
-						assert(it != groups.end());
-						it->second.push_back(a_elem);
-					});
-				std::for_each(
-					groups.begin(),
-					groups.end(),
-					[](auto& a_elem) {
-						std::sort(
-							a_elem.second.begin(),
-							a_elem.second.end(),
-							[](auto&& a_lhs, auto&& a_rhs) {
-								assert(a_lhs != nullptr && a_rhs != nullptr);
-								return a_lhs->key() < a_rhs->key();
-							});
-					});
-				return groups;
-			}();
-
-			std::string value;
-			for (const auto& [group, settings] : groups) {
-				assert(!settings.empty());
-				a_log.critical(
-					FMT_STRING("\t[{}]"),
-					group);
-
-				for (const auto setting : settings) {
-					assert(setting != nullptr);
-
-					value = "UNKNOWN"sv;
-					switch (setting->type()) {
-						SETTING_CASE(boolean, bSetting);
-						SETTING_CASE(floating_point, fSetting);
-						SETTING_CASE(integer, iSetting);
-						SETTING_CASE(string, sSetting);
-					default:
-						break;
-					}
-
-					a_log.critical(
-						FMT_STRING("\t\t{}: {}"),
-						setting->key(),
-						value);
-				}
-			}
-		}
-
 #undef SETTING_CASE
 
 		std::int32_t __stdcall UnhandledExceptions(::EXCEPTION_POINTERS* a_exception) noexcept
@@ -527,7 +566,7 @@ namespace Crash
 
 			try {
 				static std::mutex sync;
-				std::lock_guard l{ sync };
+				const std::lock_guard l{ sync };
 
 				const auto modules = Modules::get_loaded_modules();
 				const std::span cmodules{ modules.begin(), modules.end() };
@@ -564,6 +603,7 @@ namespace Crash
 				print([&]() { print_registers(*log, *a_exception->ContextRecord, cmodules); });
 				print([&]() { print_stack(*log, *a_exception->ContextRecord, cmodules); });
 				print([&]() { print_modules(*log, cmodules); });
+				print([&]() { print_f4se_plugins(*log, cmodules); });
 				print([&]() { print_plugins(*log); });
 			} catch (...) {}
 
