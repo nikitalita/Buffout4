@@ -247,9 +247,14 @@ namespace Crash
 			a_log.critical("F4SE PLUGINS:"sv);
 
 			const auto ci = [](std::string_view a_lhs, std::string_view a_rhs) {
-				return a_lhs.length() != a_rhs.length() ?
+				const auto cmp =
+					_strnicmp(
+						a_lhs.data(),
+						a_rhs.data(),
+						std::min(a_lhs.size(), a_rhs.size()));
+				return cmp == 0 && a_lhs.length() != a_rhs.length() ?
                            a_lhs.length() < a_rhs.length() :
-                           _strnicmp(a_lhs.data(), a_rhs.data(), a_lhs.length()) < 0;
+                           cmp < 0;
 			};
 
 			const auto modules = [&]() {
