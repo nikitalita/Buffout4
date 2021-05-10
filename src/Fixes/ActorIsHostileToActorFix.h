@@ -21,7 +21,7 @@ namespace Fixes::ActorIsHostileToActorFix
 
 	inline void Install()
 	{
-		constexpr std::size_t size = 0x10;
+		constexpr std::size_t size = 0xB;
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1022223) };
 
 		REL::safe_fill(target.address(), REL::INT3, size);
