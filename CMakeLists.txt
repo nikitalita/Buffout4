@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.20)
 
 # ---- Options ----
 
@@ -6,12 +6,17 @@ option(COPY_BUILD "Copy the build output to the Fallout 4 directory." ON)
 
 # ---- Cache build vars ----
 
-if (NOT DEFINED VCPKG_ROOT AND DEFINED ENV{VCPKG_ROOT})
-	set(VCPKG_ROOT $ENV{VCPKG_ROOT})
-endif ()
+macro(set_from_environment VARIABLE)
+	if (NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
+		set(${VARIABLE} $ENV{${VARIABLE}})
+	endif ()
+endmacro()
+
+set_from_environment(Fallout4Path)
+set_from_environment(VCPKG_ROOT)
 
 if (DEFINED VCPKG_ROOT)
-	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 	set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/ports" CACHE STRING "")
 	set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/triplets" CACHE STRING "")
 	set(VCPKG_TARGET_TRIPLET "x64-windows-static-md-custom" CACHE STRING "")
@@ -60,29 +65,31 @@ add_compile_definitions(
 	BOOST_STACKTRACE_LINK
 	BOOST_STACKTRACE_USE_WINDBG
 	F4SE_SUPPORT_XBYAK
-	TOML_WINDOWS_COMPAT=0
 )
 
 if (MSVC)
 	add_compile_definitions(
 		_UNICODE
 	)
-endif ()
 
-# ---- Dependencies ----
+	if (NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
+		add_compile_options(
+			/MP	# Build with Multiple Processes
+		)
+	endif ()
+endif ()
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 
-set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_DEBUG_RUNTIME ON)
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibF4/CommonLibF4" CommonLibF4)
+# ---- Dependencies ----
+
+add_subdirectory(extern/CommonLibF4/CommonLibF4 CommonLibF4)
 
 find_package(AutoTOML REQUIRED CONFIG)
-find_package(
-	Boost
+find_package(Boost
 	MODULE
 	REQUIRED
 	COMPONENTS
@@ -94,8 +101,7 @@ find_package(frozen REQUIRED CONFIG)
 find_package(infoware REQUIRED CONFIG)
 find_package(robin_hood REQUIRED CONFIG)
 find_package(spdlog REQUIRED CONFIG)
-find_package(
-	TBB
+find_package(TBB
 	REQUIRED
 	COMPONENTS
 		tbbmalloc
@@ -105,15 +111,13 @@ find_package(xbyak REQUIRED CONFIG)
 
 # ---- Add source files ----
 
-include(cmake/headerlist.cmake)
 include(cmake/sourcelist.cmake)
 
 source_group(
 	TREE
 		${CMAKE_CURRENT_SOURCE_DIR}
 	FILES
-		${headers}
-		${sources}
+		${SOURCES}
 )
 
 source_group(
@@ -128,12 +132,12 @@ source_group(
 add_library(
 	${PROJECT_NAME}
 	SHARED
-	${headers}
-	${sources}
+	${SOURCES}
 	${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	res/Buffout4.toml
 	.clang-format
-	Buffout4.toml
+	.editorconfig
 )
 
 target_compile_features(
@@ -174,7 +178,6 @@ if (MSVC)
 		${PROJECT_NAME}
 		PRIVATE
 			/EHa	# Exception handling model
-			/MP	# Build with Multiple Processes
 			/sdl	# Enable Additional Security Checks
 			/utf-8	# Set Source and Executable character sets to UTF-8
 			/Zi	# Debug Information Format
@@ -235,18 +238,14 @@ target_precompile_headers(
 # ---- File copying ----
 
 if (COPY_BUILD)
-	if (NOT DEFINED Fallout4Path AND DEFINED ENV{Fallout4Path})
-		set(Fallout4Path $ENV{Fallout4Path})
-	endif ()
-
 	if (DEFINED Fallout4Path)
 		add_custom_command(
 			TARGET ${PROJECT_NAME}
 			POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${Fallout4Path}/Data/F4SE/Plugins/
 			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> ${Fallout4Path}/Data/F4SE/Plugins/
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.toml ${Fallout4Path}/Data/F4SE/Plugins/
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}_preload.txt ${Fallout4Path}/Data/F4SE/Plugins/
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/res/${PROJECT_NAME}.toml ${Fallout4Path}/Data/F4SE/Plugins/
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/res/${PROJECT_NAME}_preload.txt ${Fallout4Path}/Data/F4SE/Plugins/
 		)
 	else ()
 		message(
@@ -258,12 +257,12 @@ endif ()
 
 # ---- Build artifacts ----
 
-set(script "scripts/PackageGen.py")
+set(SCRIPT "scripts/archive_artifacts.py")
 
 add_custom_target(
 	"create_artifact"
 	COMMAND
-		"${CMAKE_CURRENT_SOURCE_DIR}/${script}"
+		"${CMAKE_CURRENT_SOURCE_DIR}/${SCRIPT}"
 		"--src-dir=\"${CMAKE_CURRENT_SOURCE_DIR}\""
 		"--name=\"${PROJECT_NAME}\""
 		"--dll=\"$<TARGET_FILE:${PROJECT_NAME}>\""
@@ -271,12 +270,12 @@ add_custom_target(
 	WORKING_DIRECTORY
 		${CMAKE_CURRENT_BINARY_DIR}
 	SOURCES
-		${script}
+		${SCRIPT}
 )
 
 source_group(
 	TREE
 		${CMAKE_CURRENT_SOURCE_DIR}
 	FILES
-		${script}
+		${SCRIPT}
 )

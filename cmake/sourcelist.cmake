@@ -1,21 +1,56 @@
-set(sources ${sources}
+set(SOURCES
 	src/Allocator.cpp
-	src/Hash.cpp
-	src/main.cpp
-	src/PCH.cpp
+	src/Allocator.h
 	src/Compatibility/Compatibility.cpp
+	src/Compatibility/Compatibility.h
 	src/Compatibility/F4EE.cpp
+	src/Compatibility/F4EE.h
 	src/Crash/CrashHandler.cpp
+	src/Crash/CrashHandler.h
 	src/Crash/Introspection/Introspection.cpp
+	src/Crash/Introspection/Introspection.h
 	src/Crash/Modules/ModuleHandler.cpp
+	src/Crash/Modules/ModuleHandler.h
+	src/Fixes/ActorIsHostileToActorFix.h
 	src/Fixes/CellInitFix.cpp
+	src/Fixes/CellInitFix.h
+	src/Fixes/EncounterZoneResetFix.h
 	src/Fixes/Fixes.cpp
+	src/Fixes/Fixes.h
+	src/Fixes/GreyMoviesFix.h
+	src/Fixes/MagicEffectApplyEventFix.h
+	src/Fixes/MovementPlannerFix.h
+	src/Fixes/PackageAllocateLocationFix.h
+	src/Fixes/SafeExitFix.h
+	src/Fixes/UnalignedLoadFix.h
 	src/Fixes/UtilityShaderFix.cpp
+	src/Fixes/UtilityShaderFix.h
+	src/Hash.cpp
+	src/Hash.h
+	src/PCH.cpp
+	src/PCH.h
 	src/Patches/AchievementsPatch.cpp
+	src/Patches/AchievementsPatch.h
+	src/Patches/BSMTAManagerPatch.h
+	src/Patches/BSPreCulledObjectsPatch.h
+	src/Patches/BSTextureStreamerLocalHeapPatch.h
+	src/Patches/HavokMemorySystemPatch.h
+	src/Patches/INISettingCollectionPatch.h
+	src/Patches/MaxStdIOPatch.h
 	src/Patches/MemoryManagerPatch.cpp
+	src/Patches/MemoryManagerPatch.h
 	src/Patches/Patches.cpp
+	src/Patches/Patches.h
+	src/Patches/ScaleformAllocatorPatch.h
 	src/Patches/SmallBlockAllocatorPatch.cpp
+	src/Patches/SmallBlockAllocatorPatch.h
+	src/Patches/WorkshopMenuPatch.h
+	src/Settings.h
 	src/Warnings/CreateTexture2DWarning.cpp
+	src/Warnings/CreateTexture2DWarning.h
 	src/Warnings/ImageSpaceAdapterWarning.cpp
+	src/Warnings/ImageSpaceAdapterWarning.h
 	src/Warnings/Warnings.cpp
+	src/Warnings/Warnings.h
+	src/main.cpp
 )
