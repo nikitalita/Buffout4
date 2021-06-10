@@ -5,7 +5,7 @@
 
 namespace Warnings
 {
-	void PreInit()
+	void PreLoad()
 	{
 		if (*Settings::CreateTexture2D) {
 			CreateTexture2DWarning::Install();

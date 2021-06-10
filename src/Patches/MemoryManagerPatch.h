@@ -171,40 +171,13 @@ namespace Patches::MemoryManagerPatch
 				*initFence = 2;
 			}
 
-			struct initterm
-			{
-				static void thunk(std::uintptr_t* a_first, std::uintptr_t* a_last)
-				{
-					void (*const proxy)() = []() {
-						RE::MemoryManager::GetSingleton().RegisterMemoryManager();
-						RE::BSThreadEvent::InitSDM();
-					};
-
-					std::vector<std::uintptr_t> cache(a_first, a_last);
-					constexpr auto preCppInit = 1;
-					if (cache.size() > preCppInit) {
-						cache.insert(
-							cache.begin() + preCppInit + 1,
-							reinterpret_cast<std::uintptr_t>(proxy));
-					} else {
-						cache.push_back(reinterpret_cast<std::uintptr_t>(proxy));
-					}
-
-					func(
-						std::to_address(cache.begin()),
-						std::to_address(cache.end()));
-				}
-
-				static inline REL::Relocation<decltype(thunk)> func;
-			};
-
 			inline void Install()
 			{
 				StubInit();
 				ReplaceAllocRoutines();
 
-				REL::Relocation<std::uintptr_t> target{ REL::ID(1104651), 0xB3 };
-				stl::write_thunk_call<5, initterm>(target.address());
+				RE::MemoryManager::GetSingleton().RegisterMemoryManager();
+				RE::BSThreadEvent::InitSDM();
 			}
 		}
 

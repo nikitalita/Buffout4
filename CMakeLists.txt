@@ -34,7 +34,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE 
 
 project(
 	Buffout4
-	VERSION 1.23.0
+	VERSION 1.23.1
 	LANGUAGES CXX
 )
 
@@ -260,7 +260,7 @@ endif ()
 set(SCRIPT "scripts/archive_artifacts.py")
 
 add_custom_target(
-	"create_artifact"
+	create_artifact
 	COMMAND
 		"${CMAKE_CURRENT_SOURCE_DIR}/${SCRIPT}"
 		"--src-dir=\"${CMAKE_CURRENT_SOURCE_DIR}\""
@@ -271,6 +271,11 @@ add_custom_target(
 		${CMAKE_CURRENT_BINARY_DIR}
 	SOURCES
 		${SCRIPT}
+)
+
+add_dependencies(
+	create_artifact
+	${PROJECT_NAME}
 )
 
 source_group(

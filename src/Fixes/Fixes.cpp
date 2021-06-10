@@ -13,10 +13,8 @@
 
 namespace Fixes
 {
-	void PreInit()
+	void PreLoad()
 	{
-		Settings::load();
-
 		if (*Settings::ActorIsHostileToActor) {
 			ActorIsHostileToActorFix::Install();
 		}

@@ -45,7 +45,7 @@
 #include <d3d11.h>
 #include <xbyak/xbyak.h>
 
-namespace Warnings
+namespace Warnings::CreateTexture2DWarning
 {
 	namespace
 	{
@@ -81,7 +81,7 @@ namespace Warnings
 		}
 	}
 
-	void CreateTexture2DWarning::Install()
+	void Install()
 	{
 		{
 			struct Patch :
@@ -115,6 +115,6 @@ namespace Warnings
 			WritePatch<Patch>(target.address(), 0x8);
 		}
 
-		logger::info("installed {}"sv, typeid(CreateTexture2DWarning).name());
+		logger::info("installed CreateTexture2D Warning"sv);
 	}
 }

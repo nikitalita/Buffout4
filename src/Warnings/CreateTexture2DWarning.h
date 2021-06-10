@@ -1,10 +1,6 @@
 #pragma once
 
-namespace Warnings
+namespace Warnings::CreateTexture2DWarning
 {
-	class CreateTexture2DWarning
-	{
-	public:
-		static void Install();
-	};
+	void Install();
 }

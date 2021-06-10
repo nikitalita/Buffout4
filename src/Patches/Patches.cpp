@@ -14,14 +14,7 @@
 
 namespace Patches
 {
-	void PreInit()
-	{
-		if (*Settings::MaxStdIO != -1) {
-			MaxStdIOPatch::Install();
-		}
-	}
-
-	void Preload()
+	void PreLoad()
 	{
 		if (*Settings::Achievements) {
 			AchievementsPatch::Install();
@@ -45,6 +38,10 @@ namespace Patches
 
 		if (*Settings::INISettingCollection) {
 			INISettingCollectionPatch::Install();
+		}
+
+		if (*Settings::MaxStdIO != -1) {
+			MaxStdIOPatch::Install();
 		}
 
 		if (*Settings::MemoryManager || *Settings::MemoryManagerDebug) {

@@ -2,6 +2,6 @@
 
 namespace Fixes
 {
-	void PreInit();
+	void PreLoad();
 	void PostInit();
 }

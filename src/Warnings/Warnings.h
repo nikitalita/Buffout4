@@ -2,5 +2,5 @@
 
 namespace Warnings
 {
-	void PreInit();
+	void PreLoad();
 }
