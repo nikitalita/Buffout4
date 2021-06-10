@@ -166,6 +166,9 @@ namespace Patches::MemoryManagerPatch
 				REL::Relocation<std::uintptr_t> target{ REL::ID(597736) };
 				REL::safe_fill(target.address(), REL::INT3, 0x9C);
 				REL::safe_write(target.address(), REL::RET);
+
+				REL::Relocation<std::uint32_t*> initFence{ REL::ID(1570354) };
+				*initFence = 2;
 			}
 
 			struct initterm

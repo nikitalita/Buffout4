@@ -82,10 +82,8 @@ namespace stl
 			{
 				Xbyak::Label dst;
 
-				jmp(ptr[rip + dst]);
-
-				L(dst);
-				dq(a_dst);
+				mov(rax, a_dst);
+				jmp(rax);
 			}
 		};
 	}

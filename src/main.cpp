@@ -31,7 +31,8 @@ void OpenLog()
 		stl::report_and_fail("Failed to find standard logging directory"sv);
 	}
 
-	*path /= "Buffout4.log"sv;
+	*path /= Version::PROJECT;
+	*path += ".log"sv;
 	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
 #endif
 
@@ -47,7 +48,7 @@ void OpenLog()
 	spdlog::set_default_logger(std::move(log));
 	spdlog::set_pattern("%g(%#): [%^%l%$] %v"s);
 
-	logger::info("Buffout4 v{}"sv, Version::NAME);
+	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
 
 extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4SE::PluginInfo* a_info)
@@ -57,7 +58,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 	}
 
 	a_info->infoVersion = F4SE::PluginInfo::kVersion;
-	a_info->name = "Buffout4";
+	a_info->name = Version::PROJECT.data();
 	a_info->version = Version::MAJOR;
 
 	if (a_f4se->IsEditor()) {
@@ -67,7 +68,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 
 	const auto ver = a_f4se->RuntimeVersion();
 	if (ver < F4SE::RUNTIME_1_10_162) {
-		logger::critical("unsupported runtime v{}"sv, ver.string());
+		logger::critical(FMT_STRING("unsupported runtime v{}"), ver.string());
 		return false;
 	}
 
@@ -136,6 +137,13 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 
 ::BOOL WINAPI DllMain(::HINSTANCE, ::DWORD a_reason, ::LPVOID)
 {
+	enum class NativeStartupState
+	{
+		kUninitialized,
+		kInitializing,
+		kInitialized
+	};
+
 #ifndef NDEBUG
 	for (; !::IsDebuggerPresent();) {}
 #endif
@@ -147,7 +155,16 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 
 		OpenLog();
 		Settings::load();
-		F4SE::AllocTrampoline(1 << 8);
+
+		REL::Relocation<NativeStartupState*> startupState{ REL::ID(3070) };
+		if (*startupState != NativeStartupState::kUninitialized) {
+			stl::report_and_fail(
+				fmt::format(
+					FMT_STRING("{} has loaded too late. Try adjusting the plugin preloader load method."),
+					Version::PROJECT));
+		}
+
+		F4SE::AllocTrampoline(1u << 8);
 		Crash::Install();
 		Patches::Preload();
 		g_preloaded = true;

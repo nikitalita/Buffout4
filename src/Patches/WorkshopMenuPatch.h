@@ -612,7 +612,7 @@ namespace Patches::WorkshopMenuPatch
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1515994) };
 		constexpr std::size_t size = 0x24F;
-		REL::safe_fill(target.address(), REL::NOP, size);
+		REL::safe_fill(target.address(), REL::INT3, size);
 		stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(detail::BuildWorkShopMenuNodeTree));
 		logger::info("installed WorkshopMenu patch"sv);
 	}
