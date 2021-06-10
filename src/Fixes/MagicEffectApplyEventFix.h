@@ -12,7 +12,7 @@ namespace Fixes::MagicEffectApplyEventFix
 				RE::BSTEventSource<RE::TESMagicEffectApplyEvent>* a_source)
 			{
 				return a_event.target ?
-                           func(a_self, a_event, a_source) :
+				           func(a_self, a_event, a_source) :
                            RE::BSEventNotifyControl::kContinue;
 			}
 

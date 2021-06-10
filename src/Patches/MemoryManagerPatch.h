@@ -95,7 +95,7 @@ namespace Patches::MemoryManagerPatch
 				if (a_size > 0) {
 					auto& heap = Allocator::ProxyHeap::get();
 					return a_alignmentRequired ?
-                               heap.aligned_alloc(a_alignment, a_size) :
+					           heap.aligned_alloc(a_alignment, a_size) :
                                heap.malloc(a_size);
 				} else {
 					return nullptr;
@@ -118,7 +118,7 @@ namespace Patches::MemoryManagerPatch
 			{
 				auto& heap = Allocator::ProxyHeap::get();
 				a_alignmentRequired ?
-                    heap.aligned_free(a_mem) :
+					heap.aligned_free(a_mem) :
                     heap.free(a_mem);
 			}
 
@@ -128,7 +128,7 @@ namespace Patches::MemoryManagerPatch
 			{
 				auto& heap = Allocator::ProxyHeap::get();
 				return a_alignmentRequired ?
-                           heap.aligned_realloc(a_alignment, a_oldMem, a_newSize) :
+				           heap.aligned_realloc(a_alignment, a_oldMem, a_newSize) :
                            heap.realloc(a_oldMem, a_newSize);
 			}
 
@@ -211,7 +211,7 @@ namespace Patches::MemoryManagerPatch
 			{
 				auto& heap = Allocator::ProxyHeap::get();
 				return a_size > 0 ?
-                           heap.aligned_alloc(a_alignment, a_size) :
+				           heap.aligned_alloc(a_alignment, a_size) :
                            nullptr;
 			}
 

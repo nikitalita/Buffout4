@@ -13,7 +13,7 @@ namespace Patches::HavokMemorySystemPatch
 			void* BlockAlloc(std::int32_t a_numBytesIn) override
 			{
 				return a_numBytesIn > 0 ?
-                           _heap.aligned_alloc(0x10, a_numBytesIn) :
+				           _heap.aligned_alloc(0x10, a_numBytesIn) :
                            nullptr;
 			}
 
@@ -25,7 +25,7 @@ namespace Patches::HavokMemorySystemPatch
 			void* BufAlloc(std::int32_t& a_reqNumBytesInOut) override
 			{
 				return a_reqNumBytesInOut > 0 ?
-                           _heap.aligned_alloc(0x10, a_reqNumBytesInOut) :
+				           _heap.aligned_alloc(0x10, a_reqNumBytesInOut) :
                            nullptr;
 			}
 
@@ -48,7 +48,7 @@ namespace Patches::HavokMemorySystemPatch
 					[&](void*& a_elem) {
 						a_elem =
 							a_blockSize > 0 ?
-                                _heap.aligned_alloc(0x10, a_blockSize) :
+								_heap.aligned_alloc(0x10, a_blockSize) :
                                 nullptr;
 					});
 			}

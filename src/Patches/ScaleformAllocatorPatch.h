@@ -20,7 +20,7 @@ namespace Patches::ScaleformAllocatorPatch
 			void* Alloc(std::size_t a_size, std::size_t a_align) override
 			{
 				return a_size > 0 ?
-                           _heap.aligned_alloc(a_align, a_size) :
+				           _heap.aligned_alloc(a_align, a_size) :
                            nullptr;
 			}
 
