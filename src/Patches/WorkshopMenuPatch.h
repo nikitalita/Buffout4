@@ -33,42 +33,67 @@ namespace Patches::WorkshopMenuPatch
 				{
 					assert(a_lhs && a_rhs);
 
-					const auto [lCobj, rCobj] =
-						a_lhs->sourceFormListRecipe && a_rhs->sourceFormListRecipe ?
-                            std::make_pair(a_lhs->sourceFormListRecipe, a_rhs->sourceFormListRecipe) :
-                            std::make_pair(a_lhs->recipe, a_rhs->recipe);
-					if (!lCobj || !rCobj) {
-						return false;
-					}
-
-					const auto compNames = [&](const RE::BGSConstructibleObject& a_lhs, const RE::BGSConstructibleObject& a_rhs) {
-						const auto getName = [&](const RE::BGSConstructibleObject& a_cobj) {
-							const auto created = a_cobj.GetCreatedItem();
-							if (const auto it = created ? _names.find(created) : _names.end(); it != _names.end()) {
-								return static_cast<std::string_view>(it->second);
-							} else {
-								return ""sv;
-							}
-						};
-
-						const auto lName = getName(a_lhs);
-						const auto rName = getName(a_rhs);
-						return lName.compare(rName);
+					const auto compNames = [this](const RE::TESForm* a_lhs, const RE::TESForm* a_rhs) noexcept {
+						const auto lname = get_name(a_lhs);
+						const auto rname = get_name(a_rhs);
+						const auto cmp = !lname.empty() && !rname.empty() ?
+						                     _strnicmp(lname.data(), rname.data(), std::min(lname.size(), rname.size())) :
+                                             0;
+						return cmp == 0 && lname.size() != rname.size() ?
+						           lname.size() < rname.size() ? -1 : 1 :
+                                   cmp;
 					};
 
-					if (const auto lPrio = lCobj->GetWorkshopPriority(), rPrio = rCobj->GetWorkshopPriority();
-						lPrio != rPrio) {
-						return lPrio < rPrio;
-					} else if (const auto naming = compNames(*lCobj, *rCobj);
-							   naming != 0) {
-						return naming < 0;
+					if (!!a_lhs->children.empty() != !!a_rhs->children.empty()) {
+						// categories before items
+						return !a_lhs->children.empty();
+					} else if (!a_lhs->children.empty()) {
+						// catgories
+						return compNames(a_lhs->filterKeyword, a_rhs->filterKeyword) < 0;
+					} else if (a_lhs->sourceFormListRecipe && a_lhs->sourceFormListRecipe == a_rhs->sourceFormListRecipe) {
+						// sort using form list order
+						assert(a_lhs->form && a_rhs->form);
+						assert(a_lhs->sourceFormListRecipe->createdItem);
+						assert(a_lhs->sourceFormListRecipe->createdItem->Is<RE::BGSListForm>());
+
+						const auto& flist = static_cast<RE::BGSListForm&>(*a_lhs->sourceFormListRecipe->createdItem);
+						const auto lpos = flist.GetItemIndex(*a_lhs->form);
+						const auto rpos = flist.GetItemIndex(*a_rhs->form);
+
+						assert(lpos && rpos);
+						return *lpos < *rpos;
 					} else {
-						return lCobj->GetFormID() != rCobj->GetFormID() ?
-                                   lCobj->GetFormID() < rCobj->GetFormID() :
-                                   a_lhs->form &&
-						               a_rhs->form &&
-						               a_lhs->form->GetFormID() < a_rhs->form->GetFormID();
+						// items
+						assert(a_lhs->recipe && a_rhs->recipe);
+						const auto& lcobj = *a_lhs->recipe;
+						const auto& rcobj = *a_rhs->recipe;
+
+						const auto lprio = lcobj.GetWorkshopPriority();
+						const auto rprio = rcobj.GetWorkshopPriority();
+						if (lprio != rprio) {
+							return lprio < rprio;
+						}
+
+						const auto naming = compNames(lcobj.createdItem, rcobj.createdItem);
+						if (naming != 0) {
+							return naming < 0;
+						}
+
+						return lcobj.formID < rcobj.formID;
 					}
+				}
+
+				[[nodiscard]] std::string_view get_name(const RE::TESForm* a_form) const noexcept
+				{
+					if (a_form) {
+						if (const auto fullname = a_form->As<RE::TESFullName>(); fullname) {
+							return fullname->fullName;
+						} else if (const auto it = _names.find(a_form); it != _names.end()) {
+							return static_cast<std::string_view>(it->second);
+						}
+					}
+
+					return ""sv;
 				}
 
 				const RE::BSTHashMap<const RE::TESForm*, RE::BGSLocalizedString>& _names;
@@ -197,7 +222,7 @@ namespace Patches::WorkshopMenuPatch
 			{
 				const auto needle =
 					&a_item == _splineEndpointMarker && _workshopSplineObject ?
-                        _workshopSplineObject->GetFormID() :
+						_workshopSplineObject->GetFormID() :
                         a_item.GetFormID();
 				return BinarySearch(_storedItems, needle);
 			}
@@ -270,7 +295,7 @@ namespace Patches::WorkshopMenuPatch
 			const RE::BGSKeyword* const _badKeyword = []() {
 				const auto dobj = RE::BGSDefaultObjectManager::GetSingleton();
 				return dobj ?
-                           dobj->GetDefaultObject<RE::BGSKeyword>(RE::DEFAULT_OBJECT::kWorkshopMiscItemKeyword) :
+				           dobj->GetDefaultObject<RE::BGSKeyword>(RE::DEFAULT_OBJECT::kWorkshopMiscItemKeyword) :
                            nullptr;
 			}();
 			const RE::BGSKeyword* const _workshopAlwaysShowIcon = []() {
@@ -283,13 +308,13 @@ namespace Patches::WorkshopMenuPatch
 			const RE::BSAutoWriteLock _extraLock = [&]() {  // avoid constantly locking/unlocking the same extralist
 				return RE::BSAutoWriteLock(
 					_currentWorkshop && _currentWorkshop->extraList ?
-                        &_currentWorkshop->extraList->extraRWLock :
+						&_currentWorkshop->extraList->extraRWLock :
                         nullptr);
 			}();
 			const RE::BSTSmartPointer<RE::TBO_InstanceData> _currentInstance = [&]() {  // avoid looking up the same instance data every time
 				const auto xInst =
 					_currentWorkshop && _currentWorkshop->extraList ?
-                        _currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
+						_currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
                         nullptr;
 				return xInst ? xInst->data : nullptr;
 			}();
@@ -297,7 +322,7 @@ namespace Patches::WorkshopMenuPatch
 				std::vector<std::uint32_t> result;
 				const auto xWorkshop =
 					_currentWorkshop && _currentWorkshop->extraList ?
-                        _currentWorkshop->extraList->GetByType<RE::Workshop::ExtraData>() :
+						_currentWorkshop->extraList->GetByType<RE::Workshop::ExtraData>() :
                         nullptr;
 				if (xWorkshop) {
 					for (const auto item : xWorkshop->deletedItems) {
@@ -323,19 +348,19 @@ namespace Patches::WorkshopMenuPatch
 					children.push_back(child.get());
 				}
 				std::sort(children.begin(), children.end(), [](auto&& a_lhs, auto&& a_rhs) noexcept {
-#define CASE(a_name)                                                            \
-	if (!!a_lhs->a_name != !!a_rhs->a_name || a_lhs->a_name != a_rhs->a_name) { \
-		return !!a_lhs->a_name != !!a_rhs->a_name ?                             \
-                   !!a_lhs->a_name :                                            \
-                   a_lhs->a_name->GetFormID() < a_rhs->a_name->GetFormID();     \
-	}
+#	define CASE(a_name)                                                            \
+		if (!!a_lhs->a_name != !!a_rhs->a_name || a_lhs->a_name != a_rhs->a_name) { \
+			return !!a_lhs->a_name != !!a_rhs->a_name ?                             \
+			           !!a_lhs->a_name :                                            \
+                       a_lhs->a_name->GetFormID() < a_rhs->a_name->GetFormID();     \
+		}
 					// clang-format off
 					CASE(filterKeyword)
 					else CASE(recipe)
 					else CASE(form)
 					else return false;
 					// clang-format on
-#undef CASE
+#	undef CASE
 				});
 				return children;
 			};
@@ -378,7 +403,14 @@ namespace Patches::WorkshopMenuPatch
 			const CompareFactory& a_comp,
 			RE::Workshop::WorkshopMenuNode& a_node)
 		{
-			std::stable_sort(a_node.children.begin(), a_node.children.end(), a_comp.less());
+			const auto beg = std::stable_partition(
+				a_node.children.begin(),
+				a_node.children.end(),
+				[](const auto& a_node) {
+					assert(a_node);
+					return !a_node->children.empty();
+				});
+			std::stable_sort(beg, a_node.children.end(), a_comp.less());
 			if (const auto last = std::unique(a_node.children.begin(), a_node.children.end(), a_comp.equal_to());
 				last != a_node.children.end()) {
 				a_node.children.erase(last, a_node.children.end());
@@ -551,7 +583,7 @@ namespace Patches::WorkshopMenuPatch
 				const auto splineEndpointMarker = *REL::Relocation<RE::TESObjectSTAT**>{ REL::ID(1116891) };
 				const auto xInst =
 					currentWorkshop->extraList ?
-                        currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
+						currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
                         nullptr;
 				const auto inst = xInst ? xInst->data : nullptr;
 				for (const auto cobj : dhandler->GetFormArray<RE::BGSConstructibleObject>()) {
