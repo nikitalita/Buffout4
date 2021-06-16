@@ -104,6 +104,7 @@ find_package(spdlog REQUIRED CONFIG)
 find_package(TBB
 	REQUIRED
 	COMPONENTS
+		tbb
 		tbbmalloc
 	CONFIG
 )
@@ -168,6 +169,7 @@ target_link_libraries(
 		infoware
 		robin_hood::robin_hood
 		spdlog::spdlog
+		TBB::tbb
 		TBB::tbbmalloc
 		tomlplusplus::tomlplusplus
 		xbyak::xbyak

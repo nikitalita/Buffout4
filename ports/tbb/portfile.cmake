@@ -1,0 +1,27 @@
+vcpkg_from_github(
+	OUT_SOURCE_PATH SOURCE_PATH
+	REPO oneapi-src/oneTBB
+	REF v2021.2.0
+	SHA512 a29aba960547631e5d8129a478b3ff5d0ef78113a00a91a943d8408f9485bad8547d40f76f239ae4f82aa0dd9f83521c076f7cfd8cd156bc663901b24e61532e
+	HEAD_REF master
+)
+
+vcpkg_cmake_configure(
+	SOURCE_PATH ${SOURCE_PATH}
+	OPTIONS
+		-DTBB_TEST=OFF
+		-DTBB_STRICT=OFF
+)
+vcpkg_cmake_install()
+vcpkg_cmake_config_fixup(
+	PACKAGE_NAME TBB
+	CONFIG_PATH lib/cmake/TBB
+)
+
+file(
+	REMOVE_RECURSE
+		${CURRENT_PACKAGES_DIR}/debug/include
+		${CURRENT_PACKAGES_DIR}/debug/share
+)
+
+file(INSTALL ${SOURCE_PATH}/LICENSE.txt DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)
