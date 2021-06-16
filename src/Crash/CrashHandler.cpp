@@ -266,7 +266,8 @@ namespace Crash
 				return result;
 			}();
 
-			std::vector<std::string> plugins;
+			using value_type = std::pair<std::string, std::optional<REL::Version>>;
+			std::vector<value_type> plugins;
 			std::filesystem::path pluginDir{ "Data/F4SE/Plugins"sv };
 			for (const auto& elem : std::filesystem::directory_iterator(pluginDir)) {
 				if (const auto filename =
@@ -274,13 +275,41 @@ namespace Crash
 							std::make_optional(elem.path().filename().string()) :
                             std::nullopt;
 					filename && modules.contains(*filename)) {
-					plugins.push_back(*std::move(filename));
+					plugins.emplace_back(
+						*std::move(filename),
+						REL::get_file_version(elem.path().wstring()));
 				}
 			}
 
-			std::sort(plugins.begin(), plugins.end(), ci);
-			for (const auto& plugin : plugins) {
-				a_log.critical("\t{}", plugin);
+			std::sort(
+				plugins.begin(),
+				plugins.end(),
+				[=](const value_type& a_lhs, const value_type& a_rhs) {
+					return ci(a_lhs.first, a_rhs.first);
+				});
+			for (const auto& [plugin, version] : plugins) {
+				const auto ver = [&]() {
+					if (version) {
+						std::span view{ version->begin(), version->end() };
+						const auto it = std::find_if(
+							view.rbegin(),
+							view.rend(),
+							[](std::uint16_t a_val) noexcept { return a_val != 0; });
+						if (it != view.rend()) {
+							std::string result = " v";
+							std::string_view pre;
+							for (std::size_t i = 0; i < static_cast<std::size_t>(view.rend() - it); ++i) {
+								result += pre;
+								result += fmt::to_string(view[i]);
+								pre = "."sv;
+							}
+							return result;
+						}
+					}
+					return ""s;
+				}();
+
+				a_log.critical(FMT_STRING("\t{}{}"), plugin, ver);
 			}
 		}
 
