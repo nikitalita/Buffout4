@@ -19,6 +19,6 @@ namespace Fixes::MovementPlannerFix
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1403049), 0x30 };
 		stl::write_thunk_call<5, detail::CanWarpOnPathFailure>(target.address());
-		logger::info("installed MovementPlanner fix"sv);
+		logger::debug("installed MovementPlanner fix"sv);
 	}
 }

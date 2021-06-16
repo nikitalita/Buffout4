@@ -15,6 +15,6 @@ namespace Fixes::SafeExitFix
 		auto& trampoline = F4SE::GetTrampoline();
 		REL::Relocation<std::uintptr_t> target{ REL::ID(668528), 0x20 };
 		trampoline.write_call<5>(target.address(), detail::Shutdown);
-		logger::info("installed SafeExit fix"sv);
+		logger::debug("installed SafeExit fix"sv);
 	}
 }

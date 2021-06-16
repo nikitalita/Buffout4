@@ -72,6 +72,6 @@ namespace Fixes::CellInitFix
 			target.address(),
 			trampoline.allocate(p));
 
-		logger::info("installed CellInit fix"sv);
+		logger::debug("installed CellInit fix"sv);
 	}
 }

@@ -49,19 +49,19 @@ namespace
 			stl::report_and_fail("Failed to find standard logging directory"sv);
 		}
 
-		*path /= Version::PROJECT;
-		*path += ".log"sv;
+		*path /= fmt::format(FMT_STRING("{}.log"), Version::PROJECT);
 		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
 #endif
 
-		auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
-
 #ifndef NDEBUG
-		log->set_level(spdlog::level::trace);
+		const auto level = spdlog::level::trace;
 #else
-		log->set_level(spdlog::level::info);
-		log->flush_on(spdlog::level::warn);
+		const auto level = spdlog::level::info;
 #endif
+
+		auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
+		log->set_level(level);
+		log->flush_on(level);
 
 		spdlog::set_default_logger(std::move(log));
 		spdlog::set_pattern("%g(%#): [%^%l%$] %v"s);

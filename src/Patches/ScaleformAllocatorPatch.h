@@ -64,6 +64,6 @@ namespace Patches::ScaleformAllocatorPatch
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(903830), 0xEC };
 		stl::write_thunk_call<5, detail::Init>(target.address());
-		logger::info("installed ScaleformAllocator patch"sv);
+		logger::debug("installed ScaleformAllocator patch"sv);
 	}
 }

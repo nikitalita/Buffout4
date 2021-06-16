@@ -663,6 +663,6 @@ namespace Crash
 		if (success == nullptr) {
 			stl::report_and_fail("failed to install vectored exception handler"sv);
 		}
-		logger::info("installed crash handlers"sv);
+		logger::debug("installed crash handlers"sv);
 	}
 }

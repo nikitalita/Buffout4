@@ -49,6 +49,6 @@ namespace Fixes::EncounterZoneResetFix
 	{
 		auto& cells = RE::CellAttachDetachEventSource::CellAttachDetachEventSourceSingleton::GetSingleton();
 		cells.source.RegisterSink(detail::Sink::GetSingleton());
-		logger::info("installed EncounterZoneReset fix"sv);
+		logger::debug("installed EncounterZoneReset fix"sv);
 	}
 }

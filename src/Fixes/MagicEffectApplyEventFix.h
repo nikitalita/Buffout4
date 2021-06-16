@@ -24,6 +24,6 @@ namespace Fixes::MagicEffectApplyEventFix
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(RE::GameScript::CombatEventHandler::VTABLE[1]) };
 		detail::ProcessEvent::func = target.write_vfunc(0x1, detail::ProcessEvent::thunk);
-		logger::info("installed SafeExit fix"sv);
+		logger::debug("installed SafeExit fix"sv);
 	}
 }

@@ -165,6 +165,6 @@ namespace Patches::HavokMemorySystemPatch
 		auto& trampoline = F4SE::GetTrampoline();
 		REL::Relocation<std::uintptr_t> target{ REL::ID(204659), 0x68 };
 		trampoline.write_call<5>(target.address(), detail::hkMemorySystem::GetSingleton);
-		logger::info("installed HavokMemorySystem patch"sv);
+		logger::debug("installed HavokMemorySystem patch"sv);
 	}
 }

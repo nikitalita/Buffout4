@@ -30,6 +30,6 @@ namespace Fixes::UnalignedLoadFix
 	{
 		detail::ApplySkinningToGeometry();
 		detail::CreateCommandBuffer();
-		logger::info("installed UnalignedLoad fix"sv);
+		logger::debug("installed UnalignedLoad fix"sv);
 	}
 }

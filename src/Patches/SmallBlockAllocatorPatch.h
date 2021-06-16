@@ -32,6 +32,6 @@ namespace Patches::SmallBlockAllocatorPatch
 		REL::Relocation<std::uintptr_t> target{ REL::ID(329149), 0x48 };
 		REL::safe_fill(target.address(), REL::NOP, 0x5);
 
-		logger::info("installed SmallBlockAllocator patch"sv);
+		logger::debug("installed SmallBlockAllocator patch"sv);
 	}
 }

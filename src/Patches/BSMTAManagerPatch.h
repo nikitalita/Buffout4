@@ -137,6 +137,6 @@ namespace Patches::BSMTAManagerPatch
 			stl::write_thunk_call<5, detail::Submit>(base + offset);
 		}
 
-		logger::info("installed BSMTAManager patch"sv);
+		logger::debug("installed BSMTAManager patch"sv);
 	}
 }

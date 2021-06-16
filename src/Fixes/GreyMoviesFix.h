@@ -20,6 +20,6 @@ namespace Fixes::GreyMoviesFix
 		const REL::Relocation<std::uintptr_t> target{ REL::ID(1526234), 0x216 };
 		auto& trampoline = F4SE::GetTrampoline();
 		trampoline.write_call<6>(target.address(), detail::SetBackgroundAlpha);
-		logger::info("installed GreyMovies fix"sv);
+		logger::debug("installed GreyMovies fix"sv);
 	}
 }
