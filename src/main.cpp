@@ -222,9 +222,11 @@ namespace
 			const auto pos = [&]() {
 				const REL::Relocation<std::uintptr_t> preCppInit{ REL::ID(1440502) };
 				const auto it = std::find(cache.begin(), cache.end(), preCppInit.address());
-				return it != cache.end() ? it : cache.begin();
+				return it != cache.end() ? it + 1 :
+				       !cache.empty()    ? cache.begin() + 1 :
+                                           cache.end();
 			}();
-			cache.insert(pos + 1, reinterpret_cast<std::uintptr_t>(proxy));
+			cache.insert(pos, reinterpret_cast<std::uintptr_t>(proxy));
 
 			func(
 				std::to_address(cache.begin()),
