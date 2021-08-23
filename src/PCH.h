@@ -39,6 +39,7 @@
 #include <infoware/cpu.hpp>
 #include <infoware/gpu.hpp>
 #include <infoware/system.hpp>
+#include <mmio/mmio.hpp>
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>

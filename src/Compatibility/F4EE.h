@@ -31,9 +31,9 @@ namespace Compatibility::F4EE
 			// 1.6.20
 			constexpr auto precalc = "D5467FEA7D6A722E0ED87B5FB857B5E0C9FDBE57B060ADB711013ED27565688D3D4514F99E4DF02109273ED69330E5272AD76822EB15717FEBC11AF409BA60F1"sv;
 
-			boost::iostreams::mapped_file_source file("data/f4se/plugins/f4ee.dll");
-			if (file.is_open()) {
-				const auto hash = Hash::SHA512({ reinterpret_cast<const std::byte*>(file.data()), file.size() });
+			mmio::mapped_file_source file;
+			if (file.open("data/f4se/plugins/f4ee.dll")) {
+				const auto hash = Hash::SHA512({ file.data(), file.size() });
 				if (hash && precalc == *hash) {
 					return true;
 				} else {
