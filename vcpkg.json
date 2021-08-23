@@ -8,10 +8,7 @@
     "autotoml",
     "boost-algorithm",
     "boost-container",
-    "boost-iostreams",
-    "boost-iterator",
     "boost-nowide",
-    "boost-predef",
     "boost-stacktrace",
     "boost-stl-interfaces",
     "fmt",
@@ -22,6 +19,7 @@
         "d3d"
       ]
     },
+    "mmio",
     "robin-hood-hashing",
     "spdlog",
     "tbb",
