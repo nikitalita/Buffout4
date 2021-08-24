@@ -3,4 +3,5 @@
 namespace Patches
 {
 	void PreLoad();
+	void PostInit();
 }

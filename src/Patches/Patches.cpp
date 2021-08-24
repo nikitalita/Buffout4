@@ -6,6 +6,7 @@
 #include "Patches/BSTextureStreamerLocalHeapPatch.h"
 #include "Patches/HavokMemorySystemPatch.h"
 #include "Patches/INISettingCollectionPatch.h"
+#include "Patches/InputSwitchPatch.h"
 #include "Patches/MaxStdIOPatch.h"
 #include "Patches/MemoryManagerPatch.h"
 #include "Patches/ScaleformAllocatorPatch.h"
@@ -40,6 +41,10 @@ namespace Patches
 			INISettingCollectionPatch::Install();
 		}
 
+		if (*Settings::InputSwitch) {
+			InputSwitchPatch::PreLoad();
+		}
+
 		if (*Settings::MaxStdIO != -1) {
 			MaxStdIOPatch::Install();
 		}
@@ -58,6 +63,13 @@ namespace Patches
 
 		if (*Settings::WorkshopMenu) {
 			WorkshopMenuPatch::Install();
+		}
+	}
+
+	void PostInit()
+	{
+		if (*Settings::InputSwitch) {
+			InputSwitchPatch::PostInit();
 		}
 	}
 }

@@ -21,6 +21,7 @@ namespace
 		const auto task = F4SE::GetTaskInterface();
 		task->AddTask([]() {
 			Fixes::PostInit();
+			Patches::PostInit();
 		});
 	}
 

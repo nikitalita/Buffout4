@@ -48,6 +48,7 @@ namespace Settings
 	MAKE_SETTING(bSetting, "Patches", BSTextureStreamerLocalHeap, true);
 	MAKE_SETTING(bSetting, "Patches", HavokMemorySystem, true);
 	MAKE_SETTING(bSetting, "Patches", INISettingCollection, true);
+	MAKE_SETTING(bSetting, "Patches", InputSwitch, true);
 	MAKE_SETTING(iSetting, "Patches", MaxStdIO, -1);
 	MAKE_SETTING(bSetting, "Patches", MemoryManager, true);
 	MAKE_SETTING(bSetting, "Patches", MemoryManagerDebug, false);
