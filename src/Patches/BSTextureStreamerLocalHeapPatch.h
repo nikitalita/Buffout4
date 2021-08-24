@@ -10,7 +10,7 @@ namespace Patches::BSTextureStreamerLocalHeapPatch
 		{
 			auto& heap = Allocator::ProxyHeap::get();
 			return a_size > 0 ?
-			           heap.aligned_alloc(0x10, a_size) :
+                       heap.aligned_alloc(0x10, a_size) :
                        nullptr;
 		}
 

@@ -78,7 +78,7 @@ namespace Crash::Modules
 					reinterpret_cast<const char*>(a_data.data()),
 					reinterpret_cast<const char*>(a_data.data() + a_data.size()));
 				return first != last ?
-				           reinterpret_cast<const RE::RTTI::TypeDescriptor*>(first - offset) :
+                           reinterpret_cast<const RE::RTTI::TypeDescriptor*>(first - offset) :
                            nullptr;
 			}
 

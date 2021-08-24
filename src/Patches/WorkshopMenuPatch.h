@@ -37,10 +37,10 @@ namespace Patches::WorkshopMenuPatch
 						const auto lname = get_name(a_lhs);
 						const auto rname = get_name(a_rhs);
 						const auto cmp = !lname.empty() && !rname.empty() ?
-						                     _strnicmp(lname.data(), rname.data(), std::min(lname.size(), rname.size())) :
+                                             _strnicmp(lname.data(), rname.data(), std::min(lname.size(), rname.size())) :
                                              0;
 						return cmp == 0 && lname.size() != rname.size() ?
-						           lname.size() < rname.size() ? -1 : 1 :
+                                   lname.size() < rname.size() ? -1 : 1 :
                                    cmp;
 					};
 
@@ -222,7 +222,7 @@ namespace Patches::WorkshopMenuPatch
 			{
 				const auto needle =
 					&a_item == _splineEndpointMarker && _workshopSplineObject ?
-						_workshopSplineObject->GetFormID() :
+                        _workshopSplineObject->GetFormID() :
                         a_item.GetFormID();
 				return BinarySearch(_storedItems, needle);
 			}
@@ -295,7 +295,7 @@ namespace Patches::WorkshopMenuPatch
 			const RE::BGSKeyword* const _badKeyword = []() {
 				const auto dobj = RE::BGSDefaultObjectManager::GetSingleton();
 				return dobj ?
-				           dobj->GetDefaultObject<RE::BGSKeyword>(RE::DEFAULT_OBJECT::kWorkshopMiscItemKeyword) :
+                           dobj->GetDefaultObject<RE::BGSKeyword>(RE::DEFAULT_OBJECT::kWorkshopMiscItemKeyword) :
                            nullptr;
 			}();
 			const RE::BGSKeyword* const _workshopAlwaysShowIcon = []() {
@@ -308,13 +308,13 @@ namespace Patches::WorkshopMenuPatch
 			const RE::BSAutoWriteLock _extraLock = [&]() {  // avoid constantly locking/unlocking the same extralist
 				return RE::BSAutoWriteLock(
 					_currentWorkshop && _currentWorkshop->extraList ?
-						&_currentWorkshop->extraList->extraRWLock :
+                        &_currentWorkshop->extraList->extraRWLock :
                         nullptr);
 			}();
 			const RE::BSTSmartPointer<RE::TBO_InstanceData> _currentInstance = [&]() {  // avoid looking up the same instance data every time
 				const auto xInst =
 					_currentWorkshop && _currentWorkshop->extraList ?
-						_currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
+                        _currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
                         nullptr;
 				return xInst ? xInst->data : nullptr;
 			}();
@@ -322,7 +322,7 @@ namespace Patches::WorkshopMenuPatch
 				std::vector<std::uint32_t> result;
 				const auto xWorkshop =
 					_currentWorkshop && _currentWorkshop->extraList ?
-						_currentWorkshop->extraList->GetByType<RE::Workshop::ExtraData>() :
+                        _currentWorkshop->extraList->GetByType<RE::Workshop::ExtraData>() :
                         nullptr;
 				if (xWorkshop) {
 					for (const auto item : xWorkshop->deletedItems) {
@@ -351,7 +351,7 @@ namespace Patches::WorkshopMenuPatch
 #	define CASE(a_name)                                                            \
 		if (!!a_lhs->a_name != !!a_rhs->a_name || a_lhs->a_name != a_rhs->a_name) { \
 			return !!a_lhs->a_name != !!a_rhs->a_name ?                             \
-			           !!a_lhs->a_name :                                            \
+                       !!a_lhs->a_name :                                            \
                        a_lhs->a_name->GetFormID() < a_rhs->a_name->GetFormID();     \
 		}
 					// clang-format off
@@ -583,7 +583,7 @@ namespace Patches::WorkshopMenuPatch
 				const auto splineEndpointMarker = *REL::Relocation<RE::TESObjectSTAT**>{ REL::ID(1116891) };
 				const auto xInst =
 					currentWorkshop->extraList ?
-						currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
+                        currentWorkshop->extraList->GetByType<RE::ExtraInstanceData>() :
                         nullptr;
 				const auto inst = xInst ? xInst->data : nullptr;
 				for (const auto cobj : dhandler->GetFormArray<RE::BGSConstructibleObject>()) {
