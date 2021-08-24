@@ -9,6 +9,7 @@
 * [fmt](https://github.com/fmtlib/fmt)
 * [Frozen](https://github.com/serge-sans-paille/frozen)
 * [infoware](https://github.com/ThePhD/infoware)
+* [mmio](https://github.com/Ryan-rsm-McKenzie/mmio)
 * [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
 * [spdlog](https://github.com/gabime/spdlog)
 * [TBB](https://github.com/oneapi-src/oneTBB)
