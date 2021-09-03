@@ -38,18 +38,12 @@ namespace Patches::InputSwitchPatch
 					}
 
 					if (const auto id = event.As<RE::IDEvent>(); id) {
-						const auto& control = id->strUserEvent;
-						if (control == _strings.forward ||
-							control == _strings.back ||
-							control == _strings.strafeLeft ||
-							control == _strings.strafeRight ||
-							control == _strings.move) {
-							_active.moving = input;
-						} else if (control == _strings.look) {
-							if (const auto mouse = event.As<RE::MouseMoveEvent>(); mouse) {
-								if (mouse->mouseInputX != 0 || mouse->mouseInputY != 0) {
-									_active.looking = input;
-								}
+						auto& control = id->strUserEvent;
+
+						if (control == _strings.look) {
+							if (const auto mouse = event.As<RE::MouseMoveEvent>();
+								mouse && (mouse->mouseInputX != 0 || mouse->mouseInputY != 0)) {
+								_active.looking = input;
 							} else {
 								_active.looking = input;
 							}
@@ -66,10 +60,10 @@ namespace Patches::InputSwitchPatch
 
 			[[nodiscard]] bool IsGamepadActiveDevice() const noexcept { return _active.device == Device::gamepad; }
 			[[nodiscard]] bool IsGamepadActiveLooking() const noexcept { return _active.looking == Device::gamepad; }
-			[[nodiscard]] bool IsGamepadActiveMoving() const noexcept { return _active.moving == Device::gamepad; }
 
 		private:
 			using UpdateGamepadDependentButtonCodes_t = void(bool);
+			using PopInputContext_t = bool(RE::ControlMap&, RE::UserEvents::INPUT_CONTEXT_ID);
 
 			DeviceSwapHandler() = default;
 
@@ -98,21 +92,57 @@ namespace Patches::InputSwitchPatch
 
 			struct
 			{
-				RE::BSFixedString forward{ "Forward" };
-				RE::BSFixedString back{ "Back" };
-				RE::BSFixedString strafeLeft{ "StrafeLeft" };
-				RE::BSFixedString strafeRight{ "StrafeRight" };
-				RE::BSFixedString move{ "Move" };
 				RE::BSFixedString look{ "Look" };
 			} _strings;  // use optimized pointer comparison instead of slow string comparison
 
 			struct
 			{
 				std::atomic<Device> device{ Device::none };
-				std::atomic<Device> moving{ Device::none };
 				std::atomic<Device> looking{ Device::none };
 			} _active;
 		};
+
+		inline void RefreshCursor(RE::PipboyMenu& a_self)
+		{
+			bool cursorEnabled = false;
+			if (REL::Relocation<std::uint32_t*> curPage{ REL::ID(1287022) }; *curPage == 3) {
+				cursorEnabled = !a_self.showingModalMessage;
+			}
+
+			const auto handler = DeviceSwapHandler::GetSingleton();
+			if (!handler->IsGamepadActiveLooking()) {
+				cursorEnabled = true;
+			}
+
+			a_self.UpdateFlag(RE::UI_MENU_FLAGS::kUsesCursor, cursorEnabled);
+			if (const auto controls = RE::ControlMap::GetSingleton(); controls) {
+				using RE::UserEvents::INPUT_CONTEXT_ID::kLThumbCursor;
+				while (controls->PopInputContext(kLThumbCursor)) {}
+				if (cursorEnabled) {
+					controls->PushInputContext(kLThumbCursor);
+				}
+			}
+
+			if (cursorEnabled != a_self.pipboyCursorEnabled) {
+				if (const auto ui = RE::UI::GetSingleton(); ui) {
+					ui->RefreshCursor();
+				}
+
+				if (cursorEnabled && handler->IsGamepadActiveLooking()) {
+					if (const auto cursor = RE::MenuCursor::GetSingleton(); cursor) {
+						cursor->CenterCursor();
+					}
+				}
+			}
+
+			a_self.pipboyCursorEnabled = cursorEnabled;
+		}
+
+		inline void InstallRefreshCursorPatch()
+		{
+			const auto target = REL::ID(1533778).address();
+			stl::asm_jump(target, 0xE9, reinterpret_cast<std::uintptr_t>(RefreshCursor));
+		}
 
 		inline void DisableDisconnectHandler()
 		{
@@ -121,6 +151,12 @@ namespace Patches::InputSwitchPatch
 				target.address() + 0x98,
 				REL::NOP,
 				0x4E);
+		}
+
+		inline void DisableKBMIgnore()
+		{
+			const auto target = REL::ID(647956).address();
+			REL::safe_fill(target + 0x39, REL::NOP, 0x6);
 		}
 
 		inline bool IsGamepadConnected(const RE::BSInputDeviceManager&)
@@ -168,12 +204,15 @@ namespace Patches::InputSwitchPatch
 			patch(REL::ID(455462), 0x43);   // PlayerControls::ProcessLookInput
 			patch(REL::ID(53721), 0x56);    // PlayerControlsUtils::ProcessLookControls
 			patch(REL::ID(1262531), 0x1F);  // FirstPersonState::CalculatePitchOffsetChaseValue
+			patch(REL::ID(643948), 0x583);  // PipboyMenu::ProcessMessage
 		}
 	}
 
 	inline void PreLoad()
 	{
 		detail::DisableDisconnectHandler();
+		detail::DisableKBMIgnore();
+		detail::InstallRefreshCursorPatch();
 		detail::InstallGamepadConnectedPatch();
 		detail::InstallUsingGamepadPatch();
 		detail::InstallGamepadLookPatches();
