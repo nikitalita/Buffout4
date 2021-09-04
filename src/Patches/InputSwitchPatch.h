@@ -39,14 +39,29 @@ namespace Patches::InputSwitchPatch
 
 					if (const auto id = event.As<RE::IDEvent>(); id) {
 						auto& control = id->strUserEvent;
-
-						if (control == _strings.look) {
+						const auto trySet = [&](auto& a_device) noexcept {
 							if (const auto mouse = event.As<RE::MouseMoveEvent>();
 								mouse && (mouse->mouseInputX != 0 || mouse->mouseInputY != 0)) {
-								_active.looking = input;
+								a_device = input;
 							} else {
-								_active.looking = input;
+								a_device = input;
 							}
+						};
+
+						if (_proxied.ui && _proxied.getMenuOpen(*_proxied.ui, _strings.pipboyMenu)) {
+							if (control == _strings.look ||
+								control == _strings.cursor ||
+								control == _strings.leftStick) {
+								const auto old = _active.menuing.load();
+								trySet(_active.menuing);
+								if (old != _active.menuing && _proxied.msgq) {
+									_proxied.msgq->AddMessage(_strings.pipboyMenu, RE::UI_MESSAGE_TYPE::kUpdateController);
+								}
+							}
+						}
+
+						if (control == _strings.look) {
+							trySet(_active.looking);
 						}
 					}
 
@@ -60,10 +75,11 @@ namespace Patches::InputSwitchPatch
 
 			[[nodiscard]] bool IsGamepadActiveDevice() const noexcept { return _active.device == Device::gamepad; }
 			[[nodiscard]] bool IsGamepadActiveLooking() const noexcept { return _active.looking == Device::gamepad; }
+			[[nodiscard]] bool IsGamepadActiveMenuing() const noexcept { return _active.menuing == Device::gamepad; }
 
 		private:
+			using GetMenuOpen_t = bool(RE::UI&, const RE::BSFixedString&);
 			using UpdateGamepadDependentButtonCodes_t = void(bool);
-			using PopInputContext_t = bool(RE::ControlMap&, RE::UserEvents::INPUT_CONTEXT_ID);
 
 			DeviceSwapHandler() = default;
 
@@ -86,19 +102,25 @@ namespace Patches::InputSwitchPatch
 			struct
 			{
 				RE::UI*& ui{ *reinterpret_cast<RE::UI**>(REL::ID(548587).address()) };
+				RE::UIMessageQueue*& msgq{ *reinterpret_cast<RE::UIMessageQueue**>(REL::ID(82123).address()) };
 				RE::ControlMap*& controlMap{ *reinterpret_cast<RE::ControlMap**>(REL::ID(325206).address()) };
+				GetMenuOpen_t* const getMenuOpen{ reinterpret_cast<GetMenuOpen_t*>(REL::ID(1065114).address()) };
 				UpdateGamepadDependentButtonCodes_t* const updateGamepadDependentButtonCodes{ reinterpret_cast<UpdateGamepadDependentButtonCodes_t*>(REL::ID(190238).address()) };
 			} _proxied;  // this runs on a per-frame basis, so try to optimize perfomance
 
 			struct
 			{
+				RE::BSFixedString cursor{ "Cursor" };
+				RE::BSFixedString leftStick{ "LeftStick" };
 				RE::BSFixedString look{ "Look" };
+				RE::BSFixedString pipboyMenu{ RE::PipboyMenu::MENU_NAME };
 			} _strings;  // use optimized pointer comparison instead of slow string comparison
 
 			struct
 			{
 				std::atomic<Device> device{ Device::none };
 				std::atomic<Device> looking{ Device::none };
+				std::atomic<Device> menuing{ Device::none };
 			} _active;
 		};
 
@@ -110,7 +132,7 @@ namespace Patches::InputSwitchPatch
 			}
 
 			const auto handler = DeviceSwapHandler::GetSingleton();
-			if (!handler->IsGamepadActiveLooking()) {
+			if (!handler->IsGamepadActiveMenuing()) {
 				cursorEnabled = true;
 			}
 
@@ -128,7 +150,7 @@ namespace Patches::InputSwitchPatch
 					ui->RefreshCursor();
 				}
 
-				if (cursorEnabled && handler->IsGamepadActiveLooking()) {
+				if (cursorEnabled && handler->IsGamepadActiveMenuing()) {
 					if (const auto cursor = RE::MenuCursor::GetSingleton(); cursor) {
 						cursor->CenterCursor();
 					}
