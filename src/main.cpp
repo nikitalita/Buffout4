@@ -12,7 +12,7 @@ namespace
 	{
 		auto& trampoline = F4SE::GetTrampoline();
 		if (trampoline.empty()) {
-			F4SE::AllocTrampoline(1u << 8);
+			F4SE::AllocTrampoline(1u << 9);
 		}
 	}
 

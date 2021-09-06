@@ -83,6 +83,7 @@ namespace stl
 {
 	using F4SE::stl::adjust_pointer;
 	using F4SE::stl::emplace_vtable;
+	using F4SE::stl::enumeration;
 	using F4SE::stl::report_and_fail;
 	using F4SE::stl::scope_exit;
 	using F4SE::stl::to_underlying;
