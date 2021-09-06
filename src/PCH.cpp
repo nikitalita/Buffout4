@@ -80,8 +80,6 @@ namespace stl
 		{
 			asm_patch(std::uintptr_t a_dst)
 			{
-				Xbyak::Label dst;
-
 				mov(rax, a_dst);
 				jmp(rax);
 			}

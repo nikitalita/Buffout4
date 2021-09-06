@@ -48,14 +48,6 @@ namespace Patches::InputSwitchPatch
 							}
 						};
 
-						if (_proxied.ui && _proxied.getMenuOpen(*_proxied.ui, _strings.pipboyMenu)) {
-							if (control == _strings.look ||
-								control == _strings.cursor ||
-								control == _strings.leftStick) {
-								trySet(_active.menuing);
-							}
-						}
-
 						if (control == _strings.look) {
 							trySet(_active.looking);
 						}
@@ -71,11 +63,9 @@ namespace Patches::InputSwitchPatch
 
 			[[nodiscard]] bool IsGamepadActiveDevice() const noexcept { return _active.device == Device::gamepad; }
 			[[nodiscard]] bool IsGamepadActiveLooking() const noexcept { return _active.looking == Device::gamepad; }
-			[[nodiscard]] bool IsGamepadActiveMenuing() const noexcept { return _active.menuing == Device::gamepad; }
 
 		private:
 			using AddMessage_t = void(RE::UIMessageQueue&, const RE::BSFixedString&, RE::UI_MESSAGE_TYPE);
-			using GetMenuOpen_t = bool(RE::UI&, const RE::BSFixedString&);
 			using UpdateGamepadDependentButtonCodes_t = void(bool);
 
 			DeviceSwapHandler() = default;
@@ -106,23 +96,18 @@ namespace Patches::InputSwitchPatch
 				RE::UIMessageQueue*& msgq{ *reinterpret_cast<RE::UIMessageQueue**>(REL::ID(82123).address()) };
 				RE::ControlMap*& controlMap{ *reinterpret_cast<RE::ControlMap**>(REL::ID(325206).address()) };
 				AddMessage_t* const addMessage{ reinterpret_cast<AddMessage_t*>(REL::ID(1182019).address()) };
-				GetMenuOpen_t* const getMenuOpen{ reinterpret_cast<GetMenuOpen_t*>(REL::ID(1065114).address()) };
 				UpdateGamepadDependentButtonCodes_t* const updateGamepadDependentButtonCodes{ reinterpret_cast<UpdateGamepadDependentButtonCodes_t*>(REL::ID(190238).address()) };
 			} _proxied;  // this runs on a per-frame basis, so try to optimize perfomance
 
 			struct
 			{
-				RE::BSFixedString cursor{ "Cursor" };
-				RE::BSFixedString leftStick{ "LeftStick" };
 				RE::BSFixedString look{ "Look" };
-				RE::BSFixedString pipboyMenu{ RE::PipboyMenu::MENU_NAME };
 			} _strings;  // use optimized pointer comparison instead of slow string comparison
 
 			struct
 			{
 				std::atomic<Device> device{ Device::none };
 				std::atomic<Device> looking{ Device::none };
-				std::atomic<Device> menuing{ Device::none };
 			} _active;
 		};
 
@@ -130,23 +115,36 @@ namespace Patches::InputSwitchPatch
 		{
 			using UIMF = RE::UI_MENU_FLAGS;
 
+			const auto controls = RE::ControlMap::GetSingleton();
+			const auto cursor = RE::MenuCursor::GetSingleton();
+			const auto manager = RE::PipboyManager::GetSingleton();
+
 			bool cursorEnabled = false;
 			if (REL::Relocation<RE::PIPBOY_PAGES*> curPage{ REL::ID(1287022) };
 				*curPage == RE::PIPBOY_PAGES::kMap) {
 				cursorEnabled = !a_self.showingModalMessage;
 			}
 
-			const auto gamepadMenuing = DeviceSwapHandler::GetSingleton()->IsGamepadActiveMenuing();
+			const auto gamepadMenuing = DeviceSwapHandler::GetSingleton()->IsGamepadActiveDevice();
 			if (!gamepadMenuing) {
 				cursorEnabled = true;
 			}
 
-			const auto old = a_self.AssignsCursorToRenderer();
+			const auto usedCursor = a_self.UsesCursor();
+			const auto assignedCursor = a_self.AssignsCursorToRenderer();
 			a_self.UpdateFlag(UIMF::kUsesCursor, cursorEnabled);
 			a_self.UpdateFlag(UIMF::kAssignCursorToRenderer, gamepadMenuing);
 			a_self.pipboyCursorEnabled = cursorEnabled;
 
-			if (const auto controls = RE::ControlMap::GetSingleton(); controls) {
+			if (usedCursor != a_self.UsesCursor() && cursor) {
+				if (a_self.UsesCursor()) {
+					cursor->RegisterCursor();
+				} else {
+					cursor->UnregisterCursor();
+				}
+			}
+
+			if (controls) {
 				using RE::UserEvents::INPUT_CONTEXT_ID::kLThumbCursor;
 				while (controls->PopInputContext(kLThumbCursor)) {}
 				if (gamepadMenuing) {
@@ -154,42 +152,48 @@ namespace Patches::InputSwitchPatch
 				}
 			}
 
-			if (const auto ui = RE::UI::GetSingleton(); ui) {
-				ui->RefreshCursor();
-			}
-
-			if (old != a_self.AssignsCursorToRenderer()) {
-				const auto cursor = RE::MenuCursor::GetSingleton();
-				const auto manager = RE::PipboyManager::GetSingleton();
-				if (cursor && manager) {
-					if (gamepadMenuing) {
+			if (cursorEnabled && cursor && manager) {
+				if (gamepadMenuing) {
+					if (assignedCursor != a_self.AssignsCursorToRenderer()) {
 						cursor->CenterCursor();
-						manager->UpdateCursorConstraint(true);
-					} else {
-						cursor->ClearConstraints();
-						if (const auto model = RE::FlatScreenModel::GetSingleton(); model) {
-							constexpr stl::enumeration flags{ UIMF::kAssignCursorToRenderer, UIMF::kCustomRendering };
-							RE::BSUIMessageData::SendUIStringUIntMessage(
-								RE::CursorMenu::MENU_NAME,
-								RE::UI_MESSAGE_TYPE::kUpdate,
-								model->customRendererName,
-								flags.underlying());
-						}
+					}
+					manager->UpdateCursorConstraint(true);
+				} else {
+					cursor->ClearConstraints();
+					if (const auto model = RE::FlatScreenModel::GetSingleton(); model) {
+						constexpr stl::enumeration flags{ UIMF::kAssignCursorToRenderer };
+						RE::BSUIMessageData::SendUIStringUIntMessage(
+							RE::CursorMenu::MENU_NAME,
+							RE::UI_MESSAGE_TYPE::kShow,
+							model->customRendererName,
+							flags.underlying());
 					}
 				}
+			}
+
+			if (const auto ui = RE::UI::GetSingleton(); ui) {
+				ui->RefreshCursor();
 			}
 		}
 
 		inline void InstallRefreshCursorPatch()
 		{
+			// PipboyMenu::RefreshCursor
 			{
 				const auto target = REL::ID(1533778).address();
 				stl::asm_jump(target, 0xE9, reinterpret_cast<std::uintptr_t>(RefreshCursor));
 			}
 
+			// PipboyMenu::ProcessMessage - skip redundant input context switching
 			{
 				const auto target = REL::ID(643948).address();
 				REL::safe_fill(target + 0x57C, REL::NOP, 0x64);
+			}
+
+			// PipboyMenu::PipboyMenu - skip assigning cursor to renderer
+			{
+				const auto target = REL::ID(712982).address();
+				REL::safe_fill(target + 0x132, REL::NOP, 0x17);
 			}
 		}
 
@@ -255,24 +259,7 @@ namespace Patches::InputSwitchPatch
 			patch(REL::ID(1262531), 0x1F);  // FirstPersonState::CalculatePitchOffsetChaseValue
 		}
 
-		inline bool UsingGamepadMenu(const RE::BSInputDeviceManager&)
-		{
-			const auto handler = DeviceSwapHandler::GetSingleton();
-			return handler->IsGamepadActiveMenuing();
-		}
-
-		inline void InstallGamepadMenuPatches()
-		{
-			const auto patch = [](REL::ID a_base, std::size_t a_offset) {
-				auto& trampoline = F4SE::GetTrampoline();
-				trampoline.write_call<5>(a_base.address() + a_offset, UsingGamepadMenu);
-			};
-
-			patch(REL::ID(443335), 0x49);    // PipboyManager::HandleEvent
-			patch(REL::ID(1477369), 0x296);  // PipboyManager::InitPipboy
-			patch(REL::ID(726763), 0x40);    // PipboyManager::RaisePipboy
-			patch(REL::ID(900802), 0xF);     // PipboyManager::UpdateCursorConstraint
-		}
+		void InstallPipboyMenuStatePatches();
 	}
 
 	inline void PreLoad()
@@ -283,7 +270,7 @@ namespace Patches::InputSwitchPatch
 		detail::InstallGamepadConnectedPatch();
 		detail::InstallUsingGamepadPatch();
 		detail::InstallGamepadLookPatches();
-		detail::InstallGamepadMenuPatches();
+		detail::InstallPipboyMenuStatePatches();
 		logger::debug("installed InputSwitch pre-patch"sv);
 	}
 

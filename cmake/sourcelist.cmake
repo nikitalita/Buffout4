@@ -36,6 +36,7 @@ set(SOURCES
 	src/Patches/BSTextureStreamerLocalHeapPatch.h
 	src/Patches/HavokMemorySystemPatch.h
 	src/Patches/INISettingCollectionPatch.h
+	src/Patches/InputSwitchPatch.cpp
 	src/Patches/InputSwitchPatch.h
 	src/Patches/MaxStdIOPatch.h
 	src/Patches/MemoryManagerPatch.cpp
