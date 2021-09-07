@@ -14,7 +14,7 @@ set_from_environment(Fallout4Path)
 
 project(
 	Buffout4
-	VERSION 1.24.4
+	VERSION 1.24.5
 	LANGUAGES CXX
 )
 
