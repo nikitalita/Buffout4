@@ -145,11 +145,16 @@ namespace Patches::InputSwitchPatch
 			}
 
 			if (controls) {
-				using RE::UserEvents::INPUT_CONTEXT_ID::kLThumbCursor;
-				while (controls->PopInputContext(kLThumbCursor)) {}
-				if (gamepadMenuing) {
-					controls->PushInputContext(kLThumbCursor);
-				}
+				using Context = RE::UserEvents::INPUT_CONTEXT_ID;
+				const auto reset = [&](Context a_context, bool a_condition) {
+					while (controls->PopInputContext(a_context)) {}
+					if (a_condition) {
+						controls->PushInputContext(a_context);
+					}
+				};
+
+				reset(Context::kThumbNav, gamepadMenuing);
+				reset(Context::kLThumbCursor, gamepadMenuing && cursorEnabled);
 			}
 
 			if (cursorEnabled && cursor && manager) {
