@@ -78,8 +78,8 @@ namespace Crash::Modules
 					reinterpret_cast<const char*>(a_data.data()),
 					reinterpret_cast<const char*>(a_data.data() + a_data.size()));
 				return first != last ?
-                           reinterpret_cast<const RE::RTTI::TypeDescriptor*>(first - offset) :
-                           nullptr;
+				           reinterpret_cast<const RE::RTTI::TypeDescriptor*>(first - offset) :
+				           nullptr;
 			}
 
 			[[nodiscard]] static auto complete_object_locator(
@@ -168,7 +168,7 @@ namespace Crash::Modules
 				auto result = super::get_frame_info(a_frame);
 				if (it != _offset2ID.rend()) {
 					result += fmt::format(
-						FMT_STRING(" -> {}+0x{:X}"),
+						" -> {}+0x{:X}"sv,
 						it->id,
 						offset - it->offset);
 				}
@@ -268,7 +268,7 @@ namespace Crash::Modules
 	{
 		const auto offset = reinterpret_cast<std::uintptr_t>(a_frame.address()) - address();
 		return fmt::format(
-			FMT_STRING("+{:07X}"),
+			"+{:07X}"sv,
 			offset);
 	}
 

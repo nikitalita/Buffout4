@@ -59,8 +59,8 @@ namespace Warnings::CreateTexture2DWarning
 			if (result != S_OK) {
 				stl::report_and_fail(
 					fmt::format(
-						FMT_STRING("A call to ID3D11Device::CreateTexture2D failed with error code 0x{:08X}. "
-								   "This will crash the game."),
+						"A call to ID3D11Device::CreateTexture2D failed with error code 0x{:08X}. "
+						"This will crash the game.",
 						static_cast<std::uint32_t>(result)));
 			} else {
 				return result;

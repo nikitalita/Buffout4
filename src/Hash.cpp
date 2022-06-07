@@ -118,7 +118,7 @@ namespace Hash
 		std::string result;
 		result.reserve(buffer.size() * 2);
 		for (const auto byte : buffer) {
-			result += fmt::format(FMT_STRING("{:02X}"), byte);
+			result += fmt::format("{:02X}"sv, byte);
 		}
 
 		return { std::move(result) };

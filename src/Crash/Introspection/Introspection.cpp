@@ -9,7 +9,7 @@ namespace Crash::Introspection::F4
 	[[nodiscard]] std::string quoted(std::string_view a_str)
 	{
 		return fmt::format(
-			FMT_STRING("\"{}\""),
+			"\"{}\""sv,
 			a_str);
 	}
 
@@ -196,7 +196,7 @@ namespace Crash::Introspection::F4
 				a_results.emplace_back(
 					"Flags"sv,
 					fmt::format(
-						FMT_STRING("0x{:08X}"),
+						"0x{:08X}"sv,
 						formFlags));
 			} catch (...) {}
 
@@ -205,7 +205,7 @@ namespace Crash::Introspection::F4
 				a_results.emplace_back(
 					"Form ID"sv,
 					fmt::format(
-						FMT_STRING("0x{:08X}"),
+						"0x{:08X}"sv,
 						formID));
 			} catch (...) {}
 
@@ -214,8 +214,8 @@ namespace Crash::Introspection::F4
 				a_results.emplace_back(
 					"Form Type"sv,
 					fmt::format(
-						FMT_STRING("{:02}"),
-						formType));
+						"{:02}"sv,
+						stl::to_underlying(formType)));
 			} catch (...) {}
 		}
 	};
@@ -262,7 +262,7 @@ namespace Crash::Introspection::F4
 						""sv);
 					for (auto& [key, value] : xResults) {
 						a_results.emplace_back(
-							fmt::format(FMT_STRING("\t{}"), key),
+							fmt::format("\t{}"sv, key),
 							std::move(value));
 					}
 				} else {
@@ -317,7 +317,7 @@ namespace Crash::Introspection
 				if (_module) {
 					const auto address = reinterpret_cast<std::uintptr_t>(_ptr);
 					return fmt::format(
-						FMT_STRING("(void* -> {}+{:07X})"),
+						"(void* -> {}+{:07X})"sv,
 						_module->name(),
 						address - _module->address());
 				} else {
@@ -370,7 +370,7 @@ namespace Crash::Introspection
 
 				if (len != 0) {
 					return fmt::format(
-						FMT_STRING("({}*)"),
+						"({}*)"sv,
 						std::string_view{ buf.data(), len });
 				} else {
 					return "(ERROR)"s;
@@ -419,7 +419,7 @@ namespace Crash::Introspection
 				if (!xInfo.empty()) {
 					for (const auto& [key, value] : xInfo) {
 						result += fmt::format(
-							FMT_STRING("\n\t\t{}: {}"),
+							"\n\t\t{}: {}"sv,
 							key,
 							value);
 					}
@@ -456,7 +456,7 @@ namespace Crash::Introspection
 			[[nodiscard]] std::string name() const
 			{
 				return fmt::format(
-					FMT_STRING("(char*) \"{}\""),
+					"(char*) \"{}\""sv,
 					_str);
 			}
 

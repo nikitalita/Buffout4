@@ -38,10 +38,9 @@ namespace Compatibility::F4EE
 					return true;
 				} else {
 					logger::error(
-						FMT_STRING(
-							"F4EE compatibility patch: mismatch on sha512\n"
-							"\texpected \"{}\"\n"
-							"\tfound \"{}\""),
+						"F4EE compatibility patch: mismatch on sha512\n"
+						"\texpected \"{}\"\n"
+						"\tfound \"{}\""sv,
 						precalc,
 						hash ? *hash : "FAILURE"sv);
 				}

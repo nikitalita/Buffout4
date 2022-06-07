@@ -125,7 +125,7 @@ namespace Crash
 			const auto mod = moduleStack[i];
 			const auto& frame = _frames[i];
 			a_log.critical(
-				format,
+				fmt::runtime(format),
 				i,
 				reinterpret_cast<std::uintptr_t>(frame.address()),
 				(mod ? mod->name() : ""sv),
@@ -137,14 +137,11 @@ namespace Crash
 	{
 		a_log.critical("RAW CALL STACK:");
 
-		const auto format =
-			"\t[{:>"s +
-			get_size_string(_stacktrace.size()) +
-			"}] 0x{:X}"s;
-
+		const auto sz = get_size_string(_stacktrace.size());
 		for (std::size_t i = 0; i < _stacktrace.size(); ++i) {
 			a_log.critical(
-				format,
+				"\t[{1:>{0}}] 0x{2:X}"sv,
+				sz,
 				i,
 				reinterpret_cast<std::uintptr_t>(_stacktrace[i].address()));
 		}
@@ -196,7 +193,7 @@ namespace Crash
 					a_modules);
 				if (mod) {
 					return fmt::format(
-						FMT_STRING(" {}+{:07X}"),
+						" {}+{:07X}"sv,
 						mod->name(),
 						eaddr - mod->address());
 				} else {
@@ -232,7 +229,7 @@ namespace Crash
 			}();
 
 			a_log.critical(
-				FMT_STRING("Unhandled exception{} at 0x{:012X}{}"),
+				"Unhandled exception{} at 0x{:012X}{}"sv,
 				exception,
 				eaddr,
 				post);
@@ -253,8 +250,8 @@ namespace Crash
 						a_rhs.data(),
 						std::min(a_lhs.size(), a_rhs.size()));
 				return cmp == 0 && a_lhs.length() != a_rhs.length() ?
-                           a_lhs.length() < a_rhs.length() :
-                           cmp < 0;
+				           a_lhs.length() < a_rhs.length() :
+				           cmp < 0;
 			};
 
 			const auto modules = [&]() {
@@ -272,8 +269,8 @@ namespace Crash
 			for (const auto& elem : std::filesystem::directory_iterator(pluginDir)) {
 				if (const auto filename =
 						elem.path().has_filename() ?
-                            std::make_optional(elem.path().filename().string()) :
-                            std::nullopt;
+							std::make_optional(elem.path().filename().string()) :
+							std::nullopt;
 					filename && modules.contains(*filename)) {
 					plugins.emplace_back(
 						*std::move(filename),
@@ -309,7 +306,7 @@ namespace Crash
 					return ""s;
 				}();
 
-				a_log.critical(FMT_STRING("\t{}{}"), plugin, ver);
+				a_log.critical("\t{}{}"sv, plugin, ver);
 			}
 		}
 
@@ -319,26 +316,21 @@ namespace Crash
 		{
 			a_log.critical("MODULES:"sv);
 
-			const auto format = [&]() {
-				const auto width = [&]() {
-					std::size_t max = 0;
-					std::for_each(
-						a_modules.begin(),
-						a_modules.end(),
-						[&](auto&& a_elem) {
-							max = std::max(max, a_elem->name().length());
-						});
-					return max;
-				}();
-
-				return "\t{:<"s +
-				       fmt::to_string(width) +
-				       "} 0x{:012X}"s;
+			const auto width = [&]() {
+				std::size_t max = 0;
+				std::for_each(
+					a_modules.begin(),
+					a_modules.end(),
+					[&](auto&& a_elem) {
+						max = std::max(max, a_elem->name().length());
+					});
+				return std::to_string(max);
 			}();
 
 			for (const auto& mod : a_modules) {
 				a_log.critical(
-					format,
+					"\t{1:<{0}} 0x{2:012X}"sv,
+					width,
 					mod->name(),
 					mod->address());
 			}
@@ -352,15 +344,11 @@ namespace Crash
 			if (datahandler) {
 				const auto& [files, smallfiles] = datahandler->compiledFileCollection;
 
-				const auto fileFormat = [&]() {
-					return "\t[{:>02X}]{:"s +
-					       (!smallfiles.empty() ? "5"s : "1"s) +
-					       "}{}"s;
-				}();
-
+				const auto len = !smallfiles.empty() ? 5 : 1;
 				for (const auto file : files) {
 					a_log.critical(
-						fileFormat,
+						"\t[{1:>02X}]{2:{0}}{3}"sv,
+						len,
 						file->GetCompileIndex(),
 						"",
 						file->GetFilename());
@@ -368,7 +356,7 @@ namespace Crash
 
 				for (const auto file : smallfiles) {
 					a_log.critical(
-						FMT_STRING("\t[FE:{:>03X}] {}"),
+						"\t[FE:{:>03X}] {}"sv,
 						file->GetSmallFileCompileIndex(),
 						file->GetFilename());
 				}
@@ -409,7 +397,7 @@ namespace Crash
 			for (std::size_t i = 0; i < regs.size(); ++i) {
 				const auto& [name, reg] = regs[i];
 				a_log.critical(
-					FMT_STRING("\t{:<3} 0x{:<16X} {}"),
+					"\t{:<3} 0x{:<16X} {}"sv,
 					name,
 					reg,
 					analysis[i]);
@@ -419,74 +407,26 @@ namespace Crash
 		void print_settings(
 			spdlog::logger& a_log)
 		{
-#define SETTING_CASE(a_enum, a_type)                                              \
-	case toml::node_type::a_enum:                                                 \
-		{                                                                         \
-			assert(dynamic_cast<const AutoTOML::a_type*>(setting));               \
-			/* NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) */ \
-			const auto ptr = static_cast<const AutoTOML::a_type*>(setting);       \
-			value = fmt::to_string(ptr->get());                                   \
-		}                                                                         \
-		break
+#define SETTING_CASE(a_type)                                                           \
+	if (std::holds_alternative<std::reference_wrapper<a_type>>(unknown)) {             \
+		const auto& setting = std::get<std::reference_wrapper<a_type>>(unknown).get(); \
+		if (group != setting.group()) {                                                \
+			group = setting.group();                                                   \
+			a_log.critical("\t[{}]"sv, group);                                         \
+		}                                                                              \
+		a_log.critical(                                                                \
+			"\t\t{}: {}"sv,                                                            \
+			setting.key(),                                                             \
+			setting.get());                                                            \
+	}
 
-			a_log.critical("SETTINGS:"sv);
-
-			const auto groups = []() {
-				const auto& src = AutoTOML::ISetting::get_settings();
-				boost::container::flat_map<
-					std::string_view,
-					std::vector<AutoTOML::ISetting*>>
-					groups;
-				std::for_each(
-					src.begin(),
-					src.end(),
-					[&](auto&& a_elem) {
-						assert(a_elem != nullptr);
-						const auto it = groups.emplace(a_elem->group(), 0).first;
-						assert(it != groups.end());
-						it->second.push_back(a_elem);
-					});
-				std::for_each(
-					groups.begin(),
-					groups.end(),
-					[](auto& a_elem) {
-						std::sort(
-							a_elem.second.begin(),
-							a_elem.second.end(),
-							[](auto&& a_lhs, auto&& a_rhs) {
-								assert(a_lhs != nullptr && a_rhs != nullptr);
-								return a_lhs->key() < a_rhs->key();
-							});
-					});
-				return groups;
-			}();
-
-			std::string value;
-			for (const auto& [group, settings] : groups) {
-				assert(!settings.empty());
-				a_log.critical(
-					FMT_STRING("\t[{}]"),
-					group);
-
-				for (const auto setting : settings) {
-					assert(setting != nullptr);
-
-					value = "UNKNOWN"sv;
-					switch (setting->type()) {
-						SETTING_CASE(boolean, bSetting);
-						SETTING_CASE(floating_point, fSetting);
-						SETTING_CASE(integer, iSetting);
-						SETTING_CASE(string, sSetting);
-					default:
-						break;
-					}
-
-					a_log.critical(
-						FMT_STRING("\t\t{}: {}"),
-						setting->key(),
-						value);
-				}
+			std::string_view group = ""sv;
+			for (const auto& unknown : Settings::settings) {
+				SETTING_CASE(Settings::bSetting);
+				SETTING_CASE(Settings::iSetting);
 			}
+
+#undef SETTING_CASE
 		}
 
 		void print_stack(
@@ -504,14 +444,7 @@ namespace Crash
 				const auto rsp = reinterpret_cast<const std::size_t*>(a_context.Rsp);
 				std::span stack{ rsp, base };
 
-				const auto format = [&]() {
-					return "\t[RSP+{:<"s +
-					       fmt::to_string(
-							   fmt::format(FMT_STRING("{:X}"), (stack.size() - 1) * sizeof(std::size_t))
-								   .length()) +
-					       "X}] 0x{:<16X} {}"s;
-				}();
-
+				const auto width = fmt::format("{:X}"sv, (stack.size() - 1) * sizeof(std::size_t)).length();
 				constexpr std::size_t blockSize = 1000;
 				std::size_t idx = 0;
 				for (std::size_t off = 0; off < stack.size(); off += blockSize) {
@@ -521,7 +454,8 @@ namespace Crash
 							a_modules);
 					for (const auto& data : analysis) {
 						a_log.critical(
-							format,
+							"\t[RSP+{1:<{0}X}] 0x{2:<16X} {3}"sv,
+							width,
 							idx * sizeof(std::size_t),
 							stack[idx],
 							data);
@@ -538,14 +472,14 @@ namespace Crash
 
 			const auto os = iware::system::OS_info();
 			a_log.critical(
-				FMT_STRING("\tOS: {} v{}.{}.{}"),
+				"\tOS: {} v{}.{}.{}"sv,
 				os.full_name,
 				os.major,
 				os.minor,
 				os.patch);
 
 			a_log.critical(
-				FMT_STRING("\tCPU: {} {}"),
+				"\tCPU: {} {}"sv,
 				iware::cpu::vendor(),
 				iware::cpu::model_name());
 
@@ -572,7 +506,7 @@ namespace Crash
 			for (std::size_t i = 0; i < gpus.size(); ++i) {
 				const auto& gpu = gpus[i];
 				a_log.critical(
-					FMT_STRING("\tGPU #{}: {} {}"),
+					"\tGPU #{}: {} {}"sv,
 					i + 1,
 					vendor(gpu.vendor),
 					gpu.name);
@@ -585,12 +519,10 @@ namespace Crash
 
 			const auto mem = iware::system::memory();
 			a_log.critical(
-				FMT_STRING("\tPHYSICAL MEMORY: {:.02f} GB/{:.02f} GB"),
+				"\tPHYSICAL MEMORY: {:.02f} GB/{:.02f} GB"sv,
 				gibibyte(mem.physical_total - mem.physical_available),
 				gibibyte(mem.physical_total));
 		}
-
-#undef SETTING_CASE
 
 		std::int32_t __stdcall UnhandledExceptions(::EXCEPTION_POINTERS* a_exception) noexcept
 		{
@@ -612,7 +544,7 @@ namespace Crash
 						a_functor();
 					} catch (const std::exception& e) {
 						log->critical(
-							FMT_STRING("\t{}"),
+							"\t{}"sv,
 							e.what());
 					} catch (...) {
 						log->critical("\tERROR"sv);
@@ -621,8 +553,8 @@ namespace Crash
 				};
 
 				const auto runtimeVer = REL::Module::get().version();
-				log->critical(FMT_STRING("Fallout 4 v{}.{}.{}"), runtimeVer[0], runtimeVer[1], runtimeVer[2]);
-				log->critical(FMT_STRING("Buffout 4 v{}"), Version::NAME);
+				log->critical("Fallout 4 v{}.{}.{}"sv, runtimeVer[0], runtimeVer[1], runtimeVer[2]);
+				log->critical("Buffout 4 v{}.{}.{}"sv, Plugin::VERSION[0], Plugin::VERSION[1], Plugin::VERSION[2]);
 				log->flush();
 
 				print([&]() { print_exception(*log, *a_exception->ExceptionRecord, cmodules); });

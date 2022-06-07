@@ -45,8 +45,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>
 #include <tbb/scalable_allocator.h>
-
-#include "AutoTOML.hpp"
+#include <toml++/toml.h>
 #pragma warning(pop)
 
 namespace WinAPI
@@ -109,6 +108,5 @@ namespace util
 
 using namespace std::literals;
 
-#include "Version.h"
-
+#include "Plugin.h"
 #include "Settings.h"

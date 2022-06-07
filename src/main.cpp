@@ -50,7 +50,7 @@ namespace
 			stl::report_and_fail("Failed to find standard logging directory"sv);
 		}
 
-		*path /= fmt::format(FMT_STRING("{}.log"), Version::PROJECT);
+		*path /= fmt::format("{}.log"sv, Plugin::NAME);
 		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
 #endif
 
@@ -67,7 +67,12 @@ namespace
 		spdlog::set_default_logger(std::move(log));
 		spdlog::set_pattern("%g(%#): [%^%l%$] %v"s);
 
-		logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
+		logger::info(
+			"{} v{}.{}.{}"sv,
+			Plugin::NAME,
+			Plugin::VERSION[0],
+			Plugin::VERSION[1],
+			Plugin::VERSION[2]);
 	}
 }
 
@@ -78,8 +83,8 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 	}
 
 	a_info->infoVersion = F4SE::PluginInfo::kVersion;
-	a_info->name = Version::PROJECT.data();
-	a_info->version = Version::MAJOR;
+	a_info->name = Plugin::NAME.data();
+	a_info->version = Plugin::VERSION[0];
 
 	if (a_f4se->IsEditor()) {
 		logger::critical("loaded in editor"sv);
@@ -88,7 +93,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 
 	const auto ver = a_f4se->RuntimeVersion();
 	if (ver < F4SE::RUNTIME_1_10_162) {
-		logger::critical(FMT_STRING("unsupported runtime v{}"), ver.string());
+		logger::critical("unsupported runtime v{}"sv, ver.string());
 		return false;
 	}
 
@@ -190,7 +195,7 @@ namespace
 
 		stl::report_and_fail(
 			fmt::format(
-				FMT_STRING("failed to find {}!{}"),
+				"failed to find {}!{}"sv,
 				a_dll,
 				a_function));
 	}
@@ -225,7 +230,7 @@ namespace
 				const auto it = std::find(cache.begin(), cache.end(), preCppInit.address());
 				return it != cache.end() ? it + 1 :
 				       !cache.empty()    ? cache.begin() + 1 :
-                                           cache.end();
+				                           cache.end();
 			}();
 			cache.insert(pos, reinterpret_cast<std::uintptr_t>(proxy));
 
@@ -263,8 +268,8 @@ namespace
 		if (*startupState != NativeStartupState::kUninitialized) {
 			stl::report_and_fail(
 				fmt::format(
-					FMT_STRING("{} has loaded too late. Try adjusting the plugin preloader load method."),
-					Version::PROJECT));
+					"{} has loaded too late. Try adjusting the plugin preloader load method."sv,
+					Plugin::NAME));
 		}
 
 		initterm::func = PatchIAT(

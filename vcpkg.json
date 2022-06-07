@@ -1,11 +1,7 @@
 {
-  "name": "buffout4",
-  "version-string": "1",
-  "description": "A crash reporting and bug fixing plugin for Fallout 4",
-  "homepage": "https://github.com/Ryan-rsm-McKenzie/Buffout4",
-  "license": "MIT",
+  "name": "example",
+  "version": "1",
   "dependencies": [
-    "autotoml",
     "boost-algorithm",
     "boost-container",
     "boost-nowide",
@@ -19,10 +15,11 @@
         "d3d"
       ]
     },
-    "mmio",
     "robin-hood-hashing",
+    "rsm-mmio",
     "spdlog",
     "tbb",
+    "tomlplusplus",
     "xbyak"
   ]
 }

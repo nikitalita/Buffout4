@@ -1,6 +1,6 @@
 {
   "name": "tbb",
-  "version-semver": "2021.2.0",
+  "version-semver": "2021.5.0",
   "dependencies": [
     {
       "name": "vcpkg-cmake",

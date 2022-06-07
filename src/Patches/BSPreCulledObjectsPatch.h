@@ -186,15 +186,14 @@ namespace Patches::BSPreCulledObjectsPatch
 				[[nodiscard]] value_type* operator->() noexcept { return std::addressof(_proxy); }
 				[[nodiscard]] const value_type* operator->() const noexcept { return std::addressof(_proxy); }
 
-			protected:
-				friend class IDTo3DHandler;
+			private:
+				friend IDTo3DHandler;
 
 				Accessor(lock_type& a_lock, value_type& a_proxy) noexcept :
 					_locker(a_lock),
 					_proxy(a_proxy)
 				{}
 
-			private:
 				std::lock_guard<lock_type> _locker;
 				value_type& _proxy;
 			};

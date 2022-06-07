@@ -1,35 +1,48 @@
 #pragma once
 
-#define MAKE_SETTING(a_type, a_group, a_key, a_value) \
-	inline a_type a_key { a_group##s, #a_key##s, a_value }
-
 namespace Settings
 {
-	using ISetting = AutoTOML::ISetting;
-	using bSetting = AutoTOML::bSetting;
-	using iSetting = AutoTOML::iSetting;
-
-	inline void load()
+	template <class T>
+	class Setting
 	{
-		try {
-			const auto table = toml::parse_file("Data/F4SE/Plugins/Buffout4.toml"s);
-			for (const auto& setting : ISetting::get_settings()) {
-				setting->load(table);
-			}
-		} catch (const toml::parse_error& e) {
-			std::ostringstream ss;
-			ss
-				<< "Error parsing file \'" << *e.source().path << "\':\n"
-				<< '\t' << e.description() << '\n'
-				<< "\t\t(" << e.source().begin << ')';
-			logger::error(ss.str());
-			stl::report_and_fail("failed to load settings"sv);
-		} catch (const std::exception& e) {
-			stl::report_and_fail(e.what());
-		} catch (...) {
-			stl::report_and_fail("unknown failure"sv);
+	public:
+		using value_type = T;
+
+		Setting(
+			std::string_view a_group,
+			std::string_view a_key,
+			value_type a_default) noexcept :
+			_group(a_group),
+			_key(a_key),
+			_value(a_default)
+		{}
+
+		[[nodiscard]] auto group() const noexcept -> std::string_view { return this->_group; }
+		[[nodiscard]] auto key() const noexcept -> std::string_view { return this->_key; }
+
+		template <class Self>
+		[[nodiscard]] auto&& get(this Self&& a_self) noexcept
+		{
+			return std::forward<Self>(a_self)._value;
 		}
-	}
+
+		template <class Self>
+		[[nodiscard]] auto&& operator*(this Self&& a_self) noexcept
+		{
+			return std::forward<Self>(a_self).get();
+		}
+
+	private:
+		std::string_view _group;
+		std::string_view _key;
+		value_type _value;
+	};
+
+	using bSetting = Setting<bool>;
+	using iSetting = Setting<std::int64_t>;
+
+#define MAKE_SETTING(a_type, a_group, a_key, a_default) \
+	inline auto a_key = a_type(a_group##sv, #a_key##sv, a_default)
 
 	MAKE_SETTING(bSetting, "Fixes", ActorIsHostileToActor, true);
 	MAKE_SETTING(bSetting, "Fixes", CellInit, true);
@@ -60,6 +73,81 @@ namespace Settings
 	MAKE_SETTING(bSetting, "Warnings", ImageSpaceAdapter, true);
 
 	MAKE_SETTING(bSetting, "Compatibility", F4EE, true);
-}
 
 #undef MAKE_SETTING
+
+	inline std::vector<
+		std::variant<
+			std::reference_wrapper<bSetting>,
+			std::reference_wrapper<iSetting>>>
+		settings;
+
+	inline void load()
+	{
+		const auto config = toml::parse_file("Data/F4SE/Plugins/Buffout4.toml"sv);
+
+#define LOAD(a_setting)                                                              \
+	settings.push_back(std::ref(a_setting));                                         \
+	if (const auto tweak = config[a_setting.group()][a_setting.key()]; tweak) {      \
+		if (const auto value = tweak.as<decltype(a_setting)::value_type>(); value) { \
+			*a_setting = value->get();                                               \
+		} else {                                                                     \
+			throw std::runtime_error(                                                \
+				fmt::format(                                                         \
+					"setting '{}.{}' is not of the correct type: expected '{}'"sv,   \
+					a_setting.group(),                                               \
+					a_setting.key(),                                                 \
+					typeid(decltype(a_setting)::value_type).name()));                \
+		}                                                                            \
+	}
+
+		LOAD(ActorIsHostileToActor);
+		LOAD(CellInit);
+		LOAD(EncounterZoneReset);
+		LOAD(GreyMovies);
+		LOAD(MagicEffectApplyEvent);
+		LOAD(MovementPlanner);
+		LOAD(PackageAllocateLocation);
+		LOAD(SafeExit);
+		LOAD(UnalignedLoad);
+		LOAD(UtilityShader);
+
+		LOAD(Achievements);
+		LOAD(BSMTAManager);
+		LOAD(BSPreCulledObjects);
+		LOAD(BSTextureStreamerLocalHeap);
+		LOAD(HavokMemorySystem);
+		LOAD(INISettingCollection);
+		LOAD(InputSwitch);
+		LOAD(MaxStdIO);
+		LOAD(MemoryManager);
+		LOAD(MemoryManagerDebug);
+		LOAD(ScaleformAllocator);
+		LOAD(SmallBlockAllocator);
+		LOAD(WorkshopMenu);
+
+		LOAD(CreateTexture2D);
+		LOAD(ImageSpaceAdapter);
+
+		LOAD(F4EE);
+
+		std::sort(
+			settings.begin(),
+			settings.end(),
+			[](auto&& a_lhs, auto&& a_rhs) {
+				const auto get = [](auto&& a_val) {
+					return std::make_pair(
+						a_val.get().group(),
+						a_val.get().key());
+				};
+
+				const auto [lgroup, lkey] = std::visit(get, a_lhs);
+				const auto [rgroup, rkey] = std::visit(get, a_rhs);
+				if (lgroup != rgroup) {
+					return lgroup < rgroup;
+				} else {
+					return lkey < rkey;
+				}
+			});
+	}
+}
