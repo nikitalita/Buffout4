@@ -250,8 +250,8 @@ namespace Crash
 						a_rhs.data(),
 						std::min(a_lhs.size(), a_rhs.size()));
 				return cmp == 0 && a_lhs.length() != a_rhs.length() ?
-				           a_lhs.length() < a_rhs.length() :
-				           cmp < 0;
+                           a_lhs.length() < a_rhs.length() :
+                           cmp < 0;
 			};
 
 			const auto modules = [&]() {
@@ -269,8 +269,8 @@ namespace Crash
 			for (const auto& elem : std::filesystem::directory_iterator(pluginDir)) {
 				if (const auto filename =
 						elem.path().has_filename() ?
-							std::make_optional(elem.path().filename().string()) :
-							std::nullopt;
+                            std::make_optional(elem.path().filename().string()) :
+                            std::nullopt;
 					filename && modules.contains(*filename)) {
 					plugins.emplace_back(
 						*std::move(filename),
