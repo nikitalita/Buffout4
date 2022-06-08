@@ -15,6 +15,8 @@ set(SOURCE_FILES
 	"${SOURCE_DIR}/Fixes/ActorIsHostileToActorFix.h"
 	"${SOURCE_DIR}/Fixes/CellInitFix.cpp"
 	"${SOURCE_DIR}/Fixes/CellInitFix.h"
+	"${SOURCE_DIR}/Fixes/CreateD3DAndSwapChainFix.cpp"
+	"${SOURCE_DIR}/Fixes/CreateD3DAndSwapChainFix.h"
 	"${SOURCE_DIR}/Fixes/EncounterZoneResetFix.h"
 	"${SOURCE_DIR}/Fixes/Fixes.cpp"
 	"${SOURCE_DIR}/Fixes/Fixes.h"

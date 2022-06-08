@@ -2,6 +2,7 @@
 
 #include "Fixes/ActorIsHostileToActorFix.h"
 #include "Fixes/CellInitFix.h"
+#include "Fixes/CreateD3DAndSwapChainFix.h"
 #include "Fixes/EncounterZoneResetFix.h"
 #include "Fixes/GreyMoviesFix.h"
 #include "Fixes/MagicEffectApplyEventFix.h"
@@ -21,6 +22,10 @@ namespace Fixes
 
 		if (*Settings::CellInit) {
 			CellInitFix::Install();
+		}
+
+		if (*Settings::CreateD3DAndSwapChain) {
+			CreateD3DAndSwapChainFix::Install();
 		}
 
 		if (*Settings::GreyMovies) {

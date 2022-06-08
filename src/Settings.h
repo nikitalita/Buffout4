@@ -46,6 +46,7 @@ namespace Settings
 
 	MAKE_SETTING(bSetting, "Fixes", ActorIsHostileToActor, true);
 	MAKE_SETTING(bSetting, "Fixes", CellInit, true);
+	MAKE_SETTING(bSetting, "Fixes", CreateD3DAndSwapChain, true);
 	MAKE_SETTING(bSetting, "Fixes", EncounterZoneReset, true);
 	MAKE_SETTING(bSetting, "Fixes", GreyMovies, true);
 	MAKE_SETTING(bSetting, "Fixes", MagicEffectApplyEvent, true);
@@ -103,6 +104,7 @@ namespace Settings
 
 		LOAD(ActorIsHostileToActor);
 		LOAD(CellInit);
+		LOAD(CreateD3DAndSwapChain);
 		LOAD(EncounterZoneReset);
 		LOAD(GreyMovies);
 		LOAD(MagicEffectApplyEvent);
