@@ -72,7 +72,7 @@ namespace Settings
 	MAKE_SETTING(bSetting, "Warnings", CreateTexture2D, true);
 	MAKE_SETTING(bSetting, "Warnings", ImageSpaceAdapter, true);
 
-	MAKE_SETTING(bSetting, "Compatibility", F4EE, true);
+	MAKE_SETTING(bSetting, "Compatibility", F4EE, false);
 
 #undef MAKE_SETTING
 
