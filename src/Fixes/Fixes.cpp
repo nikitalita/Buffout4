@@ -9,6 +9,7 @@
 #include "Fixes/MovementPlannerFix.h"
 #include "Fixes/PackageAllocateLocationFix.h"
 #include "Fixes/SafeExitFix.h"
+#include "Fixes/TESObjectREFRGetEncounterZoneFix.h"
 #include "Fixes/UnalignedLoadFix.h"
 #include "Fixes/UtilityShaderFix.h"
 
@@ -46,6 +47,10 @@ namespace Fixes
 
 		if (*Settings::SafeExit) {
 			SafeExitFix::Install();
+		}
+
+		if (*Settings::TESObjectREFRGetEncounterZone) {
+			TESObjectREFRGetEncounterZoneFix::Install();
 		}
 
 		if (*Settings::UnalignedLoad) {

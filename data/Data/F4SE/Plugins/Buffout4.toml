@@ -8,6 +8,7 @@ MagicEffectApplyEvent = true   # Fixes a crash when magic effect apply events ar
 MovementPlanner = true         # Fixes a bug where the the movement planner crashes with non-actors
 PackageAllocateLocation = true # Fixes a crash when allocating the location for a package
 SafeExit = true                # Fixes crashes related to exiting the game that can be caused erroneously by F4SE plugin hooks
+TESObjectREFRGetEncounterZone = true # Fixes a crash when looking up the encounter zone on a reference that has not yet initialized
 UnalignedLoad = true           # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory
 UtilityShader = true           # Fixes a crash when a shader can't be found for a given technique id
 

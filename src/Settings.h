@@ -53,6 +53,7 @@ namespace Settings
 	MAKE_SETTING(bSetting, "Fixes", MovementPlanner, true);
 	MAKE_SETTING(bSetting, "Fixes", PackageAllocateLocation, true);
 	MAKE_SETTING(bSetting, "Fixes", SafeExit, true);
+	MAKE_SETTING(bSetting, "Fixes", TESObjectREFRGetEncounterZone, true);
 	MAKE_SETTING(bSetting, "Fixes", UnalignedLoad, true);
 	MAKE_SETTING(bSetting, "Fixes", UtilityShader, true);
 
@@ -111,6 +112,7 @@ namespace Settings
 		LOAD(MovementPlanner);
 		LOAD(PackageAllocateLocation);
 		LOAD(SafeExit);
+		LOAD(TESObjectREFRGetEncounterZone);
 		LOAD(UnalignedLoad);
 		LOAD(UtilityShader);
 

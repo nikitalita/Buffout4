@@ -25,6 +25,7 @@ set(SOURCE_FILES
 	"${SOURCE_DIR}/Fixes/MovementPlannerFix.h"
 	"${SOURCE_DIR}/Fixes/PackageAllocateLocationFix.h"
 	"${SOURCE_DIR}/Fixes/SafeExitFix.h"
+	"${SOURCE_DIR}/Fixes/TESObjectREFRGetEncounterZoneFix.h"
 	"${SOURCE_DIR}/Fixes/UnalignedLoadFix.h"
 	"${SOURCE_DIR}/Fixes/UtilityShaderFix.cpp"
 	"${SOURCE_DIR}/Fixes/UtilityShaderFix.h"
@@ -117,7 +118,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 		"${PROJECT_NAME}"
 		PRIVATE
 			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
-			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL>"
+			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL;/LTCG>"
 	)
 endif()
 
