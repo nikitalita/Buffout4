@@ -48,7 +48,7 @@ namespace Patches::InputSwitchPatch::detail
 {
 	namespace
 	{
-		static void PipboyMenuPreDtor(RE::PipboyMenu&)
+		static void PipboyMenuPreDtor()
 		{
 			if (const auto controls = RE::ControlMap::GetSingleton(); controls) {
 				using RE::UserEvents::INPUT_CONTEXT_ID::kLThumbCursor;
@@ -62,9 +62,11 @@ namespace Patches::InputSwitchPatch::detail
 			DtorPatch(std::uintptr_t a_ret)
 			{
 				push(rcx);
-				sub(rsp, 0x8);
+				sub(rsp, 0x8);   // alignment
+				sub(rsp, 0x20);  // function call
 				mov(rax, reinterpret_cast<std::uintptr_t>(PipboyMenuPreDtor));
 				call(rax);
+				add(rsp, 0x20);
 				add(rsp, 0x8);
 				pop(rcx);
 
