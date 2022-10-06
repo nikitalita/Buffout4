@@ -1,3 +1,38 @@
+# ---- Options ----
+option(COPY_BUILD "Copy the build output to the Fallout directory." TRUE)
+option(BUILD_FALLOUTVR "Build for Fallout VR" OFF)
+
+macro(find_commonlib_path)
+	if (CommonLibName AND NOT ${CommonLibName} STREQUAL "")
+		# Check extern
+		find_path(CommonLibPath
+		include/REL/Relocation.h
+		PATHS ${ROOT_DIR}/external/${CommonLibName}/${CommonLibName}/)
+		if (${CommonLibPath} STREQUAL "CommonLibPath-NOTFOUND")
+			#Check path
+			set_from_environment(${CommonLibName}Path)
+			set(CommonLibPath ${${CommonLibName}Path})
+		endif()
+	endif()
+endmacro()
+set(CommonLibName "CommonLibF4")
+
+if(BUILD_FALLOUTVR)
+	add_compile_definitions(FALLOUTVR)
+	set_from_environment(FalloutVRPath)
+	set(FalloutPath ${FalloutVRPath})
+	set(FalloutVersion "Fallout VR")
+else()
+	set_from_environment(Fallout4Path)
+	set(FalloutPath ${Fallout4Path})
+	set(FalloutVersion "Fallout 4")
+endif()
+find_commonlib_path()
+message(
+	STATUS
+	"Building ${PROJECT_NAME} ${PROJECT_VERSION} for ${FalloutVersion} at ${FalloutPath} with ${CommonLibName} at ${CommonLibPath}."
+)
+
 set_root_directory()
 
 set(SOURCE_DIR "${ROOT_DIR}/src")
@@ -129,7 +164,14 @@ target_include_directories(
 		"${SOURCE_DIR}"
 )
 
-add_subdirectory("${ROOT_DIR}/external/CommonLibF4/CommonLibF4" CommonLibF4 EXCLUDE_FROM_ALL)
+if (DEFINED CommonLibPath AND NOT ${CommonLibPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibPath})
+	add_subdirectory(${CommonLibPath} ${CommonLibName})
+else ()
+	message(
+		FATAL_ERROR
+		"Variable ${CommonLibName}Path is not set or in external/."
+	)
+endif()
 
 find_package(Boost
 	MODULE
@@ -138,6 +180,7 @@ find_package(Boost
 		nowide
 		stacktrace_windbg
 )
+find_package(binary_io REQUIRED CONFIG)
 find_package(fmt REQUIRED CONFIG)
 find_package(frozen REQUIRED CONFIG)
 find_package(infoware REQUIRED CONFIG)
@@ -159,6 +202,7 @@ target_link_libraries(
 		Boost::headers
 		Boost::nowide
 		Boost::stacktrace_windbg
+		binary_io::binary_io
 		Bcrypt.lib
 		CommonLibF4::CommonLibF4
 		Dbghelp.lib
@@ -207,16 +251,18 @@ install(
 	COMPONENT "pdbs"
 )
 
-if("${COPY_OUTPUT}")
-	add_custom_command(
-		TARGET "${PROJECT_NAME}"
-		POST_BUILD
-		COMMAND
-			"${CMAKE_COMMAND}"
-			-E
-			copy_if_different
-			"$<TARGET_PDB_FILE:${PROJECT_NAME}>"
-			"${Fallout4Path}/Data/F4SE/Plugins/"
-		VERBATIM
-	)
-endif()
+if (COPY_BUILD)
+	if (DEFINED FalloutPath)
+		add_custom_command(
+			TARGET ${PROJECT_NAME}
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${FalloutPath}/Data/f4se/Plugins/
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> ${FalloutPath}/Data/f4se/Plugins/
+		)
+	else ()
+		message(
+			WARNING
+			"Variable ${FalloutPath} is not defined. Skipping post-build copy command."
+		)
+	endif ()
+endif ()

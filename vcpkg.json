@@ -2,11 +2,13 @@
   "name": "example",
   "version": "1",
   "dependencies": [
+    "args",
     "boost-algorithm",
     "boost-container",
     "boost-nowide",
     "boost-stacktrace",
     "boost-stl-interfaces",
+    "catch2",
     "fmt",
     "frozen",
     {
@@ -15,8 +17,11 @@
         "d3d"
       ]
     },
+    "nowide",
     "robin-hood-hashing",
+    "rsm-binary-io",
     "rsm-mmio",
+    "srell",
     "spdlog",
     "tbb",
     "tomlplusplus",

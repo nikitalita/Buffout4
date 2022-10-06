@@ -29,12 +29,16 @@ namespace
 	{
 		switch (a_message->type) {
 		case F4SE::MessagingInterface::kPostPostLoad:
+#ifndef FALLOUTVR
 			Compatibility::Install();
+#endif
 			break;
 		case F4SE::MessagingInterface::kGameDataReady:
 			{
+#ifndef FALLOUTVR
 				static std::once_flag guard;
 				std::call_once(guard, PostInit);
+#endif
 			}
 			break;
 		}
@@ -57,7 +61,7 @@ namespace
 #ifndef NDEBUG
 		const auto level = spdlog::level::trace;
 #else
-		const auto level = spdlog::level::info;
+		const auto level = spdlog::level::trace;
 #endif
 
 		auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
@@ -65,7 +69,7 @@ namespace
 		log->flush_on(level);
 
 		spdlog::set_default_logger(std::move(log));
-		spdlog::set_pattern("%g(%#): [%^%l%$] %v"s);
+		spdlog::set_pattern("[%Y-%m-%d %H-%M-%S.%e][%-16s:%-4#][%=7l]: %v"s);
 
 		logger::info(
 			"{} v{}.{}.{}"sv,
@@ -92,7 +96,7 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a
 	}
 
 	const auto ver = a_f4se->RuntimeVersion();
-	if (ver < F4SE::RUNTIME_1_10_162) {
+	if (ver < F4SE::RUNTIME_LATEST) {
 		logger::critical("unsupported runtime v{}"sv, ver.string());
 		return false;
 	}
@@ -219,9 +223,11 @@ namespace
 			void (*const proxy)() = []() {
 				AllocTrampoline();
 				Crash::Install();
+#ifndef FALLOUTVR
 				Fixes::PreLoad();
 				Patches::PreLoad();
 				Warnings::PreLoad();
+#endif
 			};
 
 			std::vector<std::uintptr_t> cache(a_first, a_last);
@@ -230,7 +236,7 @@ namespace
 				const auto it = std::find(cache.begin(), cache.end(), preCppInit.address());
 				return it != cache.end() ? it + 1 :
 				       !cache.empty()    ? cache.begin() + 1 :
-                                           cache.end();
+				                           cache.end();
 			}();
 			cache.insert(pos, reinterpret_cast<std::uintptr_t>(proxy));
 

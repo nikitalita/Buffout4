@@ -13,10 +13,5 @@ endif()
 
 include(cmake/common.cmake)
 
-set_from_environment(Fallout4Path)
-if(NOT DEFINED Fallout4Path)
-	message(FATAL_ERROR "Fallout4Path is not set")
-endif()
-
 add_subdirectory(src)
 include(cmake/packaging.cmake)

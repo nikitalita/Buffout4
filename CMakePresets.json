@@ -1,74 +1,112 @@
 {
-  "version": 4,
+  "version": 3,
   "configurePresets": [
     {
-      "name": "cmake-dev",
-      "hidden": true,
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "type": "STRING",
-          "value": "Debug"
+          "value": "Release"
         }
-      },
-      "warnings": {
-        "deprecated": true,
-        "dev": true
       },
       "errors": {
         "deprecated": true
+      },
+      "hidden": true,
+      "name": "cmake-dev",
+      "warnings": {
+        "deprecated": true,
+        "dev": true
       }
     },
     {
-      "name": "vcpkg",
-      "hidden": true,
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "STRING",
-          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+          "value": "$env{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake"
         },
         "VCPKG_OVERLAY_PORTS": {
           "type": "STRING",
           "value": "${sourceDir}/cmake/ports/"
         }
-      }
+      },
+      "hidden": true,
+      "name": "vcpkg"
     },
     {
-      "name": "windows",
-      "hidden": true,
       "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": {
-          "type": "STRING",
-          "value": "x64-windows-static"
-        }
-      }
-    },
-    {
-      "name": "msvc",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_CXX_FLAGS": {
-          "type": "string",
-          "value": "/EHsc /MP /W4 /WX /external:anglebrackets /external:W0"
-        },
-        "CMAKE_EXE_LINKER_FLAGS_RELEASE": {
-          "type": "STRING",
-          "value": "/DEBUG:FASTLINK"
-        },
         "CMAKE_MSVC_RUNTIME_LIBRARY": {
           "type": "STRING",
-          "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+          "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+        },
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-windows-static-md"
         }
-      }
+      },
+      "hidden": true,
+      "name": "windows"
     },
     {
-      "name": "windows-msvc-vcpkg",
+      "binaryDir": "${sourceDir}/buildvr",
+      "cacheVariables": {
+        "BUILD_FALLOUTVR": true
+      },
+      "hidden": true,
+      "name": "vr"
+    },
+    {
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:anglebrackets /external:W0"
+      },
+      "generator": "Visual Studio 16 2019",
       "inherits": [
         "cmake-dev",
-        "msvc",
         "vcpkg",
         "windows"
-      ]
+      ],
+      "name": "vs2019-windows-vcpkg"
+    },
+    {
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:W0"
+      },
+      "generator": "Visual Studio 17 2022",
+      "inherits": [
+        "vr",
+        "cmake-dev",
+        "vcpkg",
+        "windows"
+      ],
+      "name": "vs2022-windows-vcpkg",
+      "toolset": "v143"
+    },
+    {
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:anglebrackets /external:W0 $penv{CXXFLAGS}"
+      },
+      "generator": "Visual Studio 16 2019",
+      "inherits": [
+        "vr",
+        "cmake-dev",
+        "vcpkg",
+        "windows"
+      ],
+      "name": "vs2019-windows-vcpkg-vr"
+    },
+    {
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:anglebrackets /external:W0 $penv{CXXFLAGS}"
+      },
+      "generator": "Visual Studio 17 2022",
+      "inherits": [
+        "vr",
+        "cmake-dev",
+        "vcpkg",
+        "windows"
+      ],
+      "name": "vs2022-windows-vcpkg-vr",
+      "toolset": "v143"
     }
   ]
 }
