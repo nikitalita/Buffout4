@@ -17,6 +17,7 @@
         "d3d"
       ]
     },
+    "magic-enum",
     "nowide",
     "robin-hood-hashing",
     "rsm-binary-io",
@@ -26,5 +27,12 @@
     "tbb",
     "tomlplusplus",
     "xbyak"
+  ],
+  "builtin-baseline": "e2667a41fc2fc578474e9521d7eb90b769569c83",
+  "overrides": [
+    {
+      "name": "fmt",
+      "version": "8.0.1"
+    }
   ]
 }

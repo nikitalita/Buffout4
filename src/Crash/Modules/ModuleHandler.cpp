@@ -1,6 +1,6 @@
 #include "Crash/Modules/ModuleHandler.h"
 
-#define WIN32_LEAN_AND_MEAN
+//#define WIN32_LEAN_AND_MEAN
 
 #define NOGDICAPMASKS
 #define NOVIRTUALKEYCODES
@@ -26,7 +26,7 @@
 #define NOMB
 #define NOMEMMGR
 #define NOMETAFILE
-#define NOMINMAX
+//#define NOMINMAX
 //#define NOMSG
 #define NOOPENFILE
 #define NOSCROLL
@@ -45,6 +45,10 @@
 #include <Windows.h>
 
 #include <Psapi.h>
+#include "Crash/PDB/PdbHandler.h"
+
+#undef max
+#undef min
 
 namespace Crash::Modules
 {
@@ -73,7 +77,7 @@ namespace Crash::Modules
 				-> const RE::RTTI::TypeDescriptor*
 			{
 				constexpr std::size_t offset = 0x10;  // offset of name into type descriptor
-				boost::algorithm::knuth_morris_pratt search(a_name.cbegin(), a_name.cend());
+				std::boyer_moore_horspool_searcher search(a_name.cbegin(), a_name.cend());
 				const auto& [first, last] = search(
 					reinterpret_cast<const char*>(a_data.data()),
 					reinterpret_cast<const char*>(a_data.data() + a_data.size()));
@@ -176,7 +180,7 @@ namespace Crash::Modules
 			}
 
 		private:
-			REL::IDDatabase::Offset2ID _offset2ID{ std::execution::parallel_unsequenced_policy{} };
+			REL::IDDatabase::Offset2ID _offset2ID{ std::execution::par_unseq };
 		};
 
 		class Factory
@@ -188,10 +192,11 @@ namespace Crash::Modules
 
 				auto name = get_name(a_module);
 				const auto image = get_image(a_module);
+				const auto path = get_path(a_module);
 				if (_stricmp(name.c_str(), util::module_name().c_str()) == 0) {
-					return result_t{ new Fallout4(std::move(name), image) };
+					return result_t{ new Fallout4(std::move(name), image, std::move(path)) };
 				} else {
-					return result_t{ new Module(std::move(name), image) };
+					return result_t{ new Module(std::move(name), image, std::move(path)) };
 				}
 			}
 
@@ -199,7 +204,7 @@ namespace Crash::Modules
 			[[nodiscard]] static std::span<const std::byte> get_image(::HMODULE a_module)
 			{
 				const auto dosHeader = reinterpret_cast<const ::IMAGE_DOS_HEADER*>(a_module);
-				const auto ntHeader = stl::adjust_pointer<::IMAGE_NT_HEADERS64>(dosHeader, dosHeader->e_lfanew);
+				const auto ntHeader = util::adjust_pointer<::IMAGE_NT_HEADERS64>(dosHeader, dosHeader->e_lfanew);
 				return { reinterpret_cast<const std::byte*>(a_module), ntHeader->OptionalHeader.SizeOfImage };
 			}
 
@@ -219,6 +224,24 @@ namespace Crash::Modules
 				const std::filesystem::path p = buf.data();
 				return p.filename().generic_string();
 			}
+
+			[[nodiscard]] static std::string get_path(::HMODULE a_module)
+			{
+				std::vector<wchar_t> buf;
+				buf.reserve(MAX_PATH);
+				buf.resize(MAX_PATH / 2);
+				std::uint32_t result = 0;
+				do {
+					buf.resize(buf.size() * 2);
+					result = ::GetModuleFileNameW(
+						a_module,
+						buf.data(),
+						static_cast<std::uint32_t>(buf.size()));
+				} while (result && result == buf.size() && buf.size() <= std::numeric_limits<std::uint32_t>::max());
+				const std::filesystem::path p = buf.data();
+				return p.generic_string();
+			}
+
 		};
 	}
 
@@ -228,12 +251,13 @@ namespace Crash::Modules
 		return get_frame_info(a_frame);
 	}
 
-	Module::Module(std::string a_name, std::span<const std::byte> a_image) :
+	Module::Module(std::string a_name, std::span<const std::byte> a_image, std::string a_path) :
 		_name(std::move(a_name)),
-		_image(a_image)
+		_image(a_image),
+		_path(std::move(a_path))
 	{
 		auto dosHeader = reinterpret_cast<const ::IMAGE_DOS_HEADER*>(_image.data());
-		auto ntHeader = stl::adjust_pointer<::IMAGE_NT_HEADERS64>(dosHeader, dosHeader->e_lfanew);
+		auto ntHeader = util::adjust_pointer<::IMAGE_NT_HEADERS64>(dosHeader, dosHeader->e_lfanew);
 		std::span sections(
 			IMAGE_FIRST_SECTION(ntHeader),
 			ntHeader->FileHeader.NumberOfSections);
@@ -267,6 +291,12 @@ namespace Crash::Modules
 	std::string Module::get_frame_info(const boost::stacktrace::frame& a_frame) const
 	{
 		const auto offset = reinterpret_cast<std::uintptr_t>(a_frame.address()) - address();
+		const auto pdbDetails = Crash::PDB::pdb_details(path(), offset);
+		if (!pdbDetails.empty())
+			return fmt::format(
+				"+{:07X} -> {}"sv,
+				offset,
+				pdbDetails);
 		return fmt::format(
 			"+{:07X}"sv,
 			offset);
@@ -284,13 +314,13 @@ namespace Crash::Modules
 				proc,
 				modules.data(),
 				static_cast<::DWORD>(modules.size() * sizeof(::HMODULE)),
-				reinterpret_cast<::DWORD*>(std::addressof(needed)));
+				reinterpret_cast<::DWORD*>(&needed));
 		} while ((modules.size() * sizeof(::HMODULE)) < needed);
 
 		decltype(get_loaded_modules()) results;
 		results.resize(modules.size());
 		std::for_each(
-			std::execution::parallel_unsequenced_policy{},
+			std::execution::par_unseq,
 			modules.begin(),
 			modules.end(),
 			[&](auto&& a_elem) {

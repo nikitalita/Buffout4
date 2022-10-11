@@ -54,20 +54,20 @@ namespace WinAPI
 
 	inline constexpr auto(EXCEPTION_EXECUTE_HANDLER){ static_cast<int>(1) };
 
-	inline constexpr auto(UNDNAME_NO_MS_KEYWORDS){ static_cast<std::uint32_t>(0x0002) };
-	inline constexpr auto(UNDNAME_NO_FUNCTION_RETURNS){ static_cast<std::uint32_t>(0x0004) };
-	inline constexpr auto(UNDNAME_NO_ALLOCATION_MODEL){ static_cast<std::uint32_t>(0x0008) };
-	inline constexpr auto(UNDNAME_NO_ALLOCATION_LANGUAGE){ static_cast<std::uint32_t>(0x0010) };
-	inline constexpr auto(UNDNAME_NO_THISTYPE){ static_cast<std::uint32_t>(0x0060) };
-	inline constexpr auto(UNDNAME_NO_ACCESS_SPECIFIERS){ static_cast<std::uint32_t>(0x0080) };
-	inline constexpr auto(UNDNAME_NO_THROW_SIGNATURES){ static_cast<std::uint32_t>(0x0100) };
-	inline constexpr auto(UNDNAME_NO_RETURN_UDT_MODEL){ static_cast<std::uint32_t>(0x0400) };
-	inline constexpr auto(UNDNAME_NAME_ONLY){ static_cast<std::uint32_t>(0x1000) };
-	inline constexpr auto(UNDNAME_NO_ARGUMENTS){ static_cast<std::uint32_t>(0x2000) };
+	inline constexpr auto UNDNAME_NO_MS_KEYWORDS = std::uint32_t{ 0x0002 };
+	inline constexpr auto UNDNAME_NO_FUNCTION_RETURNS = std::uint32_t{ 0x0004 };
+	inline constexpr auto UNDNAME_NO_ALLOCATION_MODEL = std::uint32_t{ 0x0008 };
+	inline constexpr auto UNDNAME_NO_ALLOCATION_LANGUAGE = std::uint32_t{ 0x0010 };
+	inline constexpr auto UNDNAME_NO_THISTYPE = std::uint32_t{ 0x0060 };
+	inline constexpr auto UNDNAME_NO_ACCESS_SPECIFIERS = std::uint32_t{ 0x0080 };
+	inline constexpr auto UNDNAME_NO_THROW_SIGNATURES = std::uint32_t{ 0x0100 };
+	inline constexpr auto UNDNAME_NO_RETURN_UDT_MODEL = std::uint32_t{ 0x0400 };
+	inline constexpr auto UNDNAME_NAME_ONLY = std::uint32_t{ 0x1000 };
+	inline constexpr auto UNDNAME_NO_ARGUMENTS = std::uint32_t{ 0x2000 };
 
-	[[nodiscard]] bool(IsDebuggerPresent)() noexcept;
+	[[nodiscard]] bool IsDebuggerPresent() noexcept;
 
-	[[nodiscard]] std::uint32_t(UnDecorateSymbolName)(
+	[[nodiscard]] std::uint32_t UnDecorateSymbolName(
 		const char* a_name,
 		char* a_outputString,
 		std::uint32_t a_maxStringLength,
@@ -99,10 +99,16 @@ namespace stl
 
 namespace util
 {
-	[[nodiscard]] inline std::string module_name()
+	using F4SE::stl::adjust_pointer;
+	using F4SE::stl::report_and_fail;
+	using F4SE::stl::utf16_to_utf8;
+
+	[[nodiscard]] inline auto module_name()
+		-> std::string
 	{
 		const auto filename = REL::Module::get().filename();
-		return boost::nowide::narrow(filename.data(), filename.length());
+		return util::utf16_to_utf8(filename)
+		    .value_or("<unknown module name>");
 	}
 }
 

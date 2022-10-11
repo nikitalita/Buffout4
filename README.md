@@ -56,6 +56,7 @@ cmake --build buildvr --config Release
 
 # Credits
 * [Ryan-rsm-Mckenzie](https://github.com/Ryan-rsm-McKenzie) - Original code and framework and for enabling the commonlib community in Skyrim and Fallout
+* PDB requires `msdia140.dll` distributed under [Visual Studio C++ Redistributable](https://docs.microsoft.com/en-us/visualstudio/releases/2022/redistribution#dia-sdk). [PDB Handler](src/Crash/PDB/PdbHandler.cpp) derived from StackOverflow code.
 
 # License
 [MIT](LICENSE)

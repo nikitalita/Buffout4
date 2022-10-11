@@ -40,6 +40,7 @@ namespace Settings
 
 	using bSetting = Setting<bool>;
 	using iSetting = Setting<std::int64_t>;
+	using sSetting = Setting<std::string>;
 
 #define MAKE_SETTING(a_type, a_group, a_key, a_default) \
 	inline auto a_key = a_type(a_group##sv, #a_key##sv, a_default)
@@ -76,12 +77,16 @@ namespace Settings
 
 	MAKE_SETTING(bSetting, "Compatibility", F4EE, false);
 
+	MAKE_SETTING(sSetting, "Debug", Symcache, "c:\symcache");
+	MAKE_SETTING(bSetting, "Debug", WaitForDebugger, false);
+
 #undef MAKE_SETTING
 
 	inline std::vector<
 		std::variant<
 			std::reference_wrapper<bSetting>,
-			std::reference_wrapper<iSetting>>>
+			std::reference_wrapper<iSetting>,
+			std::reference_wrapper<sSetting>>>
 		settings;
 
 	inline void load()
@@ -134,6 +139,9 @@ namespace Settings
 		LOAD(ImageSpaceAdapter);
 
 		LOAD(F4EE);
+
+		LOAD(Symcache);
+		LOAD(WaitForDebugger);
 
 		std::sort(
 			settings.begin(),

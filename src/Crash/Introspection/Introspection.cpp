@@ -1,6 +1,9 @@
 #include "Crash/Introspection/Introspection.h"
 
 #include "Crash/Modules/ModuleHandler.h"
+#include "Crash/PDB/PdbHandler.h"
+#define MAGIC_ENUM_RANGE_MAX 256
+#include <magic_enum.hpp>
 
 namespace Crash::Introspection::F4
 {
@@ -8,9 +11,7 @@ namespace Crash::Introspection::F4
 
 	[[nodiscard]] std::string quoted(std::string_view a_str)
 	{
-		return fmt::format(
-			"\"{}\""sv,
-			a_str);
+		return fmt::format("\"{}\""sv, a_str);
 	}
 
 	namespace BSResource
@@ -139,16 +140,67 @@ namespace Crash::Introspection::F4
 
 		static void filter(
 			filter_results& a_results,
-			const void* a_ptr) noexcept
+			const void* a_ptr /*, int tab_depth = 0*/) noexcept
 		{
 			const auto stream = static_cast<const value_type*>(a_ptr);
 
 			try {
 				const auto fileName = stream->GetFileName();
 				a_results.emplace_back(
-					"File Name"sv,
+					fmt::format(
+						"{:\t>{}}File Name"sv,
+						"" /*,
+						tab_depth*/
+						),
 					quoted(fileName));
 			} catch (...) {}
+			//try {
+			//	const auto& header = stream->bsStreamHeader;
+			//	a_results.emplace_back(
+			//		fmt::format(
+			//			"{:\t>{}}Header"sv,
+			//			"",
+			//			tab_depth),
+			//		fmt::format(
+			//			"author: {} version: {} processScript: {} exportScript: {}",
+			//			header.author,
+			//			header.version,
+			//			header.processScript,
+			//			header.exportScript));
+			//} catch (...) {}
+
+			//try {
+			//	const auto lastLoadedRTTI = stream->lastLoadedRTTI;
+			//	if (lastLoadedRTTI && lastLoadedRTTI[0])
+			//		a_results.emplace_back(
+			//			fmt::format(
+			//				"{:\t>{}}lastLoadedRTTI"sv,
+			//				"",
+			//				tab_depth),
+			//			quoted(lastLoadedRTTI));
+			//} catch (...) {}
+
+			//try {
+			//	const auto inputFilePath = stream->fileName;
+			//	if (inputFilePath && inputFilePath[0])
+			//		a_results.emplace_back(
+			//			fmt::format(
+			//				"{:\t>{}}fileName"sv,
+			//				"",
+			//				tab_depth),
+			//			quoted(inputFilePath));
+			//} catch (...) {}
+
+			//try {
+			//	const auto filePath = stream->filePath;
+			//	if (filePath && filePath[0])
+			//		a_results.emplace_back(
+			//			fmt::format(
+			//				"{:\t>{}}filePath"sv,
+			//				"",
+			//				tab_depth),
+			//			quoted(filePath));
+			//} catch (...) {}
 		}
 	};
 
@@ -159,51 +211,95 @@ namespace Crash::Introspection::F4
 
 		static void filter(
 			filter_results& a_results,
-			const void* a_ptr) noexcept
+			const void* a_ptr /*, int tab_depth = 0*/) noexcept
 		{
 			const auto texture = static_cast<const value_type*>(a_ptr);
+			if (!texture)
+				return;
+			try {
+				const auto name = texture ? texture->name.c_str() : ""sv;
+				if (!name.empty())
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Name"sv,
+							"" /*,
+							tab_depth*/
+							),
+						quoted(name));
+			} catch (...) {}
 
 			try {
-				const auto name = texture->GetName();
-				a_results.emplace_back(
-					"Name"sv,
-					quoted(name));
+				const auto name = texture->GetRTTI() ? texture->GetRTTI()->GetName() : ""sv;
+				if (!name.empty())
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}RTTIName"sv,
+							"" /*,
+							tab_depth*/
+							),
+						quoted(name));
 			} catch (...) {}
 		}
 	};
 
+	template <class T = RE::TESForm>
 	class TESForm
 	{
 	public:
-		using value_type = RE::TESForm;
+		using value_type = T;
 
 		static void filter(
 			filter_results& a_results,
-			const void* a_ptr) noexcept
+			const void* a_ptr /*, int tab_depth = 0*/) noexcept
 		{
 			const auto form = static_cast<const value_type*>(a_ptr);
 
 			try {
 				const auto file = form->GetDescriptionOwnerFile();
 				const auto filename = file ? file->GetFilename() : ""sv;
-				a_results.emplace_back(
-					"File"sv,
-					quoted(filename));
+				if (!filename.empty())
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}File"sv,
+							"" /*,
+							tab_depth*/
+							),
+						quoted(filename));
 			} catch (...) {}
 
 			try {
 				const auto formFlags = form->GetFormFlags();
 				a_results.emplace_back(
-					"Flags"sv,
+					fmt::format(
+						"{:\t>{}}Flags"sv,
+						""sv /*,
+						tab_depth*/
+						),
 					fmt::format(
 						"0x{:08X}"sv,
 						formFlags));
 			} catch (...) {}
 
 			try {
+				const auto editorID = form->GetFormEditorID();
+				if (editorID && editorID[0])
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}EditorID"sv,
+							""sv /*,
+							tab_depth*/
+							),
+						quoted(editorID));
+			} catch (...) {}
+
+			try {
 				const auto formID = form->GetFormID();
 				a_results.emplace_back(
-					"Form ID"sv,
+					fmt::format(
+						"{:\t>{}}FormID"sv,
+						""sv /*,
+						tab_depth*/
+						),
 					fmt::format(
 						"0x{:08X}"sv,
 						formID));
@@ -212,7 +308,11 @@ namespace Crash::Introspection::F4
 			try {
 				const auto formType = form->GetFormType();
 				a_results.emplace_back(
-					"Form Type"sv,
+					fmt::format(
+						"{:\t>{}}FormType"sv,
+						"" /*,
+						tab_depth*/
+						),
 					fmt::format(
 						"{:02}"sv,
 						stl::to_underlying(formType)));
@@ -227,15 +327,21 @@ namespace Crash::Introspection::F4
 
 		static void filter(
 			filter_results& a_results,
-			const void* a_ptr) noexcept
+			const void* a_ptr/*, int tab_depth = 0*/) noexcept
 		{
 			const auto component = static_cast<const value_type*>(a_ptr);
 
+			if (!component)
+				return;
 			try {
 				const auto fullName = component->GetFullName();
-				a_results.emplace_back(
-					"Full Name"sv,
-					quoted(fullName));
+				if (fullName && fullName[0])
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}GetFullName"sv,
+							""sv/*,
+							tab_depth*/),
+						quoted(fullName));
 			} catch (...) {}
 		}
 	};
@@ -247,7 +353,7 @@ namespace Crash::Introspection::F4
 
 		static void filter(
 			filter_results& a_results,
-			const void* a_ptr) noexcept
+			const void* a_ptr /*, int tab_depth = 0*/) noexcept
 		{
 			const auto ref = static_cast<const value_type*>(a_ptr);
 
@@ -255,10 +361,13 @@ namespace Crash::Introspection::F4
 				const auto objRef = ref->data.objectReference;
 				if (objRef) {
 					filter_results xResults;
-					TESForm::filter(xResults, objRef);
+					TESForm<RE::TESForm>::filter(xResults, objRef);
 
 					a_results.emplace_back(
-						"Object Reference"sv,
+						fmt::format(
+							"{:\t>{}}Object Reference"sv /*,
+							tab_depth*/
+							),
 						""sv);
 					for (auto& [key, value] : xResults) {
 						a_results.emplace_back(
@@ -269,6 +378,112 @@ namespace Crash::Introspection::F4
 					a_results.emplace_back(
 						"Object Reference"sv,
 						"None"sv);
+				}
+			} catch (...) {}
+		}
+	};
+
+	class BSShaderProperty
+	{
+	public:
+		using value_type = RE::BSShaderProperty;
+
+		static void filter(
+			filter_results& a_results,
+			const void* a_ptr/*, int tab_depth = 0*/) noexcept
+		{
+			const auto form = static_cast<const value_type*>(a_ptr);
+
+			try {
+				const auto formFlags = form->flags;
+				a_results.emplace_back(
+					fmt::format(
+						"{:\t>{}}Flags"sv,
+						""sv/*,
+						tab_depth*/),
+					fmt::format(
+						"0x{:08X}"sv,
+						formFlags));
+			} catch (...) {}
+			try {
+				const auto name = form->name.c_str();
+				if (name && name[0])
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Name"sv,
+							""sv/*,
+							tab_depth*/),
+						quoted(name));
+			} catch (...) {}
+			try {
+				const auto rttiname = form->GetRTTI() ? form->GetRTTI()->GetName() : ""sv;
+				if (!rttiname.empty())
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}RTTIName"sv,
+							""sv/*,
+							tab_depth*/),
+						quoted(rttiname));
+			} catch (...) {}
+		}
+	};
+	class NiAVObject
+	{
+	public:
+		using value_type = RE::NiAVObject;
+
+		static void filter(
+			filter_results& a_results,
+			const void* a_ptr/*, int tab_depth = 0*/) noexcept
+		{
+			const auto object = static_cast<const value_type*>(a_ptr);
+			if (!object)
+				return;
+			try {
+				const auto name = object ? object->name.c_str() : ""sv;
+				if (!name.empty())
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Name"sv,
+							""sv/*,
+							tab_depth*/),
+						quoted(name));
+			} catch (...) {}
+
+			try {
+				const auto name = object->GetRTTI() ? object->GetRTTI()->GetName() : ""sv;
+				if (!name.empty())
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}RTTIName"sv,
+							""sv/*,
+							tab_depth*/),
+						quoted(name));
+			} catch (...) {}
+
+			try {
+				const auto flags = object->GetFlags();
+				a_results.emplace_back(
+					fmt::format(
+						"{:\t>{}}Flags"sv,
+						""sv/*,
+						tab_depth*/),
+					fmt::format(
+						"{}"sv,
+						flags));
+			} catch (...) {}
+
+			try {
+				const auto parent = object->parent;
+				if (parent) {
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Checking Parent"sv,
+							""sv/*,
+							tab_depth*/),
+						fmt::format(
+							""sv));
+					filter(a_results, parent/*, tab_depth + 1*/);
 				}
 			} catch (...) {}
 		}
@@ -296,7 +511,19 @@ namespace Crash::Introspection
 		class Integer
 		{
 		public:
-			[[nodiscard]] std::string name() const { return "(size_t)"s; }  // NOLINT(readability-convert-member-functions-to-static)
+			Integer(std::size_t a_value) noexcept :
+				_value(a_value),
+				name_string(a_value >> 63 ?
+								fmt::format("(size_t) [uint: {} int: {}]"s, _value, static_cast<std::make_signed_t<size_t>>(_value)) :
+								fmt::format("(size_t) [{}]"s, _value))
+			{
+			}
+
+			[[nodiscard]] std::string name() const { return name_string; }
+
+		private:
+			const std::size_t _value;
+			const std::string name_string;
 		};
 
 		class Pointer
@@ -316,6 +543,13 @@ namespace Crash::Introspection
 			{
 				if (_module) {
 					const auto address = reinterpret_cast<std::uintptr_t>(_ptr);
+					const auto pdbDetails = Crash::PDB::pdb_details(_module->path(), address - _module->address());
+					if (!pdbDetails.empty())
+						return fmt::format(
+							"(void* -> {}+{:07X} -> {})"sv,
+							_module->name(),
+							address - _module->address(),
+							pdbDetails);
 					return fmt::format(
 						"(void* -> {}+{:07X})"sv,
 						_module->name(),
@@ -414,6 +648,7 @@ namespace Crash::Introspection
 						const auto target = stl::adjust_pointer<void>(root, static_cast<std::ptrdiff_t>(base->pmd.mDisp));
 						it->second(xInfo, target);
 					}
+					logger::info("Found unhandled type:\t{}\t{}"sv, result, base->typeDescriptor->mangled_name());
 				}
 
 				if (!xInfo.empty()) {
@@ -431,13 +666,20 @@ namespace Crash::Introspection
 		private:
 			static constexpr auto FILTERS = frozen::make_map({
 				std::make_pair(".?AULooseFileStreamBase@?A0xaf4cad8a@BSResource@@"sv, F4::BSResource::LooseFileStreamBase::filter),
+				std::make_pair(".?AVBSShaderProperty@@"sv, F4::BSShaderProperty::filter),
+				std::make_pair(".?AVCharacter@@"sv, F4::TESForm<RE::PlayerCharacter>::filter),
 				std::make_pair(".?AVNativeFunctionBase@NF_util@BSScript@@"sv, F4::BSScript::NF_util::NativeFunctionBase::filter),
-				std::make_pair(".?AVObjectTypeInfo@BSScript@@"sv, F4::BSScript::ObjectTypeInfo::filter),
+				std::make_pair(".?AVNiAVObject@@"sv, F4::NiAVObject::filter),
 				std::make_pair(".?AVNiObjectNET@@"sv, F4::NiObjectNET::filter),
 				std::make_pair(".?AVNiStream@@"sv, F4::NiStream::filter),
 				std::make_pair(".?AVNiTexture@@"sv, F4::NiTexture::filter),
-				std::make_pair(".?AVTESForm@@"sv, F4::TESForm::filter),
+				std::make_pair(".?AVObjectTypeInfo@BSScript@@"sv, F4::BSScript::ObjectTypeInfo::filter),
+				std::make_pair(".?AVPlayerCharacter@@"sv, F4::TESForm<RE::PlayerCharacter>::filter),
+				std::make_pair(".?AVTESFaction@@"sv, F4::TESForm<RE::TESFaction>::filter),
+				std::make_pair(".?AVTESForm@@"sv, F4::TESForm<RE::TESForm>::filter),
 				std::make_pair(".?AVTESFullName@@"sv, F4::TESFullName::filter),
+				std::make_pair(".?AVTESNPC@@"sv, F4::TESForm<RE::TESNPC>::filter),
+				std::make_pair(".?AVTESObjectCELL@@"sv, F4::TESForm<RE::TESObjectCELL>::filter),
 				std::make_pair(".?AVTESObjectREFR@@"sv, F4::TESObjectREFR::filter),
 			});
 
@@ -455,9 +697,7 @@ namespace Crash::Introspection
 
 			[[nodiscard]] std::string name() const
 			{
-				return fmt::format(
-					"(char*) \"{}\""sv,
-					_str);
+				return fmt::format("(char*) \"{}\""sv, _str);
 			}
 
 		private:
@@ -583,7 +823,7 @@ namespace Crash::Introspection
 				}
 			} catch (...) {}
 
-			return make_result<Integer>();
+			return make_result<Integer>(a_value);
 		}
 	}
 
