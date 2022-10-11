@@ -21,7 +21,9 @@ namespace
 		const auto task = F4SE::GetTaskInterface();
 		task->AddTask([]() {
 			Fixes::PostInit();
+#ifndef FALLOUTVR
 			Patches::PostInit();
+#endif
 		});
 	}
 
@@ -33,12 +35,10 @@ namespace
 			Compatibility::Install();
 #endif
 			break;
-		case F4SE::MessagingInterface::kGameDataReady:
+		case F4SE::MessagingInterface::kGameLoaded:
 			{
-#ifndef FALLOUTVR
 				static std::once_flag guard;
 				std::call_once(guard, PostInit);
-#endif
 			}
 			break;
 		}

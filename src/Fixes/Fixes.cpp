@@ -64,8 +64,10 @@ namespace Fixes
 			EncounterZoneResetFix::Install();
 		}
 
+#ifndef FALLOUTVR
 		if (*Settings::UtilityShader) {
 			UtilityShaderFix::Install();
 		}
+#endif
 	}
 }
