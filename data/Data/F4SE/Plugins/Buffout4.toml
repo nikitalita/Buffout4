@@ -11,6 +11,7 @@ SafeExit = true                      # Fixes crashes related to exiting the game
 TESObjectREFRGetEncounterZone = true # Fixes a crash when looking up the encounter zone on a reference that has not yet initialized
 UnalignedLoad = true                 # Fixes a crash related to SIMD intrinsics with an aligned move on unaligned memory
 UtilityShader = true                 # Fixes a crash when a shader can't be found for a given technique id
+WorkBenchSwap = true                 # Fixes a crash where you are scrapping or swapping many inventory items in the workbench
 
 [Patches]
 Achievements = true               # Enables achievements on modded saves
@@ -33,7 +34,3 @@ ImageSpaceAdapter = true # Warns on bad IMAD definitions which will corrupt your
 
 [Compatibility]
 F4EE = false # 1.6.20 - Patches various LooksMenu bugs
-
-[Debug]
-#Symcache = "c:\symcache"	# Location of Symcache.
-#WaitForDebugger = false 	# Whether to wait for debugger to attach when a crash occurs
