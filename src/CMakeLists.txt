@@ -126,7 +126,7 @@ add_library(
 	"${CMAKE_CURRENT_BINARY_DIR}/version.rc"
 	"${ROOT_DIR}/.clang-format"
 	"${ROOT_DIR}/.editorconfig"
- "Fixes/WorkBenchSwapFix.h")
+)
 
 target_compile_features(
 	"${PROJECT_NAME}"
