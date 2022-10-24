@@ -249,9 +249,9 @@ namespace Patches::MemoryManagerPatch
 
 	inline void Install()
 	{
-		detail::AutoScrapBuffer::Install();
+	//	detail::AutoScrapBuffer::Install();
 		detail::MemoryManager::Install();
-		detail::ScrapHeap::Install();
+//		detail::ScrapHeap::Install();
 		logger::debug("installed MemoryManager patch"sv);
 	}
 }

@@ -6,7 +6,11 @@ namespace Fixes::UnalignedLoadFix
 	{
 		inline void ApplySkinningToGeometry()
 		{
+#ifndef FALLOUTVR
 			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), 0x172 + 0x2 };
+#else
+			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), 0x179 + 0x2 };
+#endif
 			REL::safe_write(target.address(), std::uint32_t{ 0x10 });
 		}
 
@@ -29,7 +33,7 @@ namespace Fixes::UnalignedLoadFix
 	inline void Install()
 	{
 		detail::ApplySkinningToGeometry();
-		detail::CreateCommandBuffer();
+	//	detail::CreateCommandBuffer();     // function doesnt exist in VR>   need to RE more
 		logger::debug("installed UnalignedLoad fix"sv);
 	}
 }

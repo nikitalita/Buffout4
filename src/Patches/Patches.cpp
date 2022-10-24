@@ -21,6 +21,8 @@ namespace Patches
 			AchievementsPatch::Install();
 		}
 
+#ifndef FALLOUTVR
+		// partial work on this one.     BSMTAManager::RegisterObjects::execute function missing from vr so need to rethink this one
 		if (*Settings::BSMTAManager) {
 			BSMTAManagerPatch::Install();
 		}
@@ -48,7 +50,6 @@ namespace Patches
 		if (*Settings::MaxStdIO != -1) {
 			MaxStdIOPatch::Install();
 		}
-
 		if (*Settings::MemoryManager || *Settings::MemoryManagerDebug) {
 			MemoryManagerPatch::Install();
 		}
@@ -64,6 +65,7 @@ namespace Patches
 		if (*Settings::WorkshopMenu) {
 			WorkshopMenuPatch::Install();
 		}
+#endif
 	}
 
 	void PostInit()

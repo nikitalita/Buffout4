@@ -126,14 +126,23 @@ namespace Patches::BSMTAManagerPatch
 	{
 		{
 			const auto target = REL::ID(883019).address();
+#ifndef FALLOUTVR
 			constexpr auto size = 0xC5;
+#else
+			constexpr auto size = 0xE2;
+#endif
 			REL::safe_fill(target, REL::INT3, size);
 			stl::asm_jump(target, size, reinterpret_cast<std::uintptr_t>(detail::RegisterObjects));
 		}
 
 		{
+#ifndef FALLOUTVR
 			const auto base = REL::ID(485563).address();
 			constexpr auto offset = 0x8E;
+#else
+			const auto base = REL::Offset(0x2875600).address();  // add back id once in database
+			constexpr auto offset = 0x7E;
+#endif
 			stl::write_thunk_call<5, detail::Submit>(base + offset);
 		}
 

@@ -66,6 +66,7 @@ set(SOURCE_FILES
 	"${SOURCE_DIR}/Fixes/UnalignedLoadFix.h"
 	"${SOURCE_DIR}/Fixes/UtilityShaderFix.cpp"
 	"${SOURCE_DIR}/Fixes/UtilityShaderFix.h"
+	"${SOURCE_DIR}/Fixes/WorkBenchSwapFix.h"
 	"${SOURCE_DIR}/Patches/AchievementsPatch.cpp"
 	"${SOURCE_DIR}/Patches/AchievementsPatch.h"
 	"${SOURCE_DIR}/Patches/BSMTAManagerPatch.h"
@@ -125,7 +126,7 @@ add_library(
 	"${CMAKE_CURRENT_BINARY_DIR}/version.rc"
 	"${ROOT_DIR}/.clang-format"
 	"${ROOT_DIR}/.editorconfig"
-)
+ "Fixes/WorkBenchSwapFix.h")
 
 target_compile_features(
 	"${PROJECT_NAME}"
