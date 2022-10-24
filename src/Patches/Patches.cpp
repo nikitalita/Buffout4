@@ -31,6 +31,7 @@ namespace Patches
 			BSPreCulledObjectsPatch::Install();
 		}
 
+#endif
 		if (*Settings::BSTextureStreamerLocalHeap) {
 			BSTextureStreamerLocalHeapPatch::Install();
 		}
@@ -43,13 +44,16 @@ namespace Patches
 			INISettingCollectionPatch::Install();
 		}
 
+#ifndef FALLOUTVR
 		if (*Settings::InputSwitch) {
 			InputSwitchPatch::PreLoad();
 		}
+#endif
 
 		if (*Settings::MaxStdIO != -1) {
 			MaxStdIOPatch::Install();
 		}
+
 		if (*Settings::MemoryManager || *Settings::MemoryManagerDebug) {
 			MemoryManagerPatch::Install();
 		}
@@ -62,6 +66,7 @@ namespace Patches
 			SmallBlockAllocatorPatch::Install();
 		}
 
+#ifndef FALLOUTVR
 		if (*Settings::WorkshopMenu) {
 			WorkshopMenuPatch::Install();
 		}

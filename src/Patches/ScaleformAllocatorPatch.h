@@ -62,7 +62,11 @@ namespace Patches::ScaleformAllocatorPatch
 
 	inline void Install()
 	{
+#ifndef FALLOUTVR
 		REL::Relocation<std::uintptr_t> target{ REL::ID(903830), 0xEC };
+#else
+		REL::Relocation<std::uintptr_t> target{ REL::Offset(0x219a300).address() + 0xEC };
+#endif
 		stl::write_thunk_call<5, detail::Init>(target.address());
 		logger::debug("installed ScaleformAllocator patch"sv);
 	}
