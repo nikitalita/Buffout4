@@ -34,3 +34,7 @@ ImageSpaceAdapter = true # Warns on bad IMAD definitions which will corrupt your
 
 [Compatibility]
 F4EE = false # 1.6.20 - Patches various LooksMenu bugs
+
+[Debug]
+#Symcache = "c:\symcache"	# Location of Symcache.
+#WaitForDebugger = false 	# Whether to wait for debugger to attach when a crash occurs
