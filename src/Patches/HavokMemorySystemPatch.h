@@ -163,11 +163,7 @@ namespace Patches::HavokMemorySystemPatch
 	inline void Install()
 	{
 		auto& trampoline = F4SE::GetTrampoline();
-#ifndef FALLOUTVR
 		REL::Relocation<std::uintptr_t> target{ REL::ID(204659), 0x68 };
-#else
-		REL::Relocation<std::uintptr_t> target{ REL::Offset(0x1df8570).address() + 0x68 };
-#endif
 		trampoline.write_call<5>(target.address(), detail::hkMemorySystem::GetSingleton);
 		logger::debug("installed HavokMemorySystem patch"sv);
 	}

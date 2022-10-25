@@ -136,11 +136,10 @@ namespace Patches::BSMTAManagerPatch
 		}
 
 		{
-#ifndef FALLOUTVR
 			const auto base = REL::ID(485563).address();
+#ifndef FALLOUTVR
 			constexpr auto offset = 0x8E;
 #else
-			const auto base = REL::Offset(0x2875600).address();  // add back id once in database
 			constexpr auto offset = 0x7E;
 #endif
 			stl::write_thunk_call<5, detail::Submit>(base + offset);

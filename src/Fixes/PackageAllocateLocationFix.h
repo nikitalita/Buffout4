@@ -17,11 +17,7 @@ namespace Fixes::PackageAllocateLocationFix
 
 	inline void Install()
 	{
-#ifndef FALLOUTVR
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1248203), 0x141 };
-#else
-		REL::Relocation<std::uintptr_t> target{ REL::Offset(0x715350).address() + 0x141 };
-#endif
 		stl::write_thunk_call<5, detail::GetPrimitive>(target.address());
 		logger::debug("installed PackageAllocateLocation fix"sv);
 	}

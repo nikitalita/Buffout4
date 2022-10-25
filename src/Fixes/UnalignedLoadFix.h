@@ -7,10 +7,11 @@ namespace Fixes::UnalignedLoadFix
 		inline void ApplySkinningToGeometry()
 		{
 #ifndef FALLOUTVR
-			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), 0x172 + 0x2 };
+			const auto offset = 0x172;
 #else
-			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), 0x179 + 0x2 };
+			const auto offset = 0x179;
 #endif
+			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), offset + 0x2 };
 			REL::safe_write(target.address(), std::uint32_t{ 0x10 });
 		}
 
