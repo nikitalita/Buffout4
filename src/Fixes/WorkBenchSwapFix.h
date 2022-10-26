@@ -33,6 +33,6 @@ namespace Fixes::WorkBenchSwapFix
 			target.address(),
 			trampoline.allocate(p));
 
-		logger::debug("installed WorkBench Swap fix"sv);
+		logger::info("installed WorkBench Swap fix"sv);
 	}
 }

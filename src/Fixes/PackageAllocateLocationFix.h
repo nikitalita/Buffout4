@@ -19,6 +19,6 @@ namespace Fixes::PackageAllocateLocationFix
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1248203), 0x141 };
 		stl::write_thunk_call<5, detail::GetPrimitive>(target.address());
-		logger::debug("installed PackageAllocateLocation fix"sv);
+		logger::info("installed PackageAllocateLocation fix"sv);
 	}
 }

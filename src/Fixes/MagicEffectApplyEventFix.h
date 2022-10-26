@@ -24,6 +24,6 @@ namespace Fixes::MagicEffectApplyEventFix
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(RE::GameScript::CombatEventHandler::VTABLE[1]) };
 		detail::ProcessEvent::func = target.write_vfunc(0x1, detail::ProcessEvent::thunk);
-		logger::debug("installed Magic Effect Apply Event fix"sv);
+		logger::info("installed Magic Effect Apply Event fix"sv);
 	}
 }

@@ -20,6 +20,6 @@ namespace Fixes::UtilityShaderFix
 		detail::CreateShaders();
 		detail::PatchPixelShader(base.address());
 		detail::PatchVertexShader(base.address());
-		logger::debug("installed UtilityShader fix"sv);
+		logger::info("installed UtilityShader fix"sv);
 	}
 }

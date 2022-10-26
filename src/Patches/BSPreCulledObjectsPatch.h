@@ -433,6 +433,6 @@ namespace Patches::BSPreCulledObjectsPatch
 		detail::WriteAddToShadowCullingGroup();
 		detail::WriteUpdateIDto3DMap();
 
-		logger::debug("installed BSPreCulledObjects patch"sv);
+		logger::info("installed BSPreCulledObjects patch"sv);
 	}
 }

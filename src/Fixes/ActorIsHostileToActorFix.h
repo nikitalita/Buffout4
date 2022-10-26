@@ -27,6 +27,6 @@ namespace Fixes::ActorIsHostileToActorFix
 		REL::safe_fill(target.address(), REL::INT3, size);
 		stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(detail::IsHostileToActor));
 
-		logger::debug("installed ActorIsHostileToActor fix"sv);
+		logger::info("installed ActorIsHostileToActor fix"sv);
 	}
 }

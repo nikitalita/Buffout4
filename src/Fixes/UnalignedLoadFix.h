@@ -37,6 +37,6 @@ namespace Fixes::UnalignedLoadFix
 #ifndef FALLOUTVR // function doesnt exist in VR>   need to RE more
 		detail::CreateCommandBuffer();
 #endif
-		logger::debug("installed UnalignedLoad fix"sv);
+		logger::info("installed UnalignedLoad fix"sv);
 	}
 }

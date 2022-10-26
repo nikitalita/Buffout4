@@ -115,6 +115,6 @@ namespace Warnings::CreateTexture2DWarning
 			WritePatch<Patch>(target.address(), 0x8);
 		}
 
-		logger::debug("installed CreateTexture2D Warning"sv);
+		logger::info("installed CreateTexture2D Warning"sv);
 	}
 }

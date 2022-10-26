@@ -62,6 +62,6 @@ namespace Patches::BSTextureStreamerLocalHeapPatch
 	{
 		detail::WriteStubs();
 		detail::WriteHooks();
-		logger::debug("installed BSTextureStreamerLocalHeap patch"sv);
+		logger::info("installed BSTextureStreamerLocalHeap patch"sv);
 	}
 }

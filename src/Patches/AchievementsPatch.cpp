@@ -78,6 +78,6 @@ namespace Patches::AchievementsPatch
 			target.address(),
 			std::span{ p.getCode<const std::byte*>(), p.getSize() });
 
-		logger::debug("installed Achievements patch"sv);
+		logger::info("installed Achievements patch"sv);
 	}
 }

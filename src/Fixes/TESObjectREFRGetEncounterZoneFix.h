@@ -40,6 +40,6 @@ namespace TESObjectREFRGetEncounterZoneFix
 		REL::safe_write(root + 0x91 + 0x1, static_cast<std::uint8_t>(0x8D));  // mov -> lea
 		stl::write_thunk_call<5, detail::GetEncounterZone<RE::BGSLocation>>(root + 0x98);
 
-		logger::debug("installed TESObjectREFRGetEncounterZone fix"sv);
+		logger::info("installed TESObjectREFRGetEncounterZone fix"sv);
 	}
 }

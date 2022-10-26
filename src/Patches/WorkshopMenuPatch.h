@@ -614,6 +614,6 @@ namespace Patches::WorkshopMenuPatch
 		constexpr std::size_t size = 0x24F;
 		REL::safe_fill(target.address(), REL::INT3, size);
 		stl::asm_jump(target.address(), size, reinterpret_cast<std::uintptr_t>(detail::BuildWorkShopMenuNodeTree));
-		logger::debug("installed WorkshopMenu patch"sv);
+		logger::info("installed WorkshopMenu patch"sv);
 	}
 }

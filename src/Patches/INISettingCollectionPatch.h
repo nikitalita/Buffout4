@@ -22,6 +22,6 @@ namespace Patches::INISettingCollectionPatch
 		REL::Relocation<std::uintptr_t> vtable{ RE::INISettingCollection::VTABLE[0] };
 		detail::Open::func = vtable.write_vfunc(0x5, detail::Open::thunk);
 
-		logger::debug("installed INISettingCollection patch"sv);
+		logger::info("installed INISettingCollection patch"sv);
 	}
 }

@@ -41,6 +41,6 @@ namespace CreateD3DAndSwapChainFix
 		auto& trampoline = F4SE::GetTrampoline();
 		trampoline.write_call<5>(target, detail::GetDisplayModeList);
 
-		logger::debug("installed CreateD3DAndSwapChain fix"sv);
+		logger::info("installed CreateD3DAndSwapChain fix"sv);
 	}
 }

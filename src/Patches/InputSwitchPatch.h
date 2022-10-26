@@ -276,7 +276,7 @@ namespace Patches::InputSwitchPatch
 		detail::InstallUsingGamepadPatch();
 		detail::InstallGamepadLookPatches();
 		detail::InstallPipboyMenuStatePatches();
-		logger::debug("installed InputSwitch pre-patch"sv);
+		logger::info("installed InputSwitch pre-patch"sv);
 	}
 
 	inline void PostInit()
@@ -287,6 +287,6 @@ namespace Patches::InputSwitchPatch
 				detail::DeviceSwapHandler::GetSingleton());
 		}
 
-		logger::debug("installed InputSwitch post-patch"sv);
+		logger::info("installed InputSwitch post-patch"sv);
 	}
 }

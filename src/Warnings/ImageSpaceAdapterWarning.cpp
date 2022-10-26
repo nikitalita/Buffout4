@@ -98,6 +98,6 @@ namespace Warnings::ImageSpaceAdapterWarning
 		_original = trampoline.write_call<5>(
 			target.address(),
 			trampoline.allocate(p));
-		logger::debug("installed ImageSpaceAdapter Warning"sv);
+		logger::info("installed ImageSpaceAdapter Warning"sv);
 	}
 }

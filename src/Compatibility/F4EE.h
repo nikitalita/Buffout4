@@ -53,7 +53,7 @@ namespace Compatibility::F4EE
 		if (handle != nullptr && validate()) {
 			const auto base = reinterpret_cast<std::uintptr_t>(handle);
 			detail::SetMorphValues(base);
-			logger::debug("installed F4EE compatibility patch"sv);
+			logger::info("installed F4EE compatibility patch"sv);
 		} else {
 			logger::warn("failed to install F4EE compatibility patch"sv);
 		}
