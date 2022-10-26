@@ -12,6 +12,7 @@
 #include "Fixes/TESObjectREFRGetEncounterZoneFix.h"
 #include "Fixes/UnalignedLoadFix.h"
 #include "Fixes/UtilityShaderFix.h"
+#include "Fixes/WorkBenchSwapFix.h"
 
 namespace Fixes
 {
@@ -56,6 +57,12 @@ namespace Fixes
 		if (*Settings::UnalignedLoad) {
 			UnalignedLoadFix::Install();
 		}
+
+#ifdef FALLOUTVR
+		if (*Settings::WorkBenchSwap) {
+			WorkBenchSwapFix::Install();
+		}
+#endif
 	}
 
 	void PostInit()

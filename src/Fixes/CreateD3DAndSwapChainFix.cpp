@@ -32,7 +32,12 @@ namespace CreateD3DAndSwapChainFix
 
 	void Install()
 	{
-		const auto target = REL::ID(224250).address() + 0x114;
+#ifndef FALLOUTVR
+		const auto offset = 0x114;
+#else
+		const auto offset = 0x11F;
+#endif
+		const auto target = REL::ID(224250).address() + offset;
 		auto& trampoline = F4SE::GetTrampoline();
 		trampoline.write_call<5>(target, detail::GetDisplayModeList);
 

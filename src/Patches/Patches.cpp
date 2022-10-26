@@ -21,6 +21,8 @@ namespace Patches
 			AchievementsPatch::Install();
 		}
 
+#ifndef FALLOUTVR
+		// partial work on this one.     BSMTAManager::RegisterObjects::execute function missing from vr so need to rethink this one
 		if (*Settings::BSMTAManager) {
 			BSMTAManagerPatch::Install();
 		}
@@ -29,6 +31,7 @@ namespace Patches
 			BSPreCulledObjectsPatch::Install();
 		}
 
+#endif
 		if (*Settings::BSTextureStreamerLocalHeap) {
 			BSTextureStreamerLocalHeapPatch::Install();
 		}
@@ -41,9 +44,11 @@ namespace Patches
 			INISettingCollectionPatch::Install();
 		}
 
+#ifndef FALLOUTVR
 		if (*Settings::InputSwitch) {
 			InputSwitchPatch::PreLoad();
 		}
+#endif
 
 		if (*Settings::MaxStdIO != -1) {
 			MaxStdIOPatch::Install();
@@ -61,9 +66,11 @@ namespace Patches
 			SmallBlockAllocatorPatch::Install();
 		}
 
+#ifndef FALLOUTVR
 		if (*Settings::WorkshopMenu) {
 			WorkshopMenuPatch::Install();
 		}
+#endif
 	}
 
 	void PostInit()

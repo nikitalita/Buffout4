@@ -223,9 +223,9 @@ namespace
 			void (*const proxy)() = []() {
 				AllocTrampoline();
 				Crash::Install();
-#ifndef FALLOUTVR
 				Fixes::PreLoad();
 				Patches::PreLoad();
+#ifndef FALLOUTVR
 				Warnings::PreLoad();
 #endif
 			};

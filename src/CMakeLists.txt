@@ -66,6 +66,7 @@ set(SOURCE_FILES
 	"${SOURCE_DIR}/Fixes/UnalignedLoadFix.h"
 	"${SOURCE_DIR}/Fixes/UtilityShaderFix.cpp"
 	"${SOURCE_DIR}/Fixes/UtilityShaderFix.h"
+	"${SOURCE_DIR}/Fixes/WorkBenchSwapFix.h"
 	"${SOURCE_DIR}/Patches/AchievementsPatch.cpp"
 	"${SOURCE_DIR}/Patches/AchievementsPatch.h"
 	"${SOURCE_DIR}/Patches/BSMTAManagerPatch.h"
