@@ -1,5 +1,5 @@
 {
-  "name": "example",
+  "name": "buffout4",
   "version": "1",
   "dependencies": [
     "args",
@@ -19,6 +19,7 @@
     },
     "magic-enum",
     "nowide",
+    "openvr",
     "robin-hood-hashing",
     "rsm-binary-io",
     "rsm-mmio",

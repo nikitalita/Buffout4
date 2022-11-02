@@ -200,6 +200,8 @@ find_package(TBB
 find_package(tomlplusplus REQUIRED CONFIG)
 find_package(xbyak REQUIRED CONFIG)
 find_package(magic_enum CONFIG REQUIRED)
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+find_package(OpenVR REQUIRED)
 # https://github.com/microsoft/DirectXShaderCompiler/blob/main/cmake/modules/FindDiaSDK.cmake
 # Find the DIA SDK path.
 # It will typically look something like this:
@@ -289,6 +291,7 @@ target_link_libraries(
 		frozen::frozen
 		infoware
         magic_enum::magic_enum
+        OpenVR::OpenVR
 		robin_hood::robin_hood
 		spdlog::spdlog
 		TBB::tbb
