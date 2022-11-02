@@ -13,6 +13,7 @@
 #include "Fixes/UnalignedLoadFix.h"
 #include "Fixes/UtilityShaderFix.h"
 #include "Fixes/WorkBenchSwapFix.h"
+#include "Fixes/PipboyLightInvFix.h"
 
 namespace Fixes
 {
@@ -61,7 +62,12 @@ namespace Fixes
 #ifdef FALLOUTVR
 		if (*Settings::WorkBenchSwap) {
 			WorkBenchSwapFix::Install();
+		}	
+		
+		if (*Settings::PipboyLightInvFix) {
+			PipboyLightInvFix::Install();
 		}
+
 #endif
 	}
 
@@ -75,6 +81,7 @@ namespace Fixes
 		if (*Settings::UtilityShader) {
 			UtilityShaderFix::Install();
 		}
+
 #endif
 	}
 }
