@@ -515,6 +515,81 @@ namespace Crash::Introspection::F4
 			} catch (...) {}
 		}
 	};
+
+	class TESQuest
+	{
+	public:
+		using value_type = RE::TESQuest;
+
+		static void filter(
+			filter_results& a_results,
+			const void* a_ptr, int tab_depth = 0) noexcept
+		{
+			const auto object = static_cast<const value_type*>(a_ptr);
+			if (!object)
+				return;
+			try {
+				a_results.emplace_back(
+					fmt::format(
+						"{:\t>{}}Already Run Quest"sv,
+						"",
+						tab_depth),
+					fmt::format(
+						"{}",
+						object->alreadyRun));
+				a_results.emplace_back(
+					fmt::format(
+						"{:\t>{}}Current Stage"sv,
+						"",
+						tab_depth),
+					fmt::format(
+						"{}",
+						object->currentStage));
+			} catch (...) {}
+		};
+	};
+
+	class ExtraTextDisplayData
+	{
+	public:
+		using value_type = RE::ExtraTextDisplayData;
+
+		static void filter(
+			filter_results& a_results,
+			const void* a_ptr, int tab_depth = 0) noexcept
+		{
+			const auto object = static_cast<const value_type*>(a_ptr);
+
+			try {
+				const auto name = object->displayName.c_str();
+				if (name && name[0])
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Display Name"sv,
+							"",
+							tab_depth),
+						quoted(name));
+			} catch (...) {}
+			try {
+				const auto& displayNameText = object->displayNameText;
+				if (displayNameText)
+					TESForm<RE::BGSMessage>::filter(a_results, displayNameText, tab_depth + 1);
+			} catch (...) {}
+			try {
+				const auto quest = object->ownerQuest;
+				if (quest) {
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Owner Quest"sv,
+							""sv,
+							tab_depth),
+						""sv);
+					TESQuest::filter(a_results, quest, tab_depth + 1);
+				}
+			} catch (...) {}
+		};
+	};
+
 }
 
 namespace Crash::Introspection
@@ -695,6 +770,7 @@ namespace Crash::Introspection
 				std::make_pair(".?AULooseFileStreamBase@?A0xaf4cad8a@BSResource@@"sv, F4::BSResource::LooseFileStreamBase::filter),
 				std::make_pair(".?AVBSShaderProperty@@"sv, F4::BSShaderProperty::filter),
 				std::make_pair(".?AVCharacter@@"sv, F4::TESForm<RE::PlayerCharacter>::filter),
+				std::make_pair(".?AVExtraTextDisplayData@@"sv, F4::ExtraTextDisplayData::filter),
 				std::make_pair(".?AVNativeFunctionBase@NF_util@BSScript@@"sv, F4::BSScript::NF_util::NativeFunctionBase::filter),
 				std::make_pair(".?AVNiAVObject@@"sv, F4::NiAVObject::filter),
 				std::make_pair(".?AVNiObjectNET@@"sv, F4::NiObjectNET::filter),
@@ -708,6 +784,7 @@ namespace Crash::Introspection
 				std::make_pair(".?AVTESNPC@@"sv, F4::TESForm<RE::TESNPC>::filter),
 				std::make_pair(".?AVTESObjectCELL@@"sv, F4::TESForm<RE::TESObjectCELL>::filter),
 				std::make_pair(".?AVTESObjectREFR@@"sv, F4::TESObjectREFR::filter),
+				std::make_pair(".?AVTESQuest@@"sv, F4::TESQuest::filter),
 			});
 
 			Polymorphic _poly;
