@@ -44,8 +44,8 @@
 
 #include <Windows.h>
 
-#include <Psapi.h>
 #include "Crash/PDB/PdbHandler.h"
+#include <Psapi.h>
 
 #undef max
 #undef min
@@ -241,7 +241,6 @@ namespace Crash::Modules
 				const std::filesystem::path p = buf.data();
 				return p.generic_string();
 			}
-
 		};
 	}
 

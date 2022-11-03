@@ -34,7 +34,7 @@ namespace Fixes::UnalignedLoadFix
 	inline void Install()
 	{
 		detail::ApplySkinningToGeometry();
-#ifndef FALLOUTVR // function doesnt exist in VR>   need to RE more
+#ifndef FALLOUTVR  // function doesnt exist in VR>   need to RE more
 		detail::CreateCommandBuffer();
 #endif
 		logger::info("installed UnalignedLoad fix"sv);

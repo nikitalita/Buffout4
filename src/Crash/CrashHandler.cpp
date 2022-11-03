@@ -44,8 +44,8 @@
 #define NOMCX
 
 #include <Windows.h>
-#include <winternl.h>
 #include <openvr.h>
+#include <winternl.h>
 using namespace vr;
 
 #undef max

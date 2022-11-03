@@ -8,12 +8,12 @@
 #include "Fixes/MagicEffectApplyEventFix.h"
 #include "Fixes/MovementPlannerFix.h"
 #include "Fixes/PackageAllocateLocationFix.h"
+#include "Fixes/PipboyLightInvFix.h"
 #include "Fixes/SafeExitFix.h"
 #include "Fixes/TESObjectREFRGetEncounterZoneFix.h"
 #include "Fixes/UnalignedLoadFix.h"
 #include "Fixes/UtilityShaderFix.h"
 #include "Fixes/WorkBenchSwapFix.h"
-#include "Fixes/PipboyLightInvFix.h"
 
 namespace Fixes
 {
@@ -62,8 +62,8 @@ namespace Fixes
 #ifdef FALLOUTVR
 		if (*Settings::WorkBenchSwap) {
 			WorkBenchSwapFix::Install();
-		}	
-		
+		}
+
 		if (*Settings::PipboyLightInvFix) {
 			PipboyLightInvFix::Install();
 		}

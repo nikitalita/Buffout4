@@ -6,8 +6,10 @@ namespace Fixes::WorkBenchSwapFix
 {
 	namespace detail
 	{
-		struct Patch : Xbyak::CodeGenerator {
-			explicit Patch(std::uintptr_t a_dest) {
+		struct Patch : Xbyak::CodeGenerator
+		{
+			explicit Patch(std::uintptr_t a_dest)
+			{
 				Xbyak::Label retLab;
 
 				and_(dword[rdi + 0x4], 0xFFFFFFF);
@@ -21,7 +23,8 @@ namespace Fixes::WorkBenchSwapFix
 
 	}
 
-	inline void Install() {
+	inline void Install()
+	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1573164), 0x48 };
 		REL::Relocation<std::uintptr_t> resume{ REL::ID(1573164), 0x4D };
 

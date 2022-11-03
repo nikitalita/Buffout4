@@ -11,4 +11,3 @@ namespace Crash
 		void dump_symbols();
 	}
 }
-

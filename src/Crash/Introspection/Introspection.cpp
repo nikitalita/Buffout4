@@ -174,8 +174,7 @@ namespace Crash::Introspection::F4
 					fmt::format(
 						"{:\t>{}}File Name"sv,
 						""sv,
-						tab_depth
-						),
+						tab_depth),
 					quoted(fileName));
 			} catch (...) {}
 			try {
@@ -247,8 +246,7 @@ namespace Crash::Introspection::F4
 						fmt::format(
 							"{:\t>{}}Name"sv,
 							"",
-							tab_depth
-							),
+							tab_depth),
 						quoted(name));
 			} catch (...) {}
 
@@ -286,8 +284,7 @@ namespace Crash::Introspection::F4
 						fmt::format(
 							"{:\t>{}}File"sv,
 							""sv,
-							tab_depth
-							),
+							tab_depth),
 						quoted(filename));
 			} catch (...) {}
 
@@ -296,9 +293,8 @@ namespace Crash::Introspection::F4
 				a_results.emplace_back(
 					fmt::format(
 						"{:\t>{}}Flags"sv,
-						""sv ,
-						tab_depth
-						),
+						""sv,
+						tab_depth),
 					fmt::format(
 						"0x{:08X}"sv,
 						formFlags));
@@ -310,9 +306,8 @@ namespace Crash::Introspection::F4
 					a_results.emplace_back(
 						fmt::format(
 							"{:\t>{}}EditorID"sv,
-							""sv ,
-							tab_depth
-							),
+							""sv,
+							tab_depth),
 						quoted(editorID));
 			} catch (...) {}
 
@@ -321,9 +316,8 @@ namespace Crash::Introspection::F4
 				a_results.emplace_back(
 					fmt::format(
 						"{:\t>{}}FormID"sv,
-						""sv ,
-						tab_depth
-						),
+						""sv,
+						tab_depth),
 					fmt::format(
 						"0x{:08X}"sv,
 						formID));
@@ -390,9 +384,8 @@ namespace Crash::Introspection::F4
 
 					a_results.emplace_back(
 						fmt::format(
-							"{:\t>{}}Object Reference"sv ,
-							tab_depth
-							),
+							"{:\t>{}}Object Reference"sv,
+							tab_depth),
 						""sv);
 					for (auto& [key, value] : xResults) {
 						a_results.emplace_back(
@@ -616,8 +609,8 @@ namespace Crash::Introspection
 			Integer(std::size_t a_value) noexcept :
 				_value(a_value),
 				name_string(a_value >> 63 ?
-								fmt::format("(size_t) [uint: {} int: {}]"s, _value, static_cast<std::make_signed_t<size_t>>(_value)) :
-								fmt::format("(size_t) [{}]"s, _value))
+                                fmt::format("(size_t) [uint: {} int: {}]"s, _value, static_cast<std::make_signed_t<size_t>>(_value)) :
+                                fmt::format("(size_t) [{}]"s, _value))
 			{
 			}
 

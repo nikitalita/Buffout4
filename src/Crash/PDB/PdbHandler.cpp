@@ -5,9 +5,9 @@
 #pragma once
 #include "PdbHandler.h"
 #include <atlbase.h>
+#include <comdef.h>
 #include <dia2.h>
 #include <diacreate.h>
-#include <comdef.h>
 
 namespace Crash
 {
@@ -97,7 +97,8 @@ namespace Crash
 				logger::info("Symbol returning: {}", a_result);
 			return a_result;
 		}
-		std::string print_hr_failure(HRESULT hr) {
+		std::string print_hr_failure(HRESULT hr)
+		{
 			auto errMsg = "";
 			switch ((unsigned int)hr) {
 			case 0x806D0005:  // E_PDB_NOT_FOUND
@@ -118,10 +119,10 @@ namespace Crash
 		std::string pdb_details(std::string_view a_name, uintptr_t a_offset)
 		{
 			std::string result = "";
-			if (a_name.ends_with("exe")) //ignore exe since pdbs not readily available for bethesda exes
+			if (a_name.ends_with("exe"))  //ignore exe since pdbs not readily available for bethesda exes
 				return result;
 			std::string pluginPath = "Data/F4SE/Plugins/";
-			std::filesystem::path dllPath { a_name };
+			std::filesystem::path dllPath{ a_name };
 			std::string dll_path = a_name.data();
 			if (!dllPath.has_parent_path())
 				dll_path = pluginPath + dllPath.filename().string();
@@ -137,21 +138,21 @@ namespace Crash
 
 			// try to load local copy
 			auto* msdia_dll = L"Data/F4SE/Plugins/msdia140.dll";
-			hr = NoRegCoCreate(msdia_dll, CLSID_DiaSource, __uuidof(IDiaDataSource),(void**)&pSource);
+			hr = NoRegCoCreate(msdia_dll, CLSID_DiaSource, __uuidof(IDiaDataSource), (void**)&pSource);
 			if (FAILED(hr)) {
+				auto error = print_hr_failure(hr);
+				logger::info("Failed to manually load msdia140.dll and create object for CLSID for dll {}+{:07X}\t{}", a_name, a_offset, error);
+				// msdia*.dll try registered copy
+				if (FAILED(hr = CoCreateInstance(CLSID_DiaSource,
+							   NULL,
+							   CLSCTX_INPROC_SERVER,
+							   __uuidof(IDiaDataSource),
+							   (void**)&pSource))) {
 					auto error = print_hr_failure(hr);
-					logger::info("Failed to manually load msdia140.dll and create object for CLSID for dll {}+{:07X}\t{}", a_name, a_offset, error);
-					// msdia*.dll try registered copy
-					if (FAILED(hr = CoCreateInstance(CLSID_DiaSource,
-								   NULL,
-								   CLSCTX_INPROC_SERVER,
-								   __uuidof(IDiaDataSource),
-								   (void**)&pSource))) {
-						auto error = print_hr_failure(hr);
-						logger::info("Failed to load registered msdia140.dll for dll {}+{:07X}\t{}", a_name, a_offset, error);
-						CoUninitialize();
-						return result;
-					}
+					logger::info("Failed to load registered msdia140.dll for dll {}+{:07X}\t{}", a_name, a_offset, error);
+					CoUninitialize();
+					return result;
+				}
 			}
 
 			wchar_t wszFilename[_MAX_PATH];
@@ -164,7 +165,7 @@ namespace Crash
 					symcacheValid = true;
 				} else if (!symcache.empty()) {
 					logger::info("Symcache not found at {}", symcache);
-				}else
+				} else
 					logger::info("Symcache not defined");
 				symcacheChecked = true;
 			}
@@ -241,14 +242,15 @@ namespace Crash
 
 		// dump all symbols in Plugin directory
 		// this was the early POC test and written first in this module
-		void dump_symbols() {
+		void dump_symbols()
+		{
 			CoInitialize(nullptr);
 			std::filesystem::path pluginDir{ "Data/F4SE/Plugins"sv };
 			for (const auto& elem : std::filesystem::directory_iterator(pluginDir)) {
 				if (const auto filename =
 						elem.path().has_filename() ?
-							std::make_optional(elem.path().filename().string()) :
-			                      std::nullopt;
+                            std::make_optional(elem.path().filename().string()) :
+                            std::nullopt;
 					filename.value().ends_with("dll")) {
 					logger::info("Found dll {}", *filename);
 					auto path = elem.path();
@@ -307,9 +309,10 @@ namespace Crash
 									if (l->Next(i, &lineNum, &fetched) == S_OK && fetched == 1) {
 										IDiaSourceFile* srcFile;
 										DWORD l;
-										BSTR srcFileName=nullptr;
+										BSTR srcFileName = nullptr;
 										if (lineNum->get_sourceFile(&srcFile) == S_OK) {
-											if (found_source) logger::warn("MULTIPLE HITS");
+											if (found_source)
+												logger::warn("MULTIPLE HITS");
 											srcFile->get_fileName(&srcFileName);
 											found_source = true;
 										}
@@ -340,5 +343,3 @@ namespace Crash
 		}
 	}
 }
-
-
