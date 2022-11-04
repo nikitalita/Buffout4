@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.23)
+set(NAME "Buffout4")
+set(VERSION 1.27.0)
 
 project(
-	Buffout4
-	VERSION 1.27.0
+	${NAME}
+	VERSION ${VERSION}
 	LANGUAGES CXX
 )
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
