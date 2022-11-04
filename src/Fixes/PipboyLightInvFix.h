@@ -1,4 +1,5 @@
 #pragma once
+#include <xbyak/xbyak.h>
 
 namespace Fixes::PipboyLightInvFix
 {
