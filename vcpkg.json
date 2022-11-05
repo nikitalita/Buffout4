@@ -27,9 +27,11 @@
     "spdlog",
     "tbb",
     "tomlplusplus",
-    "xbyak"
+    "xbyak",
+    "zycore",
+    "zydis"
   ],
-  "builtin-baseline": "e2667a41fc2fc578474e9521d7eb90b769569c83",
+  "builtin-baseline": "68ad399d5596a540e8a12173c3d189cbc0f82be8",
   "overrides": [
     {
       "name": "fmt",

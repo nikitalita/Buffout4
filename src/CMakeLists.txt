@@ -202,6 +202,8 @@ find_package(xbyak REQUIRED CONFIG)
 find_package(magic_enum CONFIG REQUIRED)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 find_package(OpenVR REQUIRED)
+find_package(zycore CONFIG REQUIRED)
+find_package(zydis CONFIG REQUIRED)
 # https://github.com/microsoft/DirectXShaderCompiler/blob/main/cmake/modules/FindDiaSDK.cmake
 # Find the DIA SDK path.
 # It will typically look something like this:
@@ -298,6 +300,7 @@ target_link_libraries(
 		TBB::tbbmalloc
 		tomlplusplus::tomlplusplus
 		xbyak::xbyak
+		Zydis::Zydis
 )
 
 target_compile_definitions(
