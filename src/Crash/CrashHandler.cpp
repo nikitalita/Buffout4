@@ -534,7 +534,7 @@ namespace Crash
 
 				const auto runtimeVer = REL::Module::get().version();
 				log->critical("Fallout 4 v{}.{}.{}"sv, runtimeVer[0], runtimeVer[1], runtimeVer[2]);
-				log->critical("Buffout 4 v{}.{}.{}"sv, Plugin::VERSION[0], Plugin::VERSION[1], Plugin::VERSION[2]);
+				log->critical("Buffout 4 v{}.{}.{} {} {}"sv, Plugin::VERSION[0], Plugin::VERSION[1], Plugin::VERSION[2], __DATE__, __TIME__);
 				log->flush();
 
 				print([&]() { print_exception(*log, *a_exception->ExceptionRecord, cmodules); }, "print_exception");
