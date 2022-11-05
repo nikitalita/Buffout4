@@ -33,9 +33,10 @@ namespace Fixes::PipboyLightInvFix
 
 	inline void Install()
 	{
-		REL::Relocation<std::uintptr_t> target{ REL::Offset(0xf2d240).address() + 0xD28 };
-		REL::Relocation<std::uintptr_t> resume{ REL::Offset(0xf2d240).address() + 0xD33 };
-		REL::Relocation<std::uintptr_t> returnAddr{ REL::Offset(0xf2d240).address() + 0xE16 };
+		const auto base = REL::Offset(0xf2d240).address();
+		REL::Relocation<std::uintptr_t> target{ base + 0xD21 };
+		REL::Relocation<std::uintptr_t> resume{ base + 0xD2b };
+		REL::Relocation<std::uintptr_t> returnAddr{ base + 0xE16 };
 
 		for (std::size_t i = 0; i < 11; i++) {
 			REL::safe_write(target.address() + i, std::uint32_t{ 0x90 });
