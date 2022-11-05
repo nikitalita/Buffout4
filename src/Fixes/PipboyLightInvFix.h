@@ -14,8 +14,8 @@ namespace Fixes::PipboyLightInvFix
 
 				test(rbx, rbx);
 				jz("returnFunc");
+				mov(rcx, dword[rbx + 0x10b0]);
 				mov(rdx, rax);
-				movss(xmm2, dword[rax + 0xa0]);
 				jmp(ptr[rip + contLab]);
 
 				L("returnFunc");
@@ -38,7 +38,8 @@ namespace Fixes::PipboyLightInvFix
 		REL::Relocation<std::uintptr_t> resume{ base + 0xD2b };
 		REL::Relocation<std::uintptr_t> returnAddr{ base + 0xE16 };
 
-		for (std::size_t i = 0; i < 11; i++) {
+		const auto instructionBytes= resume.address() - target.address();
+		for (std::size_t i = 0; i < instructionBytes; i++) {
 			REL::safe_write(target.address() + i, std::uint32_t{ 0x90 });
 		}
 
