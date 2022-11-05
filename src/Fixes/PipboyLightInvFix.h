@@ -38,7 +38,7 @@ namespace Fixes::PipboyLightInvFix
 		REL::Relocation<std::uintptr_t> resume{ base + 0xD2b };
 		REL::Relocation<std::uintptr_t> returnAddr{ base + 0xE16 };
 
-		const auto instructionBytes= resume.address() - target.address();
+		const auto instructionBytes = resume.address() - target.address();
 		for (std::size_t i = 0; i < instructionBytes; i++) {
 			REL::safe_write(target.address() + i, std::uint32_t{ 0x90 });
 		}
