@@ -308,6 +308,26 @@ namespace Crash::Introspection::F4
 			} catch (...) {}
 
 			try {
+				auto sourcefiles = form->sourceFiles.array;
+				if (sourcefiles && sourcefiles->size() > unsigned(1)) {
+					std::string filesString = "";
+					for (auto index = unsigned(0); index < sourcefiles->size(); index++) {
+						auto sourcefile = sourcefiles->data()[index];
+						filesString = filesString.empty() ? fmt::format("{}"sv,
+																sourcefile->GetFilename().data()) :
+						                                    fmt::format("{} -> {}"sv,
+																filesString, sourcefile->GetFilename().data());
+					}
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Modified by"sv,
+							"",
+							tab_depth),
+						filesString);
+				}
+			} catch (...) {}
+
+			try {
 				const auto formFlags = form->GetFormFlags();
 				a_results.emplace_back(
 					fmt::format(
