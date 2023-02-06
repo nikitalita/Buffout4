@@ -29,32 +29,35 @@ namespace Crash::Introspection::F4
 
 				try {
 					const auto dirName = stream->GetDirName();
-					a_results.emplace_back(
-						fmt::format(
-							"{:\t>{}}Directory Name"sv,
-							"",
-							tab_depth),
-						dirName);
+					if (!dirName.empty())
+						a_results.emplace_back(
+							fmt::format(
+								"{:\t>{}}Directory Name"sv,
+								"",
+								tab_depth),
+							quoted(dirName));
 				} catch (...) {}
 
 				try {
 					const auto fileName = stream->GetFileName();
-					a_results.emplace_back(
-						fmt::format(
-							"{:\t>{}}File Name"sv,
-							"",
-							tab_depth),
-						fileName);
+					if (!fileName.empty())
+						a_results.emplace_back(
+							fmt::format(
+								"{:\t>{}}File Name"sv,
+								"",
+								tab_depth),
+							quoted(fileName));
 				} catch (...) {}
 
 				try {
 					const auto prefix = stream->GetPrefix();
-					a_results.emplace_back(
-						fmt::format(
-							"{:\t>{}}Prefix"sv,
-							"",
-							tab_depth),
-						prefix);
+					if (!prefix.empty())
+						a_results.emplace_back(
+							fmt::format(
+								"{:\t>{}}Prefix"sv,
+								"",
+								tab_depth),
+							quoted(prefix));
 				} catch (...) {}
 			}
 		};
@@ -76,35 +79,37 @@ namespace Crash::Introspection::F4
 					const auto function = static_cast<const value_type*>(a_ptr);
 
 					try {
-						const std::string_view name = function->name;
-						a_results.emplace_back(
-							fmt::format(
-								"{:\t>{}}Function"sv,
-								"",
-								tab_depth),
-							quoted(name));
+						const std::string_view name = function->GetName();
+						if (!name.empty())
+							a_results.emplace_back(
+								fmt::format(
+									"{:\t>{}}Function"sv,
+									"",
+									tab_depth),
+								quoted(name));
 					} catch (...) {}
 
 					try {
-						const std::string_view objName = function->objName;
-						a_results.emplace_back(
-							fmt::format(
-								"{:\t>{}}Object"sv,
-								"",
-								tab_depth),
-							quoted(objName));
+						const std::string_view objName = function->GetObjectTypeName();
+						if (!objName.empty())
+							a_results.emplace_back(
+								fmt::format(
+									"{:\t>{}}Object"sv,
+									"",
+									tab_depth),
+								quoted(objName));
 					} catch (...) {}
 
 					try {
-						const std::string_view stateName = function->stateName;
-						if (!stateName.empty()) {
+						const std::string_view stateName = function->GetStateName();
+						if (!stateName.empty())
 							a_results.emplace_back(
 								fmt::format(
 									"{:\t>{}}State"sv,
 									"",
 									tab_depth),
 								quoted(stateName));
-						}
+
 					} catch (...) {}
 				}
 			};
@@ -123,12 +128,24 @@ namespace Crash::Introspection::F4
 
 				try {
 					const std::string_view name = info->name;
-					a_results.emplace_back(
-						fmt::format(
-							"{:\t>{}}Name"sv,
-							"",
-							tab_depth),
-						quoted(name));
+					if (!name.empty())
+						a_results.emplace_back(
+							fmt::format(
+								"{:\t>{}}Name"sv,
+								"",
+								tab_depth),
+							quoted(name));
+				} catch (...) {}
+
+				try {
+					const std::string_view docString = info->docString;
+					if (!docString.empty())
+						a_results.emplace_back(
+							fmt::format(
+								"{:\t>{}}DocString"sv,
+								"",
+								tab_depth),
+							quoted(docString));
 				} catch (...) {}
 			}
 		};
@@ -147,12 +164,13 @@ namespace Crash::Introspection::F4
 
 			try {
 				const auto name = object->GetName();
-				a_results.emplace_back(
-					fmt::format(
-						"{:\t>{}}Name"sv,
-						"",
-						tab_depth),
-					quoted(name));
+				if (!name.empty())
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Name"sv,
+							"",
+							tab_depth),
+						quoted(name));
 			} catch (...) {}
 		}
 	};
@@ -166,10 +184,12 @@ namespace Crash::Introspection::F4
 			filter_results& a_results,
 			const void* a_ptr, int tab_depth = 0) noexcept
 		{
-			const auto stream = static_cast<const value_type*>(a_ptr);
-
+			const auto object = static_cast<const value_type*>(a_ptr);
+			if (!object)
+				return;
 			try {
-				const auto fileName = stream->GetFileName();
+				const auto fileName = object->GetFileName();
+				if (!fileName.empty())
 				a_results.emplace_back(
 					fmt::format(
 						"{:\t>{}}File Name"sv,
@@ -178,7 +198,7 @@ namespace Crash::Introspection::F4
 					quoted(fileName));
 			} catch (...) {}
 			try {
-				const auto& header = stream->bsStreamHeader;
+				const auto& header = object->bsStreamHeader;
 				a_results.emplace_back(
 					fmt::format(
 						"{:\t>{}}Header"sv,
@@ -193,7 +213,7 @@ namespace Crash::Introspection::F4
 			} catch (...) {}
 
 			try {
-				const auto lastLoadedRTTI = stream->lastLoadedRTTI;
+				const auto lastLoadedRTTI = object->lastLoadedRTTI;
 				if (lastLoadedRTTI && lastLoadedRTTI[0])
 					a_results.emplace_back(
 						fmt::format(
@@ -204,18 +224,18 @@ namespace Crash::Introspection::F4
 			} catch (...) {}
 
 			try {
-				const auto inputFilePath = stream->fileName;
-				if (inputFilePath && inputFilePath[0])
+				const auto fileName = object->fileName;
+				if (fileName && fileName[0])
 					a_results.emplace_back(
 						fmt::format(
 							"{:\t>{}}fileName"sv,
 							"",
 							tab_depth),
-						quoted(inputFilePath));
+						quoted(fileName));
 			} catch (...) {}
 
 			try {
-				const auto filePath = stream->filePath;
+				const auto filePath = object->filePath;
 				if (filePath && filePath[0])
 					a_results.emplace_back(
 						fmt::format(
@@ -236,11 +256,11 @@ namespace Crash::Introspection::F4
 			filter_results& a_results,
 			const void* a_ptr, int tab_depth = 0) noexcept
 		{
-			const auto texture = static_cast<const value_type*>(a_ptr);
-			if (!texture)
+			const auto object = static_cast<const value_type*>(a_ptr);
+			if (!object)
 				return;
 			try {
-				const auto name = texture ? texture->name.c_str() : ""sv;
+				const auto name = object ? object->name.c_str() : ""sv;
 				if (!name.empty())
 					a_results.emplace_back(
 						fmt::format(
@@ -251,14 +271,13 @@ namespace Crash::Introspection::F4
 			} catch (...) {}
 
 			try {
-				const auto name = texture->GetRTTI() ? texture->GetRTTI()->GetName() : ""sv;
+				const auto name = object->GetRTTI() ? object->GetRTTI()->GetName() : ""sv;
 				if (!name.empty())
 					a_results.emplace_back(
 						fmt::format(
 							"{:\t>{}}RTTIName"sv,
-							"" /*,
-							tab_depth*/
-							),
+							"",
+							tab_depth),
 						quoted(name));
 			} catch (...) {}
 		}
@@ -301,6 +320,17 @@ namespace Crash::Introspection::F4
 			} catch (...) {}
 
 			try {
+				const auto name = form->GetObjectTypeName();
+				if (name && name[0])
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Name"sv,
+							"",
+							tab_depth),
+						quoted(name));
+			} catch (...) {}
+
+			try {
 				const auto editorID = form->GetFormEditorID();
 				if (editorID && editorID[0])
 					a_results.emplace_back(
@@ -334,7 +364,7 @@ namespace Crash::Introspection::F4
 							tab_depth),
 						fmt::format(
 							"{} ({:02})"sv,
-							formTypeName, stl::to_underlying(formType)));
+							formTypeName, std::to_underlying(formType)));
 			} catch (...) {}
 		}
 	};
@@ -348,19 +378,19 @@ namespace Crash::Introspection::F4
 			filter_results& a_results,
 			const void* a_ptr, int tab_depth = 0) noexcept
 		{
-			const auto component = static_cast<const value_type*>(a_ptr);
+			const auto object = static_cast<const value_type*>(a_ptr);
 
-			if (!component)
+			if (!object)
 				return;
 			try {
-				const auto fullName = component->GetFullName();
-				if (fullName && fullName[0])
+				const auto name = object->GetFullName();
+				if (name && name[0])
 					a_results.emplace_back(
 						fmt::format(
 							"{:\t>{}}GetFullName"sv,
-							""sv,
+							"",
 							tab_depth),
-						quoted(fullName));
+						quoted(name));
 			} catch (...) {}
 		}
 	};
@@ -382,20 +412,28 @@ namespace Crash::Introspection::F4
 					filter_results xResults;
 					TESForm<RE::TESForm>::filter(xResults, objRef);
 
-					a_results.emplace_back(
-						fmt::format(
-							"{:\t>{}}Object Reference"sv,
-							tab_depth),
-						""sv);
-					for (auto& [key, value] : xResults) {
+					if (!xResults.empty()) {
 						a_results.emplace_back(
-							fmt::format("\t{}"sv, key),
-							std::move(value));
+							fmt::format(
+								"{:\t>{}}Object Reference"sv,
+								"",
+								tab_depth),
+							"");
+						for (auto& [key, value] : xResults) {
+							a_results.emplace_back(
+								fmt::format(
+									"{:\t>{}}{}"sv,
+									"",
+									tab_depth,
+									key),
+								std::move(value));
+						}
 					}
 				} else {
 					a_results.emplace_back(
 						fmt::format(
 							"{:\t>{}}Object Reference"sv,
+							""sv,
 							tab_depth),
 						"None"sv);
 				}
@@ -481,6 +519,7 @@ namespace Crash::Introspection::F4
 						quoted(name));
 			} catch (...) {}
 
+
 			try {
 				const auto flags = object->GetFlags();
 				a_results.emplace_back(
@@ -489,7 +528,7 @@ namespace Crash::Introspection::F4
 						""sv,
 						tab_depth),
 					fmt::format(
-						"{}"sv,
+						"{0:x}"sv,
 						flags));
 			} catch (...) {}
 
@@ -501,8 +540,7 @@ namespace Crash::Introspection::F4
 							"{:\t>{}}Checking Parent"sv,
 							""sv,
 							tab_depth),
-						fmt::format(
-							""sv));
+						""sv);
 					filter(a_results, parent, tab_depth + 1);
 				}
 			} catch (...) {}
