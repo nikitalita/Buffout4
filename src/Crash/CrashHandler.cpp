@@ -136,12 +136,14 @@ namespace Crash
 	void Callstack::print_raw_callstack(spdlog::logger& a_log) const
 	{
 		a_log.critical("RAW CALL STACK:");
-
+		const auto format =
+			"\t[{:>"s +
+			get_size_string(_stacktrace.size()) +
+			"}] 0x{:X}"s;
 		const auto sz = get_size_string(_stacktrace.size());
 		for (std::size_t i = 0; i < _stacktrace.size(); ++i) {
 			a_log.critical(
-				"\t[{1:>{0}}] 0x{2:X}"sv,
-				sz,
+				fmt::runtime(format),
 				i,
 				reinterpret_cast<std::uintptr_t>(_stacktrace[i].address()));
 		}
@@ -316,23 +318,28 @@ namespace Crash
 		{
 			a_log.critical("MODULES:"sv);
 
-			const auto width = [&]() {
-				std::size_t max = 0;
-				std::for_each(
-					a_modules.begin(),
-					a_modules.end(),
-					[&](auto&& a_elem) {
-						max = std::max(max, a_elem->name().length());
-					});
-				return std::to_string(max);
+			const auto format = [&]() {
+				const auto width = [&]() {
+					std::size_t max = 0;
+					std::for_each(
+						a_modules.begin(),
+						a_modules.end(),
+						[&](auto&& a_elem) {
+							max = std::max(max, a_elem->name().length());
+						});
+					return max;
+				}();
+
+				return "\t{:<"s +
+				       fmt::to_string(width) +
+				       "} 0x{:012X}"s;
 			}();
 
 			for (const auto& mod : a_modules) {
 				a_log.critical(
-					"\t{1:<{0}} 0x{2:012X}"sv,
-					width,
-					mod->name(),
-					mod->address());
+					fmt::runtime(format),
+					 mod->name(),
+					 mod->address());
 			}
 		}
 

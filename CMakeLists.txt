@@ -15,7 +15,7 @@ include(cmake/common.cmake)
 
 set_from_environment(Fallout4Path)
 if(NOT DEFINED Fallout4Path)
-	message(FATAL_ERROR "Fallout4Path is not set")
+	message(WARNING "Fallout4Path is not set. COPY_OUTPUT will be disabled")
 endif()
 
 add_subdirectory(src)
