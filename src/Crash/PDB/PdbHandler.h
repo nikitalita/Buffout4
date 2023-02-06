@@ -14,4 +14,3 @@ namespace Crash
 		const std::string_view sPluginPath = "Data/F4SE/Plugins"sv;
 	}
 }
-

@@ -494,7 +494,7 @@ namespace Crash
 					}
 					for (const auto& entry : propListFloat) {
 						const auto fpropValue = HMD->GetFloatTrackedDeviceProperty(k_unTrackedDeviceIndex_Hmd, entry.second);
-					a_log.critical("\t{}: {}"sv, entry.first, fpropValue);
+						a_log.critical("\t{}: {}"sv, entry.first, fpropValue);
 					}
 					for (const auto& entry : propListBool) {
 						const auto bpropValue = HMD->GetBoolTrackedDeviceProperty(k_unTrackedDeviceIndex_Hmd, entry.second);

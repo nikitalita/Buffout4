@@ -190,12 +190,12 @@ namespace Crash::Introspection::F4
 			try {
 				const auto fileName = object->GetFileName();
 				if (!fileName.empty())
-				a_results.emplace_back(
-					fmt::format(
-						"{:\t>{}}File Name"sv,
-						""sv,
-						tab_depth),
-					quoted(fileName));
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}File Name"sv,
+							""sv,
+							tab_depth),
+						quoted(fileName));
 			} catch (...) {}
 			try {
 				const auto& header = object->bsStreamHeader;
@@ -315,7 +315,7 @@ namespace Crash::Introspection::F4
 						auto sourcefile = sourcefiles->data()[index];
 						filesString = filesString.empty() ? fmt::format("{}"sv,
 																sourcefile->GetFilename().data()) :
-						                                    fmt::format("{} -> {}"sv,
+                                                            fmt::format("{} -> {}"sv,
 																filesString, sourcefile->GetFilename().data());
 					}
 					a_results.emplace_back(
@@ -538,7 +538,6 @@ namespace Crash::Introspection::F4
 							tab_depth),
 						quoted(name));
 			} catch (...) {}
-
 
 			try {
 				const auto flags = object->GetFlags();
