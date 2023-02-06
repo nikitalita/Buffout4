@@ -641,6 +641,69 @@ namespace Crash::Introspection::F4
 		};
 	};
 
+	// Code from Nightfallstorm
+	class CodeTasklet
+	{
+	public:
+		using value_type = RE::BSScript::Internal::CodeTasklet;
+
+		static void filter(
+			filter_results& a_results,
+			const void* a_ptr, int tab_depth = 0) noexcept
+		{
+			const auto object = static_cast<const value_type*>(a_ptr);
+			const auto& handlePolicy = RE::BSScript::Internal::VirtualMachine::GetSingleton()->handlePolicy;
+			const auto datahandler = RE::TESDataHandler::GetSingleton();
+			try {
+				auto currentStackFrame = object->stack->top;  // get stack from BSScript::Internal::CodeTasklet (or get stack directly if it's a stack object
+				std::string stackTrace = "\n";
+				std::map<std::string, bool> objectReferences;
+				while (currentStackFrame) {
+					auto function = currentStackFrame->owningFunction;
+					auto functionObjecTypeName = function.get()->GetObjectTypeName();
+					auto functionName = function.get()->GetName();
+					auto objectInstanceString = RE::BSFixedString("None");
+					auto objectRef = currentStackFrame->self;
+					if (objectRef.GetType().IsObject()) {
+						auto objectHandle = std::size_t(objectRef.GetType().GetObjectTypeInfo()->data);
+						handlePolicy->ConvertHandleToString(objectHandle, objectInstanceString);
+						const auto handleString = std::string{ objectInstanceString };
+						const auto paranStart = handleString.find("(");
+						const auto paranEnd = handleString.rfind(")");
+						const auto formIDString = (paranStart != std::string::npos && paranEnd != std::string::npos && paranStart <= paranEnd) ? handleString.substr(paranStart + 1, paranEnd - 1) : "";
+						if (!formIDString.empty())
+							objectReferences.emplace(formIDString, true);
+					}
+					auto sourceFileName = function->GetSourceFilename();
+					auto traceFormatString = "{:\t>{}}[{}].{}.{}() - \"{}\" Line {}\n";  // Same format in Papyrus logs
+					std::string lineTrace = "";
+					if (function.get()->GetIsNative()) {
+						lineTrace = fmt::format(traceFormatString, "", tab_depth, objectInstanceString, functionObjecTypeName, functionName, sourceFileName, "?"sv);
+					} else {
+						std::uint32_t lineNumber;
+						function.get()->TranslateIPToLineNumber(currentStackFrame->ip, lineNumber);
+						lineTrace = fmt::format(traceFormatString, "", tab_depth, objectInstanceString, functionObjecTypeName, functionName, sourceFileName, std::to_string(lineNumber));
+					}
+					stackTrace = stackTrace + lineTrace;
+					currentStackFrame = currentStackFrame->previousFrame;
+				}
+				a_results.emplace_back(
+					fmt::format(
+						"{:\t>{}}Stack Trace"sv,
+						"",
+						tab_depth),
+					stackTrace);
+				for (auto& objectReference : objectReferences) {
+					const auto objectString = objectReference.first;
+					const auto modIndex = std::stoi(objectString.substr(0, 2), nullptr, 16);
+					const auto form = std::stoi(objectString.substr(3, objectString.size()), nullptr, 16);
+					const auto target = datahandler->LookupForm(form, datahandler->LookupLoadedModByIndex(modIndex)->GetFilename());
+					if (target)
+						TESForm<RE::TESForm>::filter(a_results, target, tab_depth + 1);
+				}
+			} catch (...) {}
+		};
+	};
 }
 
 namespace Crash::Introspection
@@ -823,6 +886,7 @@ namespace Crash::Introspection
 			static constexpr auto FILTERS = frozen::make_map({
 				std::make_pair(".?AULooseFileStreamBase@?A0xaf4cad8a@BSResource@@"sv, F4::BSResource::LooseFileStreamBase::filter),
 				std::make_pair(".?AVBSShaderProperty@@"sv, F4::BSShaderProperty::filter),
+				std::make_pair(".?AVCodeTasklet@Internal@BSScript@@"sv, F4::CodeTasklet::filter),
 				std::make_pair(".?AVCharacter@@"sv, F4::TESForm<RE::PlayerCharacter>::filter),
 				std::make_pair(".?AVExtraTextDisplayData@@"sv, F4::ExtraTextDisplayData::filter),
 				std::make_pair(".?AVNativeFunctionBase@NF_util@BSScript@@"sv, F4::BSScript::NF_util::NativeFunctionBase::filter),
