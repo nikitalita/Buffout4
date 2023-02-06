@@ -31,7 +31,7 @@
     "zycore",
     "zydis"
   ],
-  "builtin-baseline": "68ad399d5596a540e8a12173c3d189cbc0f82be8",
+  "builtin-baseline": "368c782fd7d1dd6d8b1632548e0816c5bff6ff84",
   "overrides": [
     {
       "name": "fmt",

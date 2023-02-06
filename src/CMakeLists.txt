@@ -293,7 +293,6 @@ target_link_libraries(
 		frozen::frozen
 		infoware
         magic_enum::magic_enum
-        OpenVR::OpenVR
 		robin_hood::robin_hood
 		spdlog::spdlog
 		TBB::tbb
