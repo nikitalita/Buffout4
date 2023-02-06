@@ -111,6 +111,8 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* a_f
 	AllocTrampoline();
 	F4SE::Init(a_f4se);
 
+	logger::info("NOTE: This is not a crashlog. Crashlogs have the name crash-[TIMESTAMP].log");
+	logger::info("Buffout 4 v{}.{}.{} {} {} is loading"sv, Plugin::VERSION[0], Plugin::VERSION[1], Plugin::VERSION[2], __DATE__, __TIME__);
 	const auto messaging = F4SE::GetMessagingInterface();
 	if (!messaging || !messaging->RegisterListener(MessageHandler)) {
 		return false;
