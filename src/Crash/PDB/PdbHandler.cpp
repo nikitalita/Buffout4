@@ -54,22 +54,26 @@ namespace Crash
 			BSTR name;
 			a_symbol->get_name(&name);
 			auto convertedName = ConvertBSTRToMBS(name);
-
+			DWORD rva;
+			if (a_rva == 0)
+				a_symbol->get_relativeVirtualAddress(&rva); // find rva if not provided
+			else
+				rva = a_rva;
 			ULONGLONG length = 0;
 			if (a_symbol->get_length(&length) == S_OK) {
 				IDiaEnumLineNumbers* lineNums[100];
-				if (a_session->findLinesByRVA(a_rva, length, lineNums) == S_OK) {
-					auto& l = lineNums[0];
+				if (a_session->findLinesByRVA(rva, length, lineNums) == S_OK) {
+					auto& lineNumsPtr = lineNums[0];
 					CComPtr<IDiaLineNumber> line;
 					IDiaLineNumber* lineNum;
 					ULONG fetched = 0;
 					bool found_source = false;
 					bool found_line = false;
 					for (uint8_t i = 0; i < 5; ++i) {
-						if (l->Next(i, &lineNum, &fetched) == S_OK && fetched == 1) {
+						if (lineNumsPtr->Next(i, &lineNum, &fetched) == S_OK && fetched == 1) {
 							found_source = false;
 							found_line = false;
-							DWORD l;
+							DWORD sline;
 							IDiaSourceFile* srcFile;
 							BSTR fileName = nullptr;
 							std::string convertedFileName;
@@ -79,15 +83,23 @@ namespace Crash
 								convertedFileName = ConvertBSTRToMBS(fileName);
 								found_source = true;
 							}
-							if (lineNum->get_lineNumber(&l) == S_OK)
+							if (lineNum->get_lineNumber(&sline) == S_OK)
 								found_line = true;
 							if (found_source && found_line)  // this should always hit if hit at all
-								a_result += fmt::format(" {}:{} {}", convertedFileName, +l, convertedName);
+								a_result += fmt::format(" {}:{} {}", convertedFileName, +sline ? (uint64_t)sline : 0, convertedName);
 							else if (found_source)
 								a_result += fmt::format(" {} {}", convertedFileName, convertedName);
 							else if (found_line)
-								a_result += fmt::format(" unk_:{} {}", +l, convertedName);
+								a_result += fmt::format(" unk_:{} {}", +sline ? (uint64_t)sline : 0, convertedName);
 						}
+					}
+					if (!found_source && !found_line) {
+						auto sRva = fmt::format("{:X}", rva);
+						if (convertedName.ends_with(sRva))
+							sRva = "";
+						else
+							sRva = "_" + sRva;
+						a_result += fmt::format(" {}{}", convertedName, sRva);
 					}
 				}
 			}
@@ -97,6 +109,7 @@ namespace Crash
 				logger::info("Symbol returning: {}", a_result);
 			return a_result;
 		}
+
 		std::string print_hr_failure(HRESULT hr)
 		{
 			auto errMsg = "";
@@ -119,11 +132,10 @@ namespace Crash
 		std::string pdb_details(std::string_view a_name, uintptr_t a_offset)
 		{
 			std::string result = "";
-			std::string pluginPath = "Data/F4SE/Plugins/";
 			std::filesystem::path dllPath{ a_name };
 			std::string dll_path = a_name.data();
 			if (!dllPath.has_parent_path())
-				dll_path = pluginPath + dllPath.filename().string();
+				dll_path = Crash::PDB::sPluginPath.data() + dllPath.filename().string();
 			auto rva = (DWORD)a_offset;
 			CComPtr<IDiaDataSource> pSource;
 			auto hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -155,6 +167,7 @@ namespace Crash
 
 			wchar_t wszFilename[_MAX_PATH];
 			wchar_t wszPath[_MAX_PATH];
+			std::vector<std::string> searchPaths = { Crash::PDB::sPluginPath.data() };
 			mbstowcs(wszFilename, dll_path.c_str(), sizeof(wszFilename) / sizeof(wszFilename[0]));
 			auto symcache = *Settings::Symcache;
 			if (!symcacheChecked) {
@@ -167,13 +180,23 @@ namespace Crash
 					logger::info("Symcache not defined");
 				symcacheChecked = true;
 			}
-			if (symcacheValid)
-				mbstowcs(wszPath, fmt::format("cache*{}"s, symcache).c_str(), sizeof(wszPath) / sizeof(wszPath[0]));
-			logger::info("Attempting to find pdb for {}+{:07X}", a_name, a_offset);
-			hr = pSource->loadDataForExe(wszFilename, wszPath, NULL);
-			if (FAILED(hr)) {
-				auto error = print_hr_failure(hr);
-				logger::info("Failed to open pdb for dll {}+{:07X}\t{}", a_name, a_offset, error);
+			if (symcacheValid) {
+				searchPaths.push_back(fmt::format("cache*{}"s, symcache).c_str());
+			}
+			auto foundPDB = false;
+			for (const auto& path : searchPaths) {
+				mbstowcs(wszPath, path.c_str(), sizeof(wszPath) / sizeof(wszPath[0]));
+				logger::info("Attempting to find pdb for {}+{:07X} with path {}", a_name, a_offset, path);
+				hr = pSource->loadDataForExe(wszFilename, wszPath, NULL);
+				if (FAILED(hr)) {
+					auto error = print_hr_failure(hr);
+					logger::info("Failed to open pdb for dll {}+{:07X}\t{}", a_name, a_offset, error);
+					continue;
+				}
+				foundPDB = true;
+				break;
+			}
+			if (!foundPDB) {
 				CoUninitialize();
 				return result;
 			}
@@ -223,121 +246,111 @@ namespace Crash
 					// Do stuff with private symbol
 					auto privateResult = processSymbol(privateSymbol, pSession, privateRva, a_name, a_offset, result);
 					if (!privateResult.empty() && !publicResult.empty()) {
-						CoUninitialize();
-						return fmt::format("{}\t{}", privateResult, publicResult);
+						result = fmt::format("{}\t{}", privateResult, publicResult);
 					} else if (!privateResult.empty()) {
-						CoUninitialize();
-						return privateResult;
+						result = privateResult;
 					}
+					privateSymbol->Release();
 				}
-				CoUninitialize();
-				return publicResult;
+				result = publicResult;
 			}
+			publicSymbol->Release();
 			pSession->Release();
 			CoUninitialize();
 			return result;
 		}
 
-		// dump all symbols in Plugin directory
+		// dump all symbols in Plugin directory or fakepdb for exe
 		// this was the early POC test and written first in this module
-		void dump_symbols()
+		void dump_symbols(bool exe)
 		{
 			CoInitialize(nullptr);
-			std::filesystem::path pluginDir{ "Data/F4SE/Plugins"sv };
-			for (const auto& elem : std::filesystem::directory_iterator(pluginDir)) {
-				if (const auto filename =
-						elem.path().has_filename() ?
-                            std::make_optional(elem.path().filename().string()) :
-                            std::nullopt;
-					filename.value().ends_with("dll")) {
-					logger::info("Found dll {}", *filename);
-					auto path = elem.path();
-					auto dll_path = path.string();
-					CComPtr<IDiaDataSource> source;
-					auto hr = CoCreateInstance(CLSID_DiaSource,
-						NULL,
-						CLSCTX_INPROC_SERVER,
-						__uuidof(IDiaDataSource),
-						(void**)&source);
-					if (FAILED(hr))
-						continue;
-
-					{
-						wchar_t wide_path[MAX_PATH];
-						memset(wide_path, 0, MAX_PATH * 2);
-						MultiByteToWideChar(CP_ACP, 0, dll_path.c_str(), (int)dll_path.length(), wide_path, MAX_PATH);
-						hr = source->loadDataForExe(wide_path, NULL, NULL);
-						if (FAILED(hr))
+			int retflag;
+			if (exe) {
+				const auto string_path = "./Fallout4VR.exe";
+				std::filesystem::path file_path{ string_path };
+				dumpFileSymbols(file_path, retflag);
+			} else {
+				for (const auto& elem : std::filesystem::directory_iterator(Crash::PDB::sPluginPath)) {
+					if (const auto filename =
+							elem.path().has_filename() ?
+								std::make_optional(elem.path().filename().string()) :
+								std::nullopt;
+						filename.value().ends_with("dll")) {
+						dumpFileSymbols(elem.path(), retflag);
+						if (retflag == 3)
 							continue;
-						logger::info("Found pdb for dll {}", *filename);
 					}
-
-					CComPtr<IDiaSession> pSession;
-					if (FAILED(source->openSession(&pSession)))
-						continue;
-
-					IDiaEnumSymbolsByAddr* pEnumSymbolsByAddr;
-					IDiaSymbol* pSymbol;
-					ULONG celt = 0;
-					if (FAILED(pSession->getSymbolsByAddr(&pEnumSymbolsByAddr))) {
-						continue;
-					}
-					if (FAILED(pEnumSymbolsByAddr->symbolByAddr(1, 0, &pSymbol))) {
-						pEnumSymbolsByAddr->Release();
-						continue;
-					}
-					do {
-						// Do something with symbol...
-						//https://stackoverflow.com/questions/68412597/determining-source-code-filename-and-line-for-function-using-visual-studio-pdb
-						BSTR name;
-						pSymbol->get_name(&name);
-						ULONGLONG length = 0;
-						DWORD rva;
-						pSymbol->get_relativeVirtualAddress(&rva);
-						if (pSymbol->get_length(&length) == S_OK) {
-							IDiaEnumLineNumbers* lineNums[100];
-							if (pSession->findLinesByRVA(rva, length, lineNums) == S_OK) {
-								auto& l = lineNums[0];
-								CComPtr<IDiaLineNumber> line;
-								IDiaLineNumber* lineNum;
-								ULONG fetched = 0;
-								bool found_source = false;
-								bool found_line = false;
-								for (uint8_t i = 0; i < 5; ++i) {
-									if (l->Next(i, &lineNum, &fetched) == S_OK && fetched == 1) {
-										IDiaSourceFile* srcFile;
-										DWORD l;
-										BSTR srcFileName = nullptr;
-										if (lineNum->get_sourceFile(&srcFile) == S_OK) {
-											if (found_source)
-												logger::warn("MULTIPLE HITS");
-											srcFile->get_fileName(&srcFileName);
-											found_source = true;
-										}
-										if (lineNum->get_lineNumber(&l) == S_OK)
-											found_line = true;
-										if (found_source && found_line)  // this should always hit if hit at all
-											logger::info("Dll: {} RVA:{} Name: {} SourceFileName: {}:{}", *filename, +rva, ConvertBSTRToMBS(name), ConvertBSTRToMBS(srcFileName), +l);
-										else if (found_source)
-											logger::info("Dll: {} RVA:{} Name: {} SourceFileName: {}", *filename, +rva, ConvertBSTRToMBS(name), ConvertBSTRToMBS(srcFileName));
-										else if (found_line)
-											logger::info("Dll: {} RVA:{} Name: {} Line: {}", *filename, +rva, ConvertBSTRToMBS(name), +l);
-									}
-								}
-							}
-						} else
-							// no source or line number
-							logger::info("Dll: {} RVA:{} Name: {}", *filename, +rva, ConvertBSTRToMBS(name));
-
-						pSymbol->Release();
-						if (FAILED(pEnumSymbolsByAddr->Next(1, &pSymbol, &celt))) {
-							pEnumSymbolsByAddr->Release();
-							break;
-						}
-					} while (celt == 1);
-					pEnumSymbolsByAddr->Release();
 				}
 			}
+		}
+		void dumpFileSymbols(const std::filesystem::path& path, int& retflag)
+		{
+			retflag = 1;
+			const auto filename = std::make_optional(path.filename().string());
+			logger::info("Found dll {}", *filename);
+			auto dll_path = path.string();
+			auto search_path = Crash::PDB::sPluginPath.data();
+			CComPtr<IDiaDataSource> source;
+			auto hr = CoCreateInstance(CLSID_DiaSource,
+				NULL,
+				CLSCTX_INPROC_SERVER,
+				__uuidof(IDiaDataSource),
+				(void**)&source);
+			if (FAILED(hr)) {
+				retflag = 3;
+				return;
+			};
+
+			{
+				wchar_t wszFilename[_MAX_PATH];
+				wchar_t wszPath[_MAX_PATH];
+				mbstowcs(wszFilename, dll_path.c_str(), sizeof(wszFilename) / sizeof(wszFilename[0]));
+				mbstowcs(wszPath, sPluginPath.data(), sizeof(wszPath) / sizeof(wszPath[0]));
+				hr = source->loadDataForExe(wszFilename, wszPath, NULL);
+				if (FAILED(hr)) {
+					retflag = 3;
+					return;
+				};
+				logger::info("Found pdb for dll {}", *filename);
+			}
+
+			CComPtr<IDiaSession> pSession;
+			if (FAILED(source->openSession(&pSession))) {
+				retflag = 3;
+				return;
+			};
+
+			IDiaEnumSymbolsByAddr* pEnumSymbolsByAddr;
+			IDiaSymbol* pSymbol;
+			ULONG celt = 0;
+			if (FAILED(pSession->getSymbolsByAddr(&pEnumSymbolsByAddr))) {
+				{
+					retflag = 3;
+					return;
+				};
+			}
+			if (FAILED(pEnumSymbolsByAddr->symbolByAddr(1, 0, &pSymbol))) {
+				pEnumSymbolsByAddr->Release();
+				{
+					retflag = 3;
+					return;
+				};
+			}
+			do {
+				const auto rva = 0;
+				std::string_view a_name = *filename;
+				uintptr_t a_offset = 0;
+				std::string result = "";
+				result = processSymbol(pSymbol, pSession, rva, a_name, a_offset, result);
+				logger::info("{}", result);
+				pSymbol->Release();
+				if (FAILED(pEnumSymbolsByAddr->Next(1, &pSymbol, &celt))) {
+					pEnumSymbolsByAddr->Release();
+					break;
+				}
+			} while (celt == 1);
+			pEnumSymbolsByAddr->Release();
 		}
 	}
 }
