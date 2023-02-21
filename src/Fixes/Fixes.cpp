@@ -66,7 +66,6 @@ namespace Fixes
 		if (REL::Module::IsVR() && *Settings::PipboyLightInvFix) {
 			PipboyLightInvFix::Install();
 		}
-
 	}
 
 	void PostInit()

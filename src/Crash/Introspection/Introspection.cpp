@@ -694,8 +694,8 @@ namespace Crash::Introspection::F4
 					stackTrace);
 				for (auto& objectReference : objectReferences) {
 					const auto objectString = objectReference.first;
-					const auto modIndex = (std::uint8_t) std::stoi(objectString.substr(0, 2), nullptr, 16);
-					const auto form = (std::uint8_t) std::stoi(objectString.substr(3, objectString.size()), nullptr, 16);
+					const auto modIndex = (std::uint8_t)std::stoi(objectString.substr(0, 2), nullptr, 16);
+					const auto form = (std::uint8_t)std::stoi(objectString.substr(3, objectString.size()), nullptr, 16);
 					const auto target = datahandler->LookupForm(form, datahandler->LookupLoadedModByIndex(modIndex)->GetFilename());
 					if (target)
 						TESForm<RE::TESForm>::filter(a_results, target, tab_depth + 1);
