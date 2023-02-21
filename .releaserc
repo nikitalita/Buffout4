@@ -24,8 +24,8 @@
           },
           {
             "files": ["vcpkg.json"],
-            "from": "\"version-string\": \".*\"",
-            "to": "\"version-string\": \"${nextRelease.version}\"",
+            "from": "\"version-semver\": \".*\"",
+            "to": "\"version-semver\": \"${nextRelease.version}\"",
             "results": [
               {
                 "file": "vcpkg.json",
