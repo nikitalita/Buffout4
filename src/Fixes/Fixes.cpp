@@ -59,16 +59,14 @@ namespace Fixes
 			UnalignedLoadFix::Install();
 		}
 
-#ifdef FALLOUTVR
-		if (*Settings::WorkBenchSwap) {
+		if (REL::Module::IsVR() && *Settings::WorkBenchSwap) {
 			WorkBenchSwapFix::Install();
 		}
 
-		if (*Settings::PipboyLightInvFix) {
+		if (REL::Module::IsVR() && *Settings::PipboyLightInvFix) {
 			PipboyLightInvFix::Install();
 		}
 
-#endif
 	}
 
 	void PostInit()
@@ -77,11 +75,8 @@ namespace Fixes
 			EncounterZoneResetFix::Install();
 		}
 
-#ifndef FALLOUTVR
-		if (*Settings::UtilityShader) {
+		if (REL::Module::IsF4() && *Settings::UtilityShader) {
 			UtilityShaderFix::Install();
 		}
-
-#endif
 	}
 }

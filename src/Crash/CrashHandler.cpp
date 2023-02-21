@@ -293,24 +293,24 @@ namespace Crash
 
 			const auto datahandler = RE::TESDataHandler::GetSingleton();
 			if (datahandler) {
-#ifndef FALLOUTVR
-				const auto& [files, smallfiles] = datahandler->compiledFileCollection;
-				const auto fileFormat = [&]() {
-					return "\t[{:>02X}]{:"s + (!smallfiles.empty() ? "5"s : "1"s) + "}{}"s;
-				}();
-				for (const auto file : files) {
-					a_log.critical(fileFormat, file->GetCompileIndex(), "", file->GetFilename());
+				if (REL::Module::IsF4()) {
+					const auto& [files, smallfiles] = datahandler->compiledFileCollection;
+					const auto fileFormat = [&]() {
+						return "\t[{:>02X}]{:"s + (!smallfiles.empty() ? "5"s : "1"s) + "}{}"s;
+					}();
+					for (const auto file : files) {
+						a_log.critical(fileFormat, file->GetCompileIndex(), "", file->GetFilename());
+					}
+					for (const auto file : smallfiles) {
+						a_log.critical("\t[FE:{:>03X}] {}"sv, file->GetSmallFileCompileIndex(), file->GetFilename());
+					}
+				} else {  // VR does not have light esps so only ->files is necessary.
+					auto& files = datahandler->files;
+					const auto fileFormat = [&]() { return "\t[{:>02X}]{:"s + "}{}"s; }();
+					for (const auto file : files) {
+						a_log.critical(fileFormat, file->GetCompileIndex(), "", file->GetFilename());
+					}
 				}
-				for (const auto file : smallfiles) {
-					a_log.critical("\t[FE:{:>03X}] {}"sv, file->GetSmallFileCompileIndex(), file->GetFilename());
-				}
-#else  // VR does not have light esps so only ->files is necessary.
-				auto& files = datahandler->files;
-				const auto fileFormat = [&]() { return "\t[{:>02X}]{:"s + "}{}"s; }();
-				for (const auto file : files) {
-					a_log.critical(fileFormat, file->GetCompileIndex(), "", file->GetFilename());
-				}
-#endif
 			}
 		}
 
@@ -489,7 +489,7 @@ namespace Crash
 					};
 					char propValue[k_unMaxPropertyStringSize];
 					for (const auto& entry : propListString) {
-						HMD->GetStringTrackedDeviceProperty(k_unTrackedDeviceIndex_Hmd, entry.second, propValue, std::size(propValue));
+						HMD->GetStringTrackedDeviceProperty(k_unTrackedDeviceIndex_Hmd, entry.second, propValue, (std::uint32_t)std::size(propValue));
 						a_log.critical("\t{}: {}"sv, entry.first, propValue);
 					}
 					for (const auto& entry : propListFloat) {

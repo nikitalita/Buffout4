@@ -21,6 +21,7 @@
     "nowide",
     "openvr",
     "robin-hood-hashing",
+    "rapidcsv",
     "rsm-binary-io",
     "rsm-mmio",
     "srell",
@@ -31,7 +32,7 @@
     "zycore",
     "zydis"
   ],
-  "builtin-baseline": "368c782fd7d1dd6d8b1632548e0816c5bff6ff84",
+  "builtin-baseline": "d8aa5e022c45dd527302f01cc5cf39c177f58a4f",
   "overrides": [
     {
       "name": "fmt",

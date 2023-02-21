@@ -50,13 +50,13 @@
 
 namespace WinAPI
 {
-	bool(IsDebuggerPresent)() noexcept
+	bool IsDebuggerPresent() noexcept
 	{
 		return static_cast<bool>(
 			::IsDebuggerPresent());
 	}
 
-	std::uint32_t(UnDecorateSymbolName)(
+	std::uint32_t UnDecorateSymbolName(
 		const char* a_name,
 		char* a_outputString,
 		std::uint32_t a_maxStringLength,

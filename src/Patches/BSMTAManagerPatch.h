@@ -126,23 +126,14 @@ namespace Patches::BSMTAManagerPatch
 	{
 		{
 			const auto target = REL::ID(883019).address();
-#ifndef FALLOUTVR
-			constexpr auto size = 0xC5;
-#else
-			constexpr auto size = 0xE2;
-#endif
+			auto size = REL::Module::IsF4() ? 0xC5 : 0xE2;
 			REL::safe_fill(target, REL::INT3, size);
 			stl::asm_jump(target, size, reinterpret_cast<std::uintptr_t>(detail::RegisterObjects));
 		}
 
 		{
-			const auto base = REL::ID(485563).address();
-#ifndef FALLOUTVR
-			constexpr auto offset = 0x8E;
-#else
-			constexpr auto offset = 0x7E;
-#endif
-			stl::write_thunk_call<5, detail::Submit>(base + offset);
+			const auto target = REL::Relocation<std::uintptr_t>(REL::ID(485563), REL::VariantOffset(0x8E, 0x7E)).address();
+			stl::write_thunk_call<5, detail::Submit>(target);
 		}
 
 		logger::info("installed BSMTAManager patch"sv);

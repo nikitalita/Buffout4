@@ -1,9 +1,6 @@
 #include "Fixes/CreateD3DAndSwapChainFix.h"
 
-#include <Windows.h>
-
 #include <dxgi.h>
-
 namespace CreateD3DAndSwapChainFix
 {
 	namespace detail
@@ -32,12 +29,7 @@ namespace CreateD3DAndSwapChainFix
 
 	void Install()
 	{
-#ifndef FALLOUTVR
-		const auto offset = 0x114;
-#else
-		const auto offset = 0x11F;
-#endif
-		const auto target = REL::ID(224250).address() + offset;
+		const auto target = REL::Relocation<std::uintptr_t>(REL::ID(224250), REL::VariantOffset(0x114, 0x11F)).address();
 		auto& trampoline = F4SE::GetTrampoline();
 		trampoline.write_call<5>(target, detail::GetDisplayModeList);
 

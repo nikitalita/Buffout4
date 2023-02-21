@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Code from StackOverflow
-#pragma warning(disable: 4456 4189)
+#pragma warning(disable: 4267 4456 4189)
 
 #pragma once
 #include "PdbHandler.h"
@@ -62,7 +62,7 @@ namespace Crash
 			ULONGLONG length = 0;
 			if (a_symbol->get_length(&length) == S_OK) {
 				IDiaEnumLineNumbers* lineNums[100];
-				if (a_session->findLinesByRVA(rva, length, lineNums) == S_OK) {
+				if (a_session->findLinesByRVA(rva, (DWORD)length, lineNums) == S_OK) {
 					auto& lineNumsPtr = lineNums[0];
 					CComPtr<IDiaLineNumber> line;
 					IDiaLineNumber* lineNum;

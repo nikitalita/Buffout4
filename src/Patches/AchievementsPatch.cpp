@@ -61,14 +61,8 @@ namespace Patches::AchievementsPatch
 
 	void Install()
 	{
-#ifndef FALLOUTVR
-		constexpr std::size_t size = 0x73;
-#else
-		constexpr std::size_t size = 0xDC;
-#endif  // !FALLOUTVR
-
 		REL::Relocation<std::uintptr_t> target{ REL::ID(1432894) };
-
+		std::size_t size = REL::Module::IsF4() ? 0x73 : 0xDC;
 		REL::safe_fill(target.address(), REL::INT3, size);
 
 		detail::Patch p;

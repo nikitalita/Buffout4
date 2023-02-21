@@ -21,9 +21,9 @@ namespace
 		const auto task = F4SE::GetTaskInterface();
 		task->AddTask([]() {
 			Fixes::PostInit();
-#ifndef FALLOUTVR
-			Patches::PostInit();
-#endif
+			if (REL::Module::IsF4()) {
+				Patches::PostInit();
+			}
 		});
 	}
 
@@ -31,9 +31,9 @@ namespace
 	{
 		switch (a_message->type) {
 		case F4SE::MessagingInterface::kPostPostLoad:
-#ifndef FALLOUTVR
-			Compatibility::Install();
-#endif
+			if (REL::Module::IsF4()) {
+				Compatibility::Install();
+			}
 			break;
 		case F4SE::MessagingInterface::kGameLoaded:
 			{
@@ -229,9 +229,9 @@ namespace
 				Crash::Install();
 				Fixes::PreLoad();
 				Patches::PreLoad();
-#ifndef FALLOUTVR
-				Warnings::PreLoad();
-#endif
+				if (REL::Module::IsF4()) {
+					Warnings::PreLoad();
+				}
 			};
 
 			std::vector<std::uintptr_t> cache(a_first, a_last);
@@ -240,7 +240,7 @@ namespace
 				const auto it = std::find(cache.begin(), cache.end(), preCppInit.address());
 				return it != cache.end() ? it + 1 :
 				       !cache.empty()    ? cache.begin() + 1 :
-                                           cache.end();
+				                           cache.end();
 			}();
 			cache.insert(pos, reinterpret_cast<std::uintptr_t>(proxy));
 

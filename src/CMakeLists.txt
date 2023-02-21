@@ -1,6 +1,4 @@
 # ---- Options ----
-option(COPY_BUILD "Copy the build output to the Fallout directory." TRUE)
-option(BUILD_FALLOUTVR "Build for Fallout VR" OFF)
 
 macro(find_commonlib_path)
 	if (CommonLibName AND NOT ${CommonLibName} STREQUAL "")
@@ -18,20 +16,10 @@ endmacro()
 set(CommonLibName "CommonLibF4")
 set_root_directory()
 
-if(BUILD_FALLOUTVR)
-	add_compile_definitions(FALLOUTVR)
-	set_from_environment(FalloutVRPath)
-	set(FalloutPath ${FalloutVRPath})
-	set(FalloutVersion "Fallout VR")
-else()
-	set_from_environment(Fallout4Path)
-	set(FalloutPath ${Fallout4Path})
-	set(FalloutVersion "Fallout 4")
-endif()
 find_commonlib_path()
 message(
 	STATUS
-	"Building ${PROJECT_NAME} ${PROJECT_VERSION} for ${FalloutVersion} at ${FalloutPath} with ${CommonLibName} at ${CommonLibPath}."
+	"Building ${PROJECT_NAME} ${PROJECT_VERSION} for ${FalloutVersion} with ${CommonLibName} at ${CommonLibPath}."
 )
 
 
@@ -190,6 +178,7 @@ find_package(frozen REQUIRED CONFIG)
 find_package(infoware REQUIRED CONFIG)
 find_package(robin_hood REQUIRED CONFIG)
 find_package(spdlog REQUIRED CONFIG)
+find_package(mmio REQUIRED CONFIG)
 find_package(TBB
 	REQUIRED
 	COMPONENTS
@@ -256,6 +245,7 @@ endif (CMAKE_GENERATOR MATCHES "Visual Studio 15 2017.*")
 
 set(DIASDK_LIBRARIES ${DIASDK_GUIDS_LIBRARY})
 set(DIASDK_INCLUDE_DIRS ${DIASDK_INCLUDE_DIR})
+set(DIA_DLL "${DIASDK_INCLUDE_DIRS}/../bin/amd64/msdia140.dll")
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set DIASDK_FOUND to TRUE
@@ -292,6 +282,7 @@ target_link_libraries(
 		fmt::fmt
 		frozen::frozen
 		infoware
+		mmio::mmio
         magic_enum::magic_enum
 		robin_hood::robin_hood
 		spdlog::spdlog
@@ -336,18 +327,57 @@ install(
 	COMPONENT "pdbs"
 )
 
-if (COPY_BUILD)
-	if (DEFINED FalloutPath)
-		add_custom_command(
-			TARGET ${PROJECT_NAME}
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${FalloutPath}/Data/f4se/Plugins/
-			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> ${FalloutPath}/Data/f4se/Plugins/
-		)
-	else ()
-		message(
-			WARNING
-			"Variable ${FalloutPath} is not defined. Skipping post-build copy command."
-		)
-	endif ()
-endif ()
+set(CONFIG_DIR "${ROOT_DIR}/data/Data/F4SE/Plugins/*")
+file(GLOB_RECURSE CONFIG_FILES ${CONFIG_DIR})
+message("Found for ${CONFIG_FILES} in ${CONFIG_DIR}")
+
+# Automatic deployment to Mod Organizer 2 mod directory.
+foreach(DEPLOY_TARGET $ENV{FalloutPluginTargets})
+        message("Adding deployment target ${DEPLOY_TARGET}.")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "${DEPLOY_TARGET}/F4SE/Plugins/")
+
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> "${DEPLOY_TARGET}/F4SE/Plugins/")
+        if(DIASDK_LIBRARIES)
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy ${DIA_DLL} "${DEPLOY_TARGET}/F4SE/Plugins/")
+        endif()
+endforeach()
+
+set(ZIP_DIR "${CMAKE_CURRENT_BINARY_DIR}/zip")
+add_custom_target(build-time-make-directory ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${ZIP_DIR}"
+        "${ZIP_DIR}/F4SE/Plugins/"
+)
+
+message("Copying mod into ${ZIP_DIR}.")
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "${ZIP_DIR}/F4SE/Plugins/"
+)
+
+if(CONFIG_FILES)
+        message("Copying default config files ${CONFIG_FILES} into ${ZIP_DIR}.")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy ${CONFIG_FILES} "${ZIP_DIR}/F4SE/Plugins/")
+endif()
+
+if(DIASDK_LIBRARIES)
+        message("Copying ${DIA_DLL} into ${ZIP_DIR}.")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy ${DIA_DLL} "${ZIP_DIR}/F4SE/Plugins/")
+endif()
+
+if(${CMAKE_BUILD_TYPE} STREQUAL Debug OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo OR ${CMAKE_BUILD_TYPE} STREQUAL Release)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> "${ZIP_DIR}/F4SE/Plugins/")
+endif()
+
+set(TARGET_ZIP "${PROJECT_NAME}_NG-${PROJECT_VERSION}.7z")
+message("Zipping ${ZIP_DIR} to ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_ZIP}.")
+ADD_CUSTOM_COMMAND(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_ZIP} --format=7zip -- .
+        WORKING_DIRECTORY ${ZIP_DIR}
+)

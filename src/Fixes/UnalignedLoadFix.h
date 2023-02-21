@@ -6,13 +6,9 @@ namespace Fixes::UnalignedLoadFix
 	{
 		inline void ApplySkinningToGeometry()
 		{
-#ifndef FALLOUTVR
-			const auto offset = 0x172;
-#else
-			const auto offset = 0x179;
-#endif
-			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), offset + 0x2 };
-			REL::safe_write(target.address(), std::uint32_t{ 0x10 });
+			REL::Relocation<std::uintptr_t> target{ REL::ID(44611), REL::VariantOffset(0x172, 0x179)};
+			REL::safe_write(target.address() + 0x2, std::uint32_t{ 0x10 });
+			logger::debug("ApplySkinningToGeometry: writing to {:x}"sv, target.address() + 0x2);
 		}
 
 		inline void CreateCommandBuffer()
@@ -34,9 +30,9 @@ namespace Fixes::UnalignedLoadFix
 	inline void Install()
 	{
 		detail::ApplySkinningToGeometry();
-#ifndef FALLOUTVR  // function doesnt exist in VR>   need to RE more
-		detail::CreateCommandBuffer();
-#endif
+		if (REL::Module::IsF4()) {  // function doesnt exist in VR>   need to RE more
+			detail::CreateCommandBuffer();
+		}
 		logger::info("installed UnalignedLoad fix"sv);
 	}
 }

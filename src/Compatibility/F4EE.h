@@ -49,7 +49,7 @@ namespace Compatibility::F4EE
 			return false;
 		};
 
-		const auto handle = static_cast<const std::byte*>(WinAPI::GetModuleHandle(L"f4ee.dll"));
+		const auto handle = GetModuleHandle(L"f4ee.dll");
 		if (handle != nullptr && validate()) {
 			const auto base = reinterpret_cast<std::uintptr_t>(handle);
 			detail::SetMorphValues(base);
