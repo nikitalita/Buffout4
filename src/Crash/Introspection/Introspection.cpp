@@ -552,6 +552,19 @@ namespace Crash::Introspection::F4
 			} catch (...) {}
 
 			try {
+				const auto objectRefr = RE::TESObjectREFR::FindReferenceFor3D((RE::NiAVObject*)a_ptr);
+				if (objectRefr) {
+					a_results.emplace_back(
+						fmt::format(
+							"{:\t>{}}Checking TESObjectREFR"sv,
+							"",
+							tab_depth),
+							""sv);
+					TESObjectREFR::filter(a_results, objectRefr, tab_depth + 1);
+				}
+			} catch (...) {}
+
+			try {
 				const auto parent = object->parent;
 				if (parent) {
 					a_results.emplace_back(
