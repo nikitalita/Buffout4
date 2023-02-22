@@ -559,7 +559,7 @@ namespace Crash::Introspection::F4
 							"{:\t>{}}Checking TESObjectREFR"sv,
 							"",
 							tab_depth),
-							""sv);
+						""sv);
 					TESObjectREFR::filter(a_results, objectRefr, tab_depth + 1);
 				}
 			} catch (...) {}
